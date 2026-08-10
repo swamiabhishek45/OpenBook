@@ -1,3 +1,4 @@
+import { scrapeWebsite } from "../lib/firecrawl.js";
 import {
     createSourceRecord,
     deleteSourceRecord,
@@ -6,7 +7,7 @@ import {
     type SourceRecord,
 } from "../repository/source.repository.js";
 import { NotFoundError } from "../types/app-error.js";
-import { CreateSourceInput,ListSourcesQuery } from "../validators/source.validator.js";
+import { CreateSourceInput,ImportWebsiteInput,ListSourcesQuery } from "../validators/source.validator.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
@@ -87,4 +88,26 @@ export async function createTextOrMarkdownSource(
     //     content: input.content,
     //     status: "PENDING",
     // });
+}
+
+export async function importWebsiteSource(
+    workspaceId: string,
+    userId: string,
+    input: ImportWebsiteInput,
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    const scraped = await scrapeWebsite(input.url);
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "WEBSITE",
+        title: input.title || scraped.title || input.url,
+        content: scraped.markdown,
+        url: scraped.sourceUrl,
+        status: "PENDING",
+        metadata: {
+            importedFrom: scraped.sourceUrl,
+        },
+    });
 }

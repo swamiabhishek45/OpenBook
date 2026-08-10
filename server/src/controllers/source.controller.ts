@@ -16,6 +16,7 @@ import {
     deleteSourceForWorkspace,
     getSourceForWorkspace,
     listSourcesForWorkspace,
+    uploadPdfSource,
 
 } from "../services/source.services.js";
 
@@ -135,4 +136,24 @@ export async function bulkDeleteSources(req: Request, res: Response) {
         input.sourceIds,
     );
     res.status(204).send();
+}
+
+export async function uploadPdf(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+
+    if (!req.file) {
+        throw new ValidationError("PDF file is required");
+    }
+
+    const title =
+        typeof req.body.title === "string" ? req.body.title : undefined;
+
+    const source = await uploadPdfSource(
+        workspaceId,
+        req.session.user.id,
+        req.file,
+        title,
+    );
+
+    res.status(201).json(source);
 }

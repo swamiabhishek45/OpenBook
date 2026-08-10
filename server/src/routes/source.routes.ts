@@ -5,12 +5,19 @@ import {
     createSource,
     deleteSource,
     getSource, listSources,
+    uploadPdf,
 
 } from "../controllers/source.controller.js";
+import { uploadSinglePdf } from "../middleware/upload.middleware.js";
 
 
 export const sourceRoutes = Router({ mergeParams: true }); // source ka parent route -> workspace
 
+sourceRoutes.post(
+    "/upload",
+    uploadSinglePdf,
+    asyncHandler(uploadPdf),
+);
 
 sourceRoutes.get("/", asyncHandler(listSources));
 sourceRoutes.post("/", asyncHandler(createSource));

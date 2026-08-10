@@ -4,7 +4,7 @@ import {
     bulkDeleteSources,
     createSource,
     deleteSource,
-    getSource, listSources,
+    getSource, importWebsite, listSources,
     uploadPdf,
 
 } from "../controllers/source.controller.js";
@@ -18,7 +18,7 @@ sourceRoutes.post(
     uploadSinglePdf,
     asyncHandler(uploadPdf),
 );
-
+sourceRoutes.post("/import/website", asyncHandler(importWebsite));
 sourceRoutes.get("/", asyncHandler(listSources));
 sourceRoutes.post("/", asyncHandler(createSource));
 sourceRoutes.post("/bulk-delete", asyncHandler(bulkDeleteSources));

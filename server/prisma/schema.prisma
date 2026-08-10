@@ -87,8 +87,58 @@ model Workspace {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // sources   Source[]
+  sources   Source[]
 
   @@index([userId])
   @@map("workspace")
+}
+
+enum SourceType {
+  PDF
+  WEBSITE
+  YOUTUBE
+  TEXT
+  MARKDOWN
+}
+
+enum SourceStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model Source {
+  id          String       @id @default(cuid())
+  workspaceId String
+  type        SourceType
+  title       String
+  content     String?
+  url         String?
+  status      SourceStatus @default(PENDING)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  chunks      SourceChunk[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, type])
+  @@index([workspaceId, status])
+  @@map("source")
+}
+
+model SourceChunk {
+  id         String   @id @default(cuid())
+  sourceId   String
+  index      Int
+  content    String
+  tokenCount Int?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  source     Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, index])
+  @@index([sourceId])
+  @@map("source_chunk")
 }

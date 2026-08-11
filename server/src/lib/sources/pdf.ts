@@ -1,5 +1,5 @@
 import { extractText, getDocumentProxy } from "unpdf";
-import { getSignedCloudinaryDownloadUrl } from "./cloudinary.js";
+import { getSignedCloudinaryDownloadUrl } from "../cloudinary.js";
 
 
 export type PdfExtractResult = {
@@ -25,9 +25,9 @@ export async function extractPdfFromBuffer(
     const arrayBuffer =
         buffer instanceof Buffer
             ? (buffer.buffer.slice(
-                  buffer.byteOffset,
-                  buffer.byteOffset + buffer.byteLength,
-              ) as ArrayBuffer)
+                buffer.byteOffset,
+                buffer.byteOffset + buffer.byteLength,
+            ) as ArrayBuffer)
             : buffer;
 
     const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer));

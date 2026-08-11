@@ -1,6 +1,6 @@
 
 
-import { inngest } from "../inngest/client.js";
+import { inngest } from "../../inngest/client.js";
 
 /**
  * Enqueues a source processing job to run asynchronously via Inngest.

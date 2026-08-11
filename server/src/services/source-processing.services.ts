@@ -2,7 +2,7 @@ import type { PineconeRecord } from "@pinecone-database/pinecone";
 import type { Prisma } from "../generated/prisma/client.js";
 import { chunkPages, chunkText } from "../lib/chunking.js";
 import { embedTexts } from "../lib/openai.js";
-import { extractPdfFromCloudinary } from "../lib/pdf.js";
+import { extractPdfFromCloudinary } from "../lib/sources/pdf.js";
 import {
     deleteSourceVectors,
     type VectorMetadata,
@@ -47,8 +47,8 @@ async function extractSourceText(source: SourceRecord) {
     if (source.type === "PDF") {
         const metadata =
             source.metadata &&
-            typeof source.metadata === "object" &&
-            !Array.isArray(source.metadata)
+                typeof source.metadata === "object" &&
+                !Array.isArray(source.metadata)
                 ? (source.metadata as SourceMetadata)
                 : {};
         if (!metadata.fileUrl) {
@@ -84,8 +84,8 @@ export async function markSourceFailed(
 
     const metadata =
         existingMetadata &&
-        typeof existingMetadata === "object" &&
-        !Array.isArray(existingMetadata)
+            typeof existingMetadata === "object" &&
+            !Array.isArray(existingMetadata)
             ? (existingMetadata as SourceMetadata)
             : {};
 
@@ -107,8 +107,8 @@ export async function extractSourceContent(sourceId: string) {
     const extracted = await extractSourceText(source);
     const metadata =
         source.metadata &&
-        typeof source.metadata === "object" &&
-        !Array.isArray(source.metadata)
+            typeof source.metadata === "object" &&
+            !Array.isArray(source.metadata)
             ? (source.metadata as SourceMetadata)
             : {};
 
@@ -233,8 +233,8 @@ export async function embedAndIndexSource(
 
     const metadata =
         source.metadata &&
-        typeof source.metadata === "object" &&
-        !Array.isArray(source.metadata)
+            typeof source.metadata === "object" &&
+            !Array.isArray(source.metadata)
             ? (source.metadata as SourceMetadata)
             : {};
 

@@ -1,5 +1,5 @@
 import { YoutubeTranscript } from "youtube-transcript";
-import { ValidationError } from "../types/app-error.js";
+import { ValidationError } from "../../types/app-error.js";
 
 export async function fetchYoutubeTranscript(url: string) {
     const videoId =

@@ -16,6 +16,7 @@
     "@pinecone-database/pinecone": "^8.2.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "ai": "^7.0.59",
     "better-auth": "^1.6.26",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",

@@ -14,6 +14,8 @@ import {
   X,
   LogOut,
   User,
+  Settings,
+  Brain,
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -41,6 +43,8 @@ export function WorkspaceHeader({
     await onUpdateTitle(editedTitle.trim());
     setIsEditingTitle(false);
   };
+
+  const workspaceId = workspace?.id || "";
 
   return (
     <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between select-none shrink-0 z-20">
@@ -108,16 +112,43 @@ export function WorkspaceHeader({
         </div>
       </div>
 
-      {/* Right: Model badge + Source status + Theme Toggle + User info */}
-      <div className="flex items-center gap-2.5">
-        {/* Source count indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border text-[11px] text-muted-foreground font-mono">
-          <Layers className="w-3 h-3 text-foreground" />
-          <span>{sourcesCount} sources</span>
-        </div>
+      {/* Middle/Right Quick Tabs & Controls */}
+      <div className="flex items-center gap-2">
+        {workspaceId && (
+          <div className="hidden xl:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border text-[11px]">
+            <Link
+              href={`/workspace/${workspaceId}/sources`}
+              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            >
+              <Layers className="w-3 h-3" />
+              <span>Library ({sourcesCount})</span>
+            </Link>
+            <Link
+              href={`/workspace/${workspaceId}/learn`}
+              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Studio</span>
+            </Link>
+            <Link
+              href={`/settings/memory`}
+              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            >
+              <Brain className="w-3 h-3" />
+              <span>Mem0</span>
+            </Link>
+            <Link
+              href={`/workspace/${workspaceId}/settings`}
+              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
+            >
+              <Settings className="w-3 h-3" />
+              <span>Settings</span>
+            </Link>
+          </div>
+        )}
 
         {/* Model badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted border border-border text-[11px] text-foreground">
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted border border-border text-[11px] text-foreground">
           <Sparkles className="w-3 h-3 text-foreground" />
           <span className="font-mono">
             {workspace?.defaultModel || "gpt-4o-mini"}

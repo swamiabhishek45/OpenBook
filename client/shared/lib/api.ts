@@ -9,37 +9,36 @@ export class ApiError extends Error {
     }
 }
 
-const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
-
 export async function apiFetch<T>(
-    endpoint: string,
+    path: string,
     options: RequestInit = {},
 ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+    const headers = new Headers(options.headers);
 
-    const isFormData = options.body instanceof FormData;
+    if (
+        options.body &&
+        !headers.has("Content-Type") &&
+        !(options.body instanceof FormData)
+    ) {
+        headers.set("Content-Type", "application/json");
+    }
 
-    const response = await fetch(url, {
+    const response = await fetch(path, {
         ...options,
         credentials: "include",
-        headers: {
-            ...(!isFormData ? { "Content-Type": "application/json" } : {}),
-            ...options.headers,
-        },
+        headers,
     });
+
+    if (response.status === 204) {
+        return undefined as T;
+    }
 
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-        const message =
-            (data as { error?: string; message?: string } | null)?.error ||
-            (data as { error?: string; message?: string } | null)?.message ||
-            `Request failed with status ${response.status}`;
-
         throw new ApiError(
             response.status,
-            message,
+            (data as { error?: string } | null)?.error ?? "Request failed",
             (data as { details?: unknown } | null)?.details,
         );
     }

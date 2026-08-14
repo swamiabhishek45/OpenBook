@@ -32,7 +32,11 @@ export function useWorkspace(workspaceId: string) {
   });
 
   const updateWorkspaceMutation = useMutation({
-    mutationFn: async (input: { title?: string; description?: string }) => {
+    mutationFn: async (input: {
+      title?: string;
+      description?: string;
+      defaultModel?: string;
+    }) => {
       return await apiClient<WorkspaceDetail>(
         `/api/workspaces/${workspaceId}`,
         {

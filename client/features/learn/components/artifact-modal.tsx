@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import { LearningArtifact } from "../types";
 import { FlashcardsViewer } from "./flashcards-viewer";
 import { QuizViewer } from "./quiz-viewer";
+import { MindmapViewer } from "./mindmap-viewer";
+import { TakeawaysViewer } from "./takeaways-viewer";
+import { SummaryViewer } from "./summary-viewer";
 import {
   X,
   BookOpen,
@@ -48,36 +51,36 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
   const getTypeIcon = () => {
     switch (artifact.type) {
       case "SUMMARY":
-        return <BookOpen className="w-5 h-5 text-zinc-300" />;
+        return <BookOpen className="w-5 h-5 text-foreground" />;
       case "FLASHCARDS":
-        return <Layers className="w-5 h-5 text-zinc-300" />;
+        return <Layers className="w-5 h-5 text-foreground" />;
       case "QUIZ":
-        return <HelpCircle className="w-5 h-5 text-zinc-300" />;
+        return <HelpCircle className="w-5 h-5 text-foreground" />;
       case "MINDMAP":
-        return <Network className="w-5 h-5 text-zinc-300" />;
+        return <Network className="w-5 h-5 text-foreground" />;
       case "TAKEAWAYS":
-        return <ListChecks className="w-5 h-5 text-zinc-300" />;
+        return <ListChecks className="w-5 h-5 text-foreground" />;
       case "REPORT":
-        return <FileText className="w-5 h-5 text-zinc-300" />;
+        return <FileText className="w-5 h-5 text-foreground" />;
       default:
-        return <BookOpen className="w-5 h-5 text-zinc-300" />;
+        return <BookOpen className="w-5 h-5 text-foreground" />;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl max-h-[90vh] bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-foreground">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-950/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-3 min-w-0 pr-4">
-            <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0">
               {getTypeIcon()}
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white truncate">
+              <h2 className="text-sm font-semibold text-foreground truncate">
                 {artifact.title}
               </h2>
-              <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5 font-mono">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5 font-mono">
                 <span>{artifact.type}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1 font-sans">
@@ -92,10 +95,10 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
             <button
               onClick={handleCopyMarkdown}
               title="Copy content"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground text-xs transition-colors"
             >
               {copied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
@@ -104,7 +107,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -124,55 +127,21 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
           )}
 
           {/* Takeaways List */}
-          {artifact.type === "TAKEAWAYS" && artifact.content?.items && (
-            <div className="space-y-3 max-w-2xl mx-auto">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4">
-                Key Takeaways &amp; Findings
-              </h3>
-              <div className="space-y-2.5">
-                {artifact.content.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl bg-zinc-950/70 border border-zinc-800/80 flex items-start gap-3 text-sm text-zinc-200"
-                  >
-                    <span className="w-5 h-5 rounded-full bg-zinc-800 text-zinc-300 text-xs font-mono flex items-center justify-center shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <p className="leading-relaxed">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {artifact.type === "TAKEAWAYS" && (
+            <TakeawaysViewer content={artifact.content?.items || []} />
           )}
 
-          {/* Summary / Report / Markdown View */}
-          {(artifact.type === "SUMMARY" || artifact.type === "REPORT") &&
-            artifact.content?.markdown && (
-              <div className="max-w-3xl mx-auto p-6 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 text-zinc-200 space-y-4 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                {artifact.content.markdown}
-              </div>
-            )}
+          {/* Summary / Report View */}
+          {(artifact.type === "SUMMARY" || artifact.type === "REPORT") && (
+            <SummaryViewer
+              content={artifact.content?.markdown || ""}
+              title={artifact.title}
+            />
+          )}
 
-          {/* Mindmap Nodes & Edges View */}
-          {artifact.type === "MINDMAP" && artifact.content?.nodes && (
-            <div className="max-w-2xl mx-auto space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Mind Map Hierarchy
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {artifact.content.nodes.map((node) => (
-                  <div
-                    key={node.id}
-                    className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center gap-2.5"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-white shrink-0" />
-                    <span className="text-xs font-medium text-zinc-200">
-                      {node.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Mindmap Nodes View */}
+          {artifact.type === "MINDMAP" && (
+            <MindmapViewer content={artifact.content?.nodes || artifact.content || {}} />
           )}
         </div>
       </div>

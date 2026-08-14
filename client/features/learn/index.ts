@@ -4,3 +4,6 @@ export * from "./components/studio-panel";
 export * from "./components/artifact-modal";
 export * from "./components/flashcards-viewer";
 export * from "./components/quiz-viewer";
+export * from "./components/mindmap-viewer";
+export * from "./components/takeaways-viewer";
+export * from "./components/summary-viewer";

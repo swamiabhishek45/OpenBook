@@ -7,8 +7,8 @@ export const CHAT_MODELS = ["gpt-4o-mini", "gpt-4o"] as const;
 /** OpenAI embedding model used for RAG vector indexing and query embedding. */
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 
-/** Vector dimension count — must match Pinecone index configuration. */
-export const EMBEDDING_DIMENSIONS = 1536;
+/** Vector dimension count — must match Pinecone index configuration (default: 512 for chaibooklm index). */
+export const EMBEDDING_DIMENSIONS = Number(process.env.EMBEDDING_DIMENSIONS) || 512;
 
 /** Target max characters per text chunk during source processing. */
 export const CHUNK_SIZE = 1000;

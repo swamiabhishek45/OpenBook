@@ -16,7 +16,7 @@ export function AuthLayout({ mode }: AuthLayoutProps) {
       </div>
 
       {/* Outer Shell container */}
-      <div className="w-full max-w-[1400px] h-[calc(100vh-2rem)] min-h-[640px] max-h-[920px] rounded-[24px] sm:rounded-[32px] overflow-hidden border border-zinc-800/60 bg-black flex flex-col lg:flex-row shadow-2xl relative">
+      <div className="w-full max-w-350 h-[calc(100vh-2rem)] min-h-160 max-h-230 rounded-8 sm:rounded-8 overflow-hidden border border-zinc-800/60 bg-black flex flex-col lg:flex-row shadow-2xl relative">
         {/* Left Section - Cosmic Halftone Pillars Illustration */}
         <div className="relative flex-1 hidden lg:flex flex-col justify-end p-10 xl:p-14 overflow-hidden bg-black">
           {/* Background Artwork */}
@@ -30,8 +30,8 @@ export function AuthLayout({ mode }: AuthLayoutProps) {
               className="object-cover object-center scale-[1.02] filter contrast-125 brightness-95"
             />
             {/* Subtle Gradient Shadow Vignette to ensure maximum text clarity */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/60" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent opacity-90" />
+            <div className="absolute inset-0 bg-linear-to-r from-black/20 via-transparent to-black/60" />
           </div>
 
           {/* Left Overlay Content */}
@@ -50,9 +50,9 @@ export function AuthLayout({ mode }: AuthLayoutProps) {
         </div>
 
         {/* Right Section - Form Panel */}
-        <div className="w-full lg:w-[480px] xl:w-[520px] flex items-center justify-center bg-[#09090b] lg:p-4 z-10 shrink-0">
-          <div className="w-full h-full lg:h-auto max-w-[440px] lg:rounded-[24px] bg-[#fafafc] dark:bg-[#121214] border-0 lg:border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl flex items-center justify-center">
-            <React.Suspense fallback={<div className="min-h-[640px] w-full" />}>
+        <div className="w-full lg:w-120 xl:w-130 flex items-center justify-center bg-[#09090b] lg:p-4 z-10 shrink-0">
+          <div className="w-full h-full lg:h-auto max-w-110 lg:rounded-8 bg-[#fafafc] dark:bg-[#121214] border-0 lg:border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl flex items-center justify-center">
+            <React.Suspense fallback={<div className="min-h-160 w-full" />}>
               <AuthForm initialMode={mode} />
             </React.Suspense>
           </div>

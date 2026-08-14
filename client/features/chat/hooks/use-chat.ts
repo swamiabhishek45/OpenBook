@@ -142,33 +142,46 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let accumulated = "";
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          // Keep incomplete line in buffer for next chunk
+          buffer = lines.pop() ?? "";
 
-          // The AI SDK stream protocol can send format like: 0:"text chunk"\n or raw lines
-          const lines = chunk.split("\n");
           for (const line of lines) {
-            if (!line.trim()) continue;
+            const trimmed = line.trim();
+            if (!trimmed) continue;
 
-            if (line.startsWith("0:")) {
+            if (trimmed === "data: [DONE]") {
+              continue;
+            }
+
+            if (trimmed.startsWith("data: ")) {
               try {
-                // Remove prefix 0: and parse JSON string
-                const jsonStr = line.slice(2);
+                const jsonStr = trimmed.slice(6);
+                const data = JSON.parse(jsonStr);
+                // Handle Vercel AI SDK UI Message Stream delta events
+                if (data.type === "text-delta" && typeof data.delta === "string") {
+                  accumulated += data.delta;
+                } else if (data.type === "text" && typeof data.text === "string") {
+                  accumulated += data.text;
+                }
+              } catch {
+                // Ignore incomplete or non-JSON SSE markers
+              }
+            } else if (trimmed.startsWith("0:")) {
+              try {
+                const jsonStr = trimmed.slice(2);
                 const text = JSON.parse(jsonStr);
                 accumulated += text;
               } catch {
-                accumulated += line.slice(2);
+                accumulated += trimmed.slice(2);
               }
-            } else if (line.startsWith("d:")) {
-              // Finish metadata part
-            } else if (line.startsWith("e:") || line.startsWith("c:")) {
-              // Extra metadata
-            } else {
-              accumulated += line;
             }
           }
 
@@ -179,6 +192,26 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
                 : msg
             )
           );
+        }
+
+        // Process any remainder in buffer
+        if (buffer.trim()) {
+          const trimmed = buffer.trim();
+          if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
+            try {
+              const data = JSON.parse(trimmed.slice(6));
+              if (data.type === "text-delta" && typeof data.delta === "string") {
+                accumulated += data.delta;
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: accumulated }
+                      : msg
+                  )
+                );
+              }
+            } catch {}
+          }
         }
 
         queryClient.invalidateQueries({

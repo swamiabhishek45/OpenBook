@@ -15,29 +15,33 @@ export function OpenBookLogo({
   textSize = "text-2xl",
   textColor = "text-foreground",
 }: LogoProps) {
+  // SVG aspect ratio is 200x120
+  const width = Math.round(size * (200 / 120));
+  const height = size;
+
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Pixelated geometric open rosette circle matching brand identity */}
       <svg
-        width={size}
-        height={size}
-        viewBox="0 0 32 32"
-        fill="currentColor"
+        width={width}
+        height={height}
+        viewBox="0 0 200 120"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         xmlns="http://www.w3.org/2000/svg"
         className="text-foreground shrink-0"
       >
-        <rect x="10" y="2" width="4" height="3" rx="0.5" />
-        <rect x="18" y="2" width="4" height="3" rx="0.5" />
-        <rect x="23" y="5" width="4" height="3" rx="0.5" />
-        <rect x="5" y="5" width="4" height="3" rx="0.5" />
-        <rect x="27" y="10" width="3" height="4" rx="0.5" />
-        <rect x="2" y="10" width="3" height="4" rx="0.5" />
-        <rect x="27" y="18" width="3" height="4" rx="0.5" />
-        <rect x="2" y="18" width="3" height="4" rx="0.5" />
-        <rect x="23" y="24" width="4" height="3" rx="0.5" />
-        <rect x="5" y="24" width="4" height="3" rx="0.5" />
-        <rect x="10" y="27" width="4" height="3" rx="0.5" />
-        <rect x="18" y="27" width="4" height="3" rx="0.5" />
+        {/* Horizontal Base Line */}
+        <line x1="20" y1="100" x2="180" y2="100" />
+
+        {/* Radiating Rays from Center (100, 100) */}
+        <line x1="100" y1="100" x2="25" y2="57" />
+        <line x1="100" y1="100" x2="60" y2="31" />
+        <line x1="100" y1="100" x2="100" y2="20" />
+        <line x1="100" y1="100" x2="140" y2="31" />
+        <line x1="100" y1="100" x2="175" y2="57" />
       </svg>
 
       {showText && (

@@ -20,9 +20,15 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
         client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     }
 
+    // OpenAI text-embedding-3-small has an 8192 token limit per input string.
+    // Ensure each string does not exceed ~20,000 characters.
+    const sanitizedTexts = texts.map((t) =>
+        t && t.length > 20000 ? t.slice(0, 20000) : (t || " ")
+    );
+
     const response = await client.embeddings.create({
         model: EMBEDDING_MODEL,
-        input: texts,
+        input: sanitizedTexts,
         dimensions: EMBEDDING_DIMENSIONS,
     });
 

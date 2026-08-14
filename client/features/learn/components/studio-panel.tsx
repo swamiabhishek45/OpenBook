@@ -1,0 +1,292 @@
+"use client";
+
+import React, { useState } from "react";
+import { LearningArtifact, ArtifactType } from "../types";
+import { ArtifactModal } from "./artifact-modal";
+import {
+  Sparkles,
+  BookOpen,
+  Layers,
+  HelpCircle,
+  ListChecks,
+  Network,
+  FileText,
+  Loader2,
+  Trash2,
+  ChevronRight,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface StudioPanelProps {
+  artifacts: LearningArtifact[];
+  onCreateArtifact: (type: ArtifactType) => Promise<unknown>;
+  onDeleteArtifact: (id: string) => Promise<unknown>;
+  isCreating: boolean;
+  selectedSourcesCount: number;
+}
+
+const STUDIO_TOOLS: {
+  type: ArtifactType;
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    type: "SUMMARY",
+    title: "Summary",
+    desc: "Comprehensive overview of your sources",
+    icon: <BookOpen className="w-4 h-4 text-zinc-300" />,
+  },
+  {
+    type: "TAKEAWAYS",
+    title: "Key Takeaways",
+    desc: "Bullet points of the main findings",
+    icon: <ListChecks className="w-4 h-4 text-zinc-300" />,
+  },
+  {
+    type: "FLASHCARDS",
+    title: "Flashcards",
+    desc: "Interactive flip study cards deck",
+    icon: <Layers className="w-4 h-4 text-zinc-300" />,
+  },
+  {
+    type: "QUIZ",
+    title: "Practice Quiz",
+    desc: "Test your understanding with instant score",
+    icon: <HelpCircle className="w-4 h-4 text-zinc-300" />,
+  },
+  {
+    type: "MINDMAP",
+    title: "Mind Map",
+    desc: "Hierarchical concept branches & nodes",
+    icon: <Network className="w-4 h-4 text-zinc-300" />,
+  },
+  {
+    type: "REPORT",
+    title: "AI Report",
+    desc: "Long-form structured briefing report",
+    icon: <FileText className="w-4 h-4 text-zinc-300" />,
+  },
+];
+
+export function StudioPanel({
+  artifacts,
+  onCreateArtifact,
+  onDeleteArtifact,
+  isCreating,
+  selectedSourcesCount,
+}: StudioPanelProps) {
+  const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
+  const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
+
+  const handleCreate = async (type: ArtifactType) => {
+    if (isCreating || selectedSourcesCount === 0) return;
+    setGeneratingType(type);
+    try {
+      await onCreateArtifact(type);
+    } catch (err) {
+      console.error("Failed to create artifact:", err);
+    } finally {
+      setGeneratingType(null);
+    }
+  };
+
+  const getTypeIcon = (type: ArtifactType) => {
+    switch (type) {
+      case "SUMMARY":
+        return <BookOpen className="w-3.5 h-3.5 text-zinc-300" />;
+      case "FLASHCARDS":
+        return <Layers className="w-3.5 h-3.5 text-zinc-300" />;
+      case "QUIZ":
+        return <HelpCircle className="w-3.5 h-3.5 text-zinc-300" />;
+      case "MINDMAP":
+        return <Network className="w-3.5 h-3.5 text-zinc-300" />;
+      case "TAKEAWAYS":
+        return <ListChecks className="w-3.5 h-3.5 text-zinc-300" />;
+      case "REPORT":
+        return <FileText className="w-3.5 h-3.5 text-zinc-300" />;
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-card border-l border-border text-foreground select-none">
+      {/* Studio Header */}
+      <div className="p-3.5 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-foreground" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            Studio
+          </span>
+          <span className="px-1.5 py-0.2 bg-muted text-[11px] rounded text-muted-foreground font-mono">
+            {artifacts.length}
+          </span>
+        </div>
+
+        <span className="text-[11px] text-muted-foreground font-mono">
+          Learning Tools
+        </span>
+      </div>
+
+      {/* Main Studio Scroll Container */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Quick Tools Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Generate from Sources
+            </h3>
+            {selectedSourcesCount === 0 && (
+              <span className="text-[10px] text-amber-500/90 font-medium">
+                Add sources first
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {STUDIO_TOOLS.map((tool) => {
+              const isThisGenerating = generatingType === tool.type;
+
+              return (
+                <button
+                  key={tool.type}
+                  type="button"
+                  onClick={() => handleCreate(tool.type)}
+                  disabled={isCreating || selectedSourcesCount === 0}
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group",
+                    selectedSourcesCount === 0
+                      ? "border-border bg-muted/20 opacity-60 cursor-not-allowed"
+                      : "border-border bg-card hover:bg-muted/40 hover:border-zinc-400 dark:hover:border-zinc-600 active:scale-[0.99]"
+                  )}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
+                    {isThisGenerating ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground" />
+                    ) : (
+                      tool.icon
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-foreground block truncate">
+                      {tool.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {tool.desc}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Artifacts History List */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Created Artifacts ({artifacts.length})
+          </h3>
+
+          {artifacts.length === 0 ? (
+            <div className="p-6 text-center border border-dashed border-border rounded-2xl text-muted-foreground space-y-2 bg-card">
+              <Sparkles className="w-6 h-6 text-muted-foreground mx-auto" />
+              <p className="text-xs font-medium text-foreground">No artifacts generated yet</p>
+              <p className="text-[11px] text-muted-foreground max-w-[200px] mx-auto">
+                Click any tool above to synthesize notes, quizzes, or flashcards.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {artifacts.map((artifact) => {
+                const isReady = artifact.status === "READY";
+                const isPending =
+                  artifact.status === "PENDING" ||
+                  artifact.status === "PROCESSING";
+
+                return (
+                  <div
+                    key={artifact.id}
+                    className={cn(
+                      "group p-3 rounded-xl border transition-all flex items-center justify-between select-none",
+                      isReady
+                        ? "border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-card hover:bg-muted/40 cursor-pointer"
+                        : "border-border bg-muted/20"
+                    )}
+                    onClick={() => {
+                      if (isReady) setSelectedArtifact(artifact);
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+                        {getTypeIcon(artifact.type)}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          {artifact.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                          <span className="font-mono">{artifact.type}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {new Date(artifact.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isPending && (
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          Building
+                        </span>
+                      )}
+
+                      {artifact.status === "FAILED" && (
+                        <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          Failed
+                        </span>
+                      )}
+
+                      {isReady && (
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground opacity-60" />
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${artifact.title}"?`)) {
+                            onDeleteArtifact(artifact.id);
+                          }
+                        }}
+                        title="Delete artifact"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Artifact Full Modal Viewer */}
+      <ArtifactModal
+        artifact={selectedArtifact}
+        onClose={() => setSelectedArtifact(null)}
+      />
+    </div>
+  );
+}

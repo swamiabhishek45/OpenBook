@@ -15,8 +15,12 @@ export async function enqueueSourceProcessing(input: {
     sourceId: string;
     workspaceId: string;
 }) {
-    await inngest.send({
-        name: "source/created",
-        data: input,
-    });
+    try {
+        await inngest.send({
+            name: "source/created",
+            data: input,
+        });
+    } catch (err) {
+        console.warn("Inngest enqueueSourceProcessing warning (Inngest server may be offline):", err);
+    }
 }

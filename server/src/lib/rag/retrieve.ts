@@ -17,50 +17,57 @@ export async function retrieveWorkspaceContext(
     workspaceId: string,
     query: string,
 ): Promise<RetrievedChunk[]> {
-    const [embedding] = await embedTexts([query]);
-    const matches = await queryWorkspaceVectors(
-        workspaceId,
-        embedding,
-        RAG_TOP_K,
-    );
+    try {
+        const [embedding] = await embedTexts([query]);
+        if (!embedding) return [];
 
-    const chunks: RetrievedChunk[] = [];
+        const matches = await queryWorkspaceVectors(
+            workspaceId,
+            embedding,
+            RAG_TOP_K,
+        );
 
-    for (const match of matches) {
-        const score = match.score ?? 0;
-        if (score < RAG_MIN_SCORE) {
-            continue;
+        const chunks: RetrievedChunk[] = [];
+
+        for (const match of matches) {
+            const score = match.score ?? 0;
+            if (score < RAG_MIN_SCORE) {
+                continue;
+            }
+
+            const metadata = match.metadata as
+                | Record<string, unknown>
+                | undefined;
+            if (
+                !metadata ||
+                typeof metadata.sourceId !== "string" ||
+                typeof metadata.sourceTitle !== "string" ||
+                typeof metadata.sourceType !== "string" ||
+                typeof metadata.chunkId !== "string" ||
+                typeof metadata.text !== "string"
+            ) {
+                continue;
+            }
+
+            chunks.push({
+                sourceId: metadata.sourceId,
+                sourceTitle: metadata.sourceTitle,
+                sourceType: metadata.sourceType,
+                chunkId: metadata.chunkId,
+                chunkIndex: Number(metadata.chunkIndex ?? 0),
+                ...(typeof metadata.page === "number"
+                    ? { page: metadata.page }
+                    : {}),
+                text: metadata.text,
+                score,
+            });
         }
 
-        const metadata = match.metadata as
-            | Record<string, unknown>
-            | undefined;
-        if (
-            !metadata ||
-            typeof metadata.sourceId !== "string" ||
-            typeof metadata.sourceTitle !== "string" ||
-            typeof metadata.sourceType !== "string" ||
-            typeof metadata.chunkId !== "string" ||
-            typeof metadata.text !== "string"
-        ) {
-            continue;
-        }
-
-        chunks.push({
-            sourceId: metadata.sourceId,
-            sourceTitle: metadata.sourceTitle,
-            sourceType: metadata.sourceType,
-            chunkId: metadata.chunkId,
-            chunkIndex: Number(metadata.chunkIndex ?? 0),
-            ...(typeof metadata.page === "number"
-                ? { page: metadata.page }
-                : {}),
-            text: metadata.text,
-            score,
-        });
+        return chunks;
+    } catch (err) {
+        console.warn("Vector retrieval fallback (no matches or vector service down):", err);
+        return [];
     }
-
-    return chunks;
 }
 
 export type UserMemoryContext = string;

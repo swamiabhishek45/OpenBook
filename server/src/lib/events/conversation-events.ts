@@ -5,8 +5,12 @@ export async function enqueueConversationSummarize(input: {
     conversationId: string;
     userId: string;
 }) {
-    await inngest.send({
-        name: "conversation/summarize",
-        data: input,
-    });
+    try {
+        await inngest.send({
+            name: "conversation/summarize",
+            data: input,
+        });
+    } catch (err) {
+        console.warn("Inngest enqueueConversationSummarize warning (Inngest server may be offline):", err);
+    }
 }

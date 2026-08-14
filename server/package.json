@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "inngest": "npx inngest-cli@latest dev -u http://localhost:8081/api/inngest",
     "start": "node dist/index.js",
     "build": "tsc"
   },

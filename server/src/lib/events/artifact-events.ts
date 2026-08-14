@@ -15,8 +15,12 @@ export async function enqueueArtifactGeneration(input: {
     artifactId: string;
     workspaceId: string;
 }) {
-    await inngest.send({
-        name: "artifact/generate",
-        data: input,
-    });
+    try {
+        await inngest.send({
+            name: "artifact/generate",
+            data: input,
+        });
+    } catch (err) {
+        console.warn("Inngest enqueueArtifactGeneration warning (Inngest server may be offline):", err);
+    }
 }

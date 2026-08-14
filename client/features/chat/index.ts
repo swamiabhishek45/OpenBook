@@ -1,5 +1,10 @@
-export * from "./types";
+export * from "./lib/types";
+export * from "./lib/api";
+export * from "./lib/citation";
+export * from "./lib/export-chat";
+export * from "./hooks/use-conversations";
 export * from "./hooks/use-chat";
+export * from "./stores/chat-preferences";
 export * from "./components/chat-panel";
 export { ChatMessage as ChatMessageCard } from "./components/chat-message";
 export * from "./components/chat-input";

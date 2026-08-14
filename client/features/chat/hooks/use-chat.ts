@@ -4,14 +4,25 @@ import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ChatMessage, Conversation } from "../types";
+import { useChatPreferences } from "../stores/chat-preferences";
 
 export function useChat(workspaceId: string, activeConversationId?: string) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(
     activeConversationId
+  );
+
+  const { getPrefs, setWebSearch, setModel } = useChatPreferences();
+  const prefs = getPrefs(workspaceId);
+  const webSearchEnabled = prefs.webSearch;
+
+  const setWebSearchEnabled = useCallback(
+    (enabled: boolean) => {
+      setWebSearch(workspaceId, enabled);
+    },
+    [workspaceId, setWebSearch]
   );
 
   // Load conversations list
@@ -80,6 +91,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
 
       const userMessage: ChatMessage = {
         id: userMessageId,
+        conversationId: currentConversationId || "",
         role: "user",
         content: content.trim(),
         createdAt: new Date().toISOString(),
@@ -87,6 +99,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
 
       const pendingAssistantMessage: ChatMessage = {
         id: assistantMessageId,
+        conversationId: currentConversationId || "",
         role: "assistant",
         content: "",
         createdAt: new Date().toISOString(),
@@ -106,6 +119,8 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           parts: [{ type: "text" as const, text: m.content }],
         }));
 
+        const currentPrefs = getPrefs(workspaceId);
+
         const response = await fetch(
           `${API_BASE_URL}/api/workspaces/${workspaceId}/chat`,
           {
@@ -117,7 +132,8 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
             body: JSON.stringify({
               conversationId: currentConversationId,
               messages: payloadMessages,
-              webSearch: webSearchEnabled,
+              model: currentPrefs.model,
+              webSearch: currentPrefs.webSearch,
             }),
           }
         );
@@ -150,7 +166,6 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
-          // Keep incomplete line in buffer for next chunk
           buffer = lines.pop() ?? "";
 
           for (const line of lines) {
@@ -165,14 +180,13 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
               try {
                 const jsonStr = trimmed.slice(6);
                 const data = JSON.parse(jsonStr);
-                // Handle Vercel AI SDK UI Message Stream delta events
                 if (data.type === "text-delta" && typeof data.delta === "string") {
                   accumulated += data.delta;
                 } else if (data.type === "text" && typeof data.text === "string") {
                   accumulated += data.text;
                 }
               } catch {
-                // Ignore incomplete or non-JSON SSE markers
+                // Ignore incomplete SSE chunks
               }
             } else if (trimmed.startsWith("0:")) {
               try {
@@ -194,7 +208,6 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           );
         }
 
-        // Process any remainder in buffer
         if (buffer.trim()) {
           const trimmed = buffer.trim();
           if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
@@ -242,7 +255,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
       isStreaming,
       workspaceId,
       currentConversationId,
-      webSearchEnabled,
+      getPrefs,
       queryClient,
     ]
   );

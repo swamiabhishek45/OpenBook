@@ -58,7 +58,7 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
   };
 
   return (
-    <div className="w-full max-w-[440px] px-6 sm:px-10 py-10 flex flex-col items-center justify-between min-h-[640px] text-zinc-900 dark:text-zinc-100">
+    <div className="w-full max-w-110 px-6 sm:px-10 py-10 flex flex-col items-center justify-between min-h-[640px] text-zinc-900 dark:text-zinc-100">
       {/* Brand Header */}
       <div className="flex flex-col items-center text-center w-full">
         <OpenBookLogo size={32} textSize="text-2xl" className="mb-8" />

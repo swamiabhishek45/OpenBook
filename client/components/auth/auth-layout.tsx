@@ -10,7 +10,7 @@ export function AuthLayout({ mode }: AuthLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-[#0a0a0c] text-foreground flex items-center justify-center p-3 sm:p-5 lg:p-6 select-none">
       {/* Outer Shell container */}
-      <div className="w-full max-w-[1400px] h-[calc(100vh-2rem)] min-h-[640px] max-h-[920px] rounded-[24px] sm:rounded-[32px] overflow-hidden border border-zinc-800/60 bg-black flex flex-col lg:flex-row shadow-2xl relative">
+      <div className="w-full max-w-350 h-[calc(100vh-2rem)] min-h-[640px] max-h-[920px] rounded-[24px] sm:rounded-[32px] overflow-hidden border border-zinc-800/60 bg-black flex flex-col lg:flex-row shadow-2xl relative">
         {/* Left Section - Cosmic Halftone Pillars Illustration */}
         <div className="relative flex-1 hidden lg:flex flex-col justify-end p-10 xl:p-14 overflow-hidden bg-black">
           {/* Background Artwork */}

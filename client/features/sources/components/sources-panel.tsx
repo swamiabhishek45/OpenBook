@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Source } from "../types";
+import { Source } from "../lib/types";
 import { SourceItem } from "./source-item";
 import { AddSourceDialog } from "./add-source-dialog";
 import { SourcePreviewDialog } from "./source-preview-dialog";
@@ -128,7 +128,7 @@ export function SourcesPanel({
             </div>
             <div>
               <p className="text-xs font-medium text-foreground">No sources yet</p>
-              <p className="text-[11px] text-muted-foreground mt-1 max-w-[180px]">
+              <p className="text-[11px] text-muted-foreground mt-1 max-w-45">
                 Add PDFs, websites, or YouTube links to ground this notebook.
               </p>
             </div>

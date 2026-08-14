@@ -7,13 +7,18 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { WorkspaceHeader } from "./workspace-header";
-import { SourcesPanel } from "@/features/sources";
-import { ChatPanel } from "@/features/chat";
-import { StudioPanel } from "@/features/learn";
+import {
+  SourcesPanel,
+  useSources,
+  useUploadPdfSource,
+  useImportWebsiteSource,
+  useImportYoutubeSource,
+  useCreateSource,
+  useDeleteSource,
+} from "@/features/sources";
+import { ChatPanel, useChat } from "@/features/chat";
+import { StudioPanel, useArtifacts } from "@/features/learn";
 import { useWorkspace } from "../hooks/use-workspace";
-import { useSources } from "@/features/sources";
-import { useChat } from "@/features/chat";
-import { useArtifacts } from "@/features/learn";
 import { Layers, MessageSquare, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +30,7 @@ type MobileTab = "sources" | "chat" | "studio";
 
 export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 
   const {
     workspace,
@@ -32,19 +38,29 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     updateWorkspace,
   } = useWorkspace(workspaceId);
 
-  const {
-    sources,
-    selectedSourceIds,
-    toggleSourceSelection,
-    selectAllSources,
-    deselectAllSources,
-    uploadPdf,
-    importWebsite,
-    importYoutube,
-    createTextSource,
-    deleteSource,
-    isLoading: isSourcesLoading,
-  } = useSources(workspaceId);
+  const sourcesQuery = useSources(workspaceId);
+  const sources = sourcesQuery.data || [];
+  const isSourcesLoading = sourcesQuery.isLoading;
+
+  const uploadPdfMutation = useUploadPdfSource(workspaceId);
+  const importWebsiteMutation = useImportWebsiteSource(workspaceId);
+  const importYoutubeMutation = useImportYoutubeSource(workspaceId);
+  const createSourceMutation = useCreateSource(workspaceId);
+  const deleteSourceMutation = useDeleteSource(workspaceId);
+
+  const toggleSourceSelection = (id: string) => {
+    setSelectedSourceIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllSources = () => {
+    setSelectedSourceIds(sources.map((s) => s.id));
+  };
+
+  const deselectAllSources = () => {
+    setSelectedSourceIds([]);
+  };
 
   const {
     messages,
@@ -99,11 +115,13 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               onToggleSelect={toggleSourceSelection}
               onSelectAll={selectAllSources}
               onDeselectAll={deselectAllSources}
-              onUploadPdf={uploadPdf}
-              onImportWebsite={importWebsite}
-              onImportYoutube={importYoutube}
-              onCreateTextSource={createTextSource}
-              onDeleteSource={deleteSource}
+              onUploadPdf={(file, title) => uploadPdfMutation.mutateAsync({ file, title })}
+              onImportWebsite={(url, title) => importWebsiteMutation.mutateAsync({ url, title })}
+              onImportYoutube={(url, title) => importYoutubeMutation.mutateAsync({ url, title })}
+              onCreateTextSource={(title, content) =>
+                createSourceMutation.mutateAsync({ type: "TEXT", title, content })
+              }
+              onDeleteSource={(id) => deleteSourceMutation.mutateAsync(id)}
               isLoading={isSourcesLoading}
             />
           </ResizablePanel>
@@ -167,11 +185,13 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               onToggleSelect={toggleSourceSelection}
               onSelectAll={selectAllSources}
               onDeselectAll={deselectAllSources}
-              onUploadPdf={uploadPdf}
-              onImportWebsite={importWebsite}
-              onImportYoutube={importYoutube}
-              onCreateTextSource={createTextSource}
-              onDeleteSource={deleteSource}
+              onUploadPdf={(file, title) => uploadPdfMutation.mutateAsync({ file, title })}
+              onImportWebsite={(url, title) => importWebsiteMutation.mutateAsync({ url, title })}
+              onImportYoutube={(url, title) => importYoutubeMutation.mutateAsync({ url, title })}
+              onCreateTextSource={(title, content) =>
+                createSourceMutation.mutateAsync({ type: "TEXT", title, content })
+              }
+              onDeleteSource={(id) => deleteSourceMutation.mutateAsync(id)}
               isLoading={isSourcesLoading}
             />
           )}
@@ -211,13 +231,16 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           )}
         </div>
 
-        {/* Mobile Bottom Navigation Bar */}
-        <div className="h-12 border-t border-zinc-800 bg-[#09090b] grid grid-cols-3 shrink-0">
+        {/* Mobile Navigation Tabs */}
+        <div className="h-14 border-t border-border bg-card flex items-center justify-around px-4 z-20 shrink-0">
           <button
+            type="button"
             onClick={() => setMobileTab("sources")}
             className={cn(
-              "flex flex-col items-center justify-center text-[10px] gap-0.5",
-              mobileTab === "sources" ? "text-white font-medium" : "text-zinc-500"
+              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
+              mobileTab === "sources"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Layers className="w-4 h-4" />
@@ -225,10 +248,13 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           </button>
 
           <button
+            type="button"
             onClick={() => setMobileTab("chat")}
             className={cn(
-              "flex flex-col items-center justify-center text-[10px] gap-0.5",
-              mobileTab === "chat" ? "text-white font-medium" : "text-zinc-500"
+              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
+              mobileTab === "chat"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <MessageSquare className="w-4 h-4" />
@@ -236,10 +262,13 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           </button>
 
           <button
+            type="button"
             onClick={() => setMobileTab("studio")}
             className={cn(
-              "flex flex-col items-center justify-center text-[10px] gap-0.5",
-              mobileTab === "studio" ? "text-white font-medium" : "text-zinc-500"
+              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
+              mobileTab === "studio"
+                ? "text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Sparkles className="w-4 h-4" />

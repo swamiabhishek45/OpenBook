@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Source } from "../types";
+import { Source } from "../lib/types";
 import {
   FileText,
   Globe,
@@ -86,7 +86,7 @@ export function SourceItem({
               : "border-border bg-card hover:border-muted-foreground"
           )}
         >
-          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+          {isSelected && <Check className="w-3 h-3 stroke-3" />}
         </button>
 
         {/* Source Icon */}

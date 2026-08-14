@@ -1,186 +1,213 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
-import { Source } from "../types";
-import { useState } from "react";
+import { ApiError } from "@/shared/lib/api";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
+import {
+    bulkDeleteSources,
+    createSource,
+    deleteSource,
+    getSource,
+    importWebsiteSource,
+    importWebSearchSource,
+    importYoutubeSource,
+    listSources,
+    reprocessSource,
+    reprocessSources,
+    uploadPdfSource,
+} from "../lib/api";
+import type {
+    CreateSourceInput,
+    ImportWebsiteInput,
+    ImportYoutubeInput,
+    SourceFilters,
+} from "../lib/types";
 
-export function useSources(workspaceId: string) {
-  const queryClient = useQueryClient();
-  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+export function sourceKeys(workspaceId: string) {
+    return {
+        all: ["sources", workspaceId] as const,
+        list: (filters?: SourceFilters) =>
+            ["sources", workspaceId, "list", filters ?? {}] as const,
+        detail: (sourceId: string) =>
+            ["sources", workspaceId, sourceId] as const,
+    };
+}
 
-  const sourcesQuery = useQuery({
-    queryKey: ["sources", workspaceId],
-    queryFn: async () => {
-      if (!workspaceId) return [];
-      const res = await apiClient<Source[] | { data: Source[] }>(
-        `/api/workspaces/${workspaceId}/sources`
-      );
-      const data = Array.isArray(res) ? res : res.data || [];
-      return data;
-    },
-    enabled: !!workspaceId,
-    refetchInterval: (query) => {
-      // Auto-poll if any source is pending or processing
-      const hasProcessing = query.state.data?.some(
-        (s) => s.status === "PENDING" || s.status === "PROCESSING"
-      );
-      return hasProcessing ? 3000 : false;
-    },
-  });
+export function useSources(
+    workspaceId: string,
+    filters: SourceFilters = {},
+) {
+    const debouncedQuery = useDebouncedValue(filters.q ?? "", 300);
+    const queryFilters: SourceFilters = {
+        ...filters,
+        q: debouncedQuery || undefined,
+    };
 
-  const uploadPdfMutation = useMutation({
-    mutationFn: async ({ file, title }: { file: File; title?: string }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (title) formData.append("title", title);
+    return useQuery({
+        queryKey: sourceKeys(workspaceId).list(queryFilters),
+        queryFn: () => listSources(workspaceId, queryFilters),
+        refetchInterval: (query) => {
+            const hasProcessing = query.state.data?.some(
+                (source) =>
+                    source.status === "PENDING" ||
+                    source.status === "PROCESSING",
+            );
+            return hasProcessing ? 3000 : false;
+        },
+    });
+}
 
-      return await apiClient<Source>(`/api/workspaces/${workspaceId}/sources/upload`, {
-        method: "POST",
-        body: formData,
-      });
-    },
-    onSuccess: (newSource) => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      if (newSource?.id) {
-        setSelectedSourceIds((prev) => [...prev, newSource.id]);
-      }
-    },
-  });
+export function useSource(workspaceId: string, sourceId: string) {
+    return useQuery({
+        queryKey: sourceKeys(workspaceId).detail(sourceId),
+        queryFn: () => getSource(workspaceId, sourceId),
+        retry: (_, error) =>
+            !(error instanceof ApiError && error.status === 404),
+        refetchInterval: (query) => {
+            const status = query.state.data?.status;
+            return status === "PENDING" || status === "PROCESSING"
+                ? 3000
+                : false;
+        },
+    });
+}
 
-  const importWebsiteMutation = useMutation({
-    mutationFn: async ({ url, title }: { url: string; title?: string }) => {
-      return await apiClient<Source>(
-        `/api/workspaces/${workspaceId}/sources/import/website`,
-        {
-          method: "POST",
-          body: JSON.stringify({ url, title }),
-        }
-      );
-    },
-    onSuccess: (newSource) => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      if (newSource?.id) {
-        setSelectedSourceIds((prev) => [...prev, newSource.id]);
-      }
-    },
-  });
+export function useCreateSource(workspaceId: string) {
+    const queryClient = useQueryClient();
 
-  const importYoutubeMutation = useMutation({
-    mutationFn: async ({ url, title }: { url: string; title?: string }) => {
-      return await apiClient<Source>(
-        `/api/workspaces/${workspaceId}/sources/import/youtube`,
-        {
-          method: "POST",
-          body: JSON.stringify({ url, title }),
-        }
-      );
-    },
-    onSuccess: (newSource) => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      if (newSource?.id) {
-        setSelectedSourceIds((prev) => [...prev, newSource.id]);
-      }
-    },
-  });
+    return useMutation({
+        mutationFn: (input: CreateSourceInput) =>
+            createSource(workspaceId, input),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
 
-  const createTextSourceMutation = useMutation({
-    mutationFn: async ({
-      title,
-      content,
-      type = "TEXT",
-    }: {
-      title: string;
-      content: string;
-      type?: "TEXT" | "MARKDOWN";
-    }) => {
-      return await apiClient<Source>(`/api/workspaces/${workspaceId}/sources`, {
-        method: "POST",
-        body: JSON.stringify({ title, content, type }),
-      });
-    },
-    onSuccess: (newSource) => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      if (newSource?.id) {
-        setSelectedSourceIds((prev) => [...prev, newSource.id]);
-      }
-    },
-  });
+export function useUploadPdfSource(workspaceId: string) {
+    const queryClient = useQueryClient();
 
-  const deleteSourceMutation = useMutation({
-    mutationFn: async (sourceId: string) => {
-      return await apiClient(
-        `/api/workspaces/${workspaceId}/sources/${sourceId}`,
-        {
-          method: "DELETE",
-        }
-      );
-    },
-    onSuccess: (_, sourceId) => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      setSelectedSourceIds((prev) => prev.filter((id) => id !== sourceId));
-    },
-  });
+    return useMutation({
+        mutationFn: ({
+            file,
+            title,
+        }: {
+            file: File;
+            title?: string;
+        }) => uploadPdfSource(workspaceId, file, title),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (sourceIds: string[]) => {
-      return await apiClient(
-        `/api/workspaces/${workspaceId}/sources/bulk-delete`,
-        {
-          method: "POST",
-          body: JSON.stringify({ sourceIds }),
-        }
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources", workspaceId] });
-      setSelectedSourceIds([]);
-    },
-  });
+export function useImportWebsiteSource(workspaceId: string) {
+    const queryClient = useQueryClient();
 
-  const toggleSourceSelection = (sourceId: string) => {
-    setSelectedSourceIds((prev) =>
-      prev.includes(sourceId)
-        ? prev.filter((id) => id !== sourceId)
-        : [...prev, sourceId]
-    );
-  };
+    return useMutation({
+        mutationFn: (input: ImportWebsiteInput) =>
+            importWebsiteSource(workspaceId, input),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
 
-  const selectAllSources = () => {
-    const allIds = sourcesQuery.data?.map((s) => s.id) || [];
-    setSelectedSourceIds(allIds);
-  };
+export function useImportYoutubeSource(workspaceId: string) {
+    const queryClient = useQueryClient();
 
-  const deselectAllSources = () => {
-    setSelectedSourceIds([]);
-  };
+    return useMutation({
+        mutationFn: (input: ImportYoutubeInput) =>
+            importYoutubeSource(workspaceId, input),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
 
-  return {
-    sources: sourcesQuery.data || [],
-    isLoading: sourcesQuery.isLoading,
-    isError: sourcesQuery.isError,
-    error: sourcesQuery.error,
-    refetch: sourcesQuery.refetch,
-    selectedSourceIds,
-    setSelectedSourceIds,
-    toggleSourceSelection,
-    selectAllSources,
-    deselectAllSources,
-    uploadPdf: (file: File, title?: string) =>
-      uploadPdfMutation.mutateAsync({ file, title }),
-    isUploadingPdf: uploadPdfMutation.isPending,
-    importWebsite: (url: string, title?: string) =>
-      importWebsiteMutation.mutateAsync({ url, title }),
-    isImportingWebsite: importWebsiteMutation.isPending,
-    importYoutube: (url: string, title?: string) =>
-      importYoutubeMutation.mutateAsync({ url, title }),
-    isImportingYoutube: importYoutubeMutation.isPending,
-    createTextSource: (title: string, content: string) =>
-      createTextSourceMutation.mutateAsync({ title, content }),
-    isCreatingTextSource: createTextSourceMutation.isPending,
-    deleteSource: deleteSourceMutation.mutateAsync,
-    isDeleting: deleteSourceMutation.isPending,
-    bulkDelete: bulkDeleteMutation.mutateAsync,
-    isBulkDeleting: bulkDeleteMutation.isPending,
-  };
+export function useDeleteSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (sourceId: string) =>
+            deleteSource(workspaceId, sourceId),
+        onSuccess: (_, sourceId) => {
+            queryClient.removeQueries({
+                queryKey: sourceKeys(workspaceId).detail(sourceId),
+            });
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
+
+export function useBulkDeleteSources(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (sourceIds: string[]) =>
+            bulkDeleteSources(workspaceId, sourceIds),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
+
+export function useReprocessSources(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (sourceIds?: string[]) =>
+            reprocessSources(workspaceId, sourceIds),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
+
+export function useReprocessSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (sourceId: string) =>
+            reprocessSource(workspaceId, sourceId),
+        onSuccess: (_, sourceId) => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).detail(sourceId),
+            });
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
+}
+
+export function useImportWebSearchSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (input: {
+            title: string;
+            content: string;
+            url: string;
+        }) => importWebSearchSource(workspaceId, input),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+        },
+    });
 }

@@ -91,7 +91,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
             defaultSize="22%"
             minSize="15%"
             maxSize="35%"
-            className="min-w-[220px]"
+            className="min-w-55"
           >
             <SourcesPanel
               sources={sources}
@@ -136,7 +136,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
             defaultSize="26%"
             minSize="18%"
             maxSize="40%"
-            className="min-w-[240px]"
+            className="min-w-55"
           >
             <StudioPanel
               artifacts={artifacts}

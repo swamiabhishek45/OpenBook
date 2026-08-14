@@ -8,9 +8,10 @@ export async function getSession(): Promise<Session | null> {
     const cookie = requestHeaders.get("cookie") ?? "";
 
     const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
         process.env.BETTER_AUTH_URL ||
-        "http://localhost:3000";
+        process.env.NEXT_PUBLIC_API_URL ||
+        "http://localhost:8081";
 
     try {
         const response = await fetch(`${baseUrl}/api/auth/get-session`, {

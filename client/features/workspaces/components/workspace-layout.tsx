@@ -93,7 +93,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   }
 
   return (
-    <div className="h-screen w-full bg-background text-foreground flex flex-col overflow-hidden font-sans select-none">
+    <div className="h-screen w-full bg-background text-foreground flex flex-col overflow-hidden font-sans">
       {/* Workspace Header */}
       <WorkspaceHeader
         workspace={workspace || null}

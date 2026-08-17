@@ -70,7 +70,7 @@ export function ChatPanel({
   }, [messages, isStreaming]);
 
   return (
-    <div className="h-full flex flex-col bg-background text-foreground relative">
+    <div className="h-full flex flex-col bg-background text-foreground relative select-text">
       {/* Top Chat Sub-header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-card/60">
         <div className="flex items-center gap-2 min-w-0">

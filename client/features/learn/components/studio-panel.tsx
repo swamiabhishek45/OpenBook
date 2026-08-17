@@ -5,18 +5,20 @@ import { LearningArtifact, ArtifactType } from "../types";
 import { ArtifactModal } from "./artifact-modal";
 import {
   Sparkles,
-  BookOpen,
-  Layers,
-  HelpCircle,
-  ListChecks,
-  Network,
-  FileText,
   Trash2,
   ChevronRight,
   Clock,
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
+import {
+  AnimatedBookOpen,
+  AnimatedListChecks,
+  AnimatedLayers,
+  AnimatedHelpCircle,
+  AnimatedNetwork,
+  AnimatedFileText,
+} from "@/components/ui/animated-icons";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -32,43 +34,79 @@ const STUDIO_TOOLS: {
   type: ArtifactType;
   title: string;
   desc: string;
-  icon: React.ReactNode;
+  renderIcon: (isHovered: boolean) => React.ReactNode;
 }[] = [
   {
     type: "SUMMARY",
     title: "Summary",
     desc: "Comprehensive overview of your sources",
-    icon: <BookOpen className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedBookOpen
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
   {
     type: "TAKEAWAYS",
     title: "Key Takeaways",
     desc: "Bullet points of the main findings",
-    icon: <ListChecks className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedListChecks
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
   {
     type: "FLASHCARDS",
     title: "Flashcards",
     desc: "Interactive flip study cards deck",
-    icon: <Layers className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedLayers
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
   {
     type: "QUIZ",
     title: "Practice Quiz",
     desc: "Test your understanding with instant score",
-    icon: <HelpCircle className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedHelpCircle
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
   {
     type: "MINDMAP",
     title: "Mind Map",
     desc: "Hierarchical concept branches & nodes",
-    icon: <Network className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedNetwork
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
   {
     type: "REPORT",
     title: "AI Report",
     desc: "Long-form structured briefing report",
-    icon: <FileText className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    renderIcon: (isHovered) => (
+      <AnimatedFileText
+        size={16}
+        isHovered={isHovered}
+        className="text-zinc-800 dark:text-zinc-200"
+      />
+    ),
   },
 ];
 
@@ -81,6 +119,7 @@ export function StudioPanel({
 }: StudioPanelProps) {
   const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
   const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
+  const [hoveredTool, setHoveredTool] = useState<ArtifactType | null>(null);
 
   const handleCreate = async (type: ArtifactType) => {
     if (isCreating || selectedSourcesCount === 0) return;
@@ -97,17 +136,17 @@ export function StudioPanel({
   const getTypeIcon = (type: ArtifactType) => {
     switch (type) {
       case "SUMMARY":
-        return <BookOpen className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedBookOpen size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "FLASHCARDS":
-        return <Layers className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedLayers size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "QUIZ":
-        return <HelpCircle className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedHelpCircle size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "MINDMAP":
-        return <Network className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedNetwork size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "TAKEAWAYS":
-        return <ListChecks className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedListChecks size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "REPORT":
-        return <FileText className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AnimatedFileText size={14} className="text-zinc-800 dark:text-zinc-200" />;
     }
   };
 
@@ -153,6 +192,8 @@ export function StudioPanel({
                   key={tool.type}
                   type="button"
                   onClick={() => handleCreate(tool.type)}
+                  onMouseEnter={() => setHoveredTool(tool.type)}
+                  onMouseLeave={() => setHoveredTool(null)}
                   disabled={isCreating || selectedSourcesCount === 0}
                   className={cn(
                     "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group",
@@ -165,7 +206,7 @@ export function StudioPanel({
                     {isThisGenerating ? (
                       <ThemeLoader size={16} />
                     ) : (
-                      tool.icon
+                      tool.renderIcon(hoveredTool === tool.type)
                     )}
                   </div>
                   <div>

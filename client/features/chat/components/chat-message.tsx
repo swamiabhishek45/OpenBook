@@ -40,7 +40,7 @@ export function ChatMessage({
     }
 
     return (
-      <div className="space-y-3 leading-relaxed whitespace-pre-wrap font-sans text-sm text-foreground">
+      <div className="space-y-3 leading-relaxed whitespace-pre-wrap font-sans text-sm text-foreground select-text cursor-text">
         {content}
       </div>
     );

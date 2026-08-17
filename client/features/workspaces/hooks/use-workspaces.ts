@@ -33,9 +33,30 @@ export function useWorkspaces() {
   });
 
   const createWorkspaceMutation = useMutation({
-    mutationFn: async (input: { title: string; description?: string; defaultModel?: string }) => {
+    mutationFn: async (input: { title: string; description?: string; icon?: string; defaultModel?: string }) => {
       return await apiFetch<Workspace>("/api/workspaces", {
         method: "POST",
+        body: JSON.stringify(input),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    },
+  });
+
+  const updateWorkspaceMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...input
+    }: {
+      id: string;
+      title?: string;
+      description?: string;
+      icon?: string;
+      defaultModel?: string;
+    }) => {
+      return await apiFetch<Workspace>(`/api/workspaces/${id}`, {
+        method: "PATCH",
         body: JSON.stringify(input),
       });
     },
@@ -63,6 +84,8 @@ export function useWorkspaces() {
     refetch: workspacesQuery.refetch,
     createWorkspace: createWorkspaceMutation.mutateAsync,
     isCreating: createWorkspaceMutation.isPending,
+    updateWorkspace: updateWorkspaceMutation.mutateAsync,
+    isUpdating: updateWorkspaceMutation.isPending,
     deleteWorkspace: deleteWorkspaceMutation.mutateAsync,
     isDeleting: deleteWorkspaceMutation.isPending,
   };

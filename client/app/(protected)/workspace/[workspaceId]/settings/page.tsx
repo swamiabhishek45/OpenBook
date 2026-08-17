@@ -7,6 +7,29 @@ import { ArrowLeft, Trash2, Save, Settings } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useWorkspace, useWorkspaces } from "@/features/workspaces";
 
+const NOTEBOOK_ICONS = [
+  "📚",
+  "🔬",
+  "💻",
+  "🧠",
+  "📊",
+  "⚡",
+  "🎨",
+  "📝",
+  "🌐",
+  "🎯",
+  "🚀",
+  "💡",
+  "📌",
+  "✨",
+  "🔥",
+  "🤖",
+  "📖",
+  "🎓",
+  "🧪",
+  "🛠️",
+];
+
 interface WorkspaceSettingsPageProps {
   params: Promise<{
     workspaceId: string;
@@ -22,12 +45,14 @@ export default function WorkspaceSettingsPage({
   const { deleteWorkspace } = useWorkspaces();
 
   const [title, setTitle] = useState("");
+  const [icon, setIcon] = useState("📚");
   const [defaultModel, setDefaultModel] = useState("gpt-4o-mini");
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (workspace) {
       setTitle(workspace.title || "");
+      setIcon(workspace.icon || "📚");
       setDefaultModel(workspace.defaultModel || "gpt-4o-mini");
     }
   }, [workspace]);
@@ -36,6 +61,7 @@ export default function WorkspaceSettingsPage({
     e.preventDefault();
     await updateWorkspace({
       title: title.trim(),
+      icon,
       defaultModel,
     });
     setIsSaved(true);
@@ -89,6 +115,30 @@ export default function WorkspaceSettingsPage({
 
         {/* Form */}
         <form onSubmit={handleSave} className="space-y-6 p-6 rounded-2xl border border-border bg-card">
+          {/* Icon Picker */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground flex items-center justify-between">
+              <span>Notebook Icon</span>
+              <span className="text-muted-foreground text-[11px]">Selected: {icon}</span>
+            </label>
+            <div className="flex flex-wrap gap-1.5 p-2 rounded-xl border border-border bg-muted/30 max-h-28 overflow-y-auto">
+              {NOTEBOOK_ICONS.map((ic) => (
+                <button
+                  key={ic}
+                  type="button"
+                  onClick={() => setIcon(ic)}
+                  className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition-all cursor-pointer ${
+                    icon === ic
+                      ? "bg-primary text-primary-foreground border-2 border-primary scale-105 shadow-xs"
+                      : "hover:bg-muted border border-transparent"
+                  }`}
+                >
+                  {ic}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-foreground">Workspace Title</label>
             <input

@@ -35,6 +35,7 @@ export function useWorkspace(workspaceId: string) {
     mutationFn: async (input: {
       title?: string;
       description?: string;
+      icon?: string;
       defaultModel?: string;
     }) => {
       return await apiClient<WorkspaceDetail>(

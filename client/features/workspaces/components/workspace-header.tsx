@@ -94,6 +94,7 @@ export function WorkspaceHeader({
               }}
               className="flex items-center gap-1.5 cursor-pointer group py-1 px-2 rounded-lg hover:bg-muted/80 transition-colors min-w-0"
             >
+              <span className="text-sm shrink-0">{workspace?.icon || "📚"}</span>
               <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
                 {workspace?.title || "Untitled Notebook"}
               </span>

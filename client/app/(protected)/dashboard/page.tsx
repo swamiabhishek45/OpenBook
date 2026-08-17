@@ -21,6 +21,7 @@ import {
   Pin,
 } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { GooeyInput } from "@/components/ui/gooey-input";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -204,24 +205,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-muted">
-      {/* Top Navigation Bar (without New Notebook button) */}
+      {/* Top Navigation Bar */}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/dashboard" className="flex items-center gap-2">
             <OpenBookLogo size={26} textSize="text-xl" textColor="text-foreground" />
           </Link>
-
-          {/* Search bar */}
-          <div className="hidden md:flex items-center relative w-72">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notebooks..."
-              className="w-full pl-9 pr-4 py-1.5 bg-muted/60 dark:bg-zinc-900 border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-            />
-          </div>
         </div>
 
         {/* User profile & theme actions */}
@@ -251,8 +240,8 @@ export default function DashboardPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-10 space-y-8">
-        {/* Welcome Banner with + New Notebook button on right */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+        {/* Welcome Banner with Gooey Search on right next to + New Notebook button */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground font-sans">
               Welcome back, {session.user.name || "Explorer"}
@@ -262,7 +251,13 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 shrink-0">
+            <GooeyInput
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search notebooks..."
+            />
+
             <button
               onClick={() => {
                 setNewTitle("");
@@ -270,7 +265,7 @@ export default function DashboardPage() {
                 setNewIcon("📚");
                 setIsCreateOpen(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:scale-95 rounded-xl text-xs font-medium transition-all shadow-xs shrink-0 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:scale-95 rounded-xl text-xs font-medium transition-all shadow-xs shrink-0 cursor-pointer h-10"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Notebook</span>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "../types";
 import { Sparkles, User, Copy, Check } from "lucide-react";
+import { ThemeBlob } from "@/components/ui/theme-blob";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -58,13 +59,13 @@ export function ChatMessage({
       {/* Role Avatar Icon */}
       <div
         className={cn(
-          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-xs",
+          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-xs overflow-hidden",
           isUser
             ? "bg-zinc-900 dark:bg-zinc-100 border-zinc-800 dark:border-zinc-200 text-white dark:text-zinc-900"
-            : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
+            : "bg-white border-zinc-200 shadow-xs"
         )}
       >
-        {isUser ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+        {isUser ? <User className="w-4 h-4" /> : <ThemeBlob size={20} />}
       </div>
 
       {/* Message Content */}

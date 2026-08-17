@@ -30,17 +30,17 @@ interface ChatPanelProps {
 
 const STARTER_PROMPTS = [
   {
-    icon: <BookOpen className="w-4 h-4 text-zinc-300" />,
+    icon: <BookOpen className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Summarize sources",
     prompt: "Provide a comprehensive summary of all key concepts across my selected sources.",
   },
   {
-    icon: <FileSearch className="w-4 h-4 text-zinc-300" />,
+    icon: <FileSearch className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Key takeaways & insights",
     prompt: "Extract the top 5 most important takeaways with supporting evidence.",
   },
   {
-    icon: <HelpCircle className="w-4 h-4 text-zinc-300" />,
+    icon: <HelpCircle className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Find connections",
     prompt: "What are the common themes and contrasting arguments across these documents?",
   },

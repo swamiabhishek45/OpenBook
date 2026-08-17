@@ -38,37 +38,37 @@ const STUDIO_TOOLS: {
     type: "SUMMARY",
     title: "Summary",
     desc: "Comprehensive overview of your sources",
-    icon: <BookOpen className="w-4 h-4 text-zinc-300" />,
+    icon: <BookOpen className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
   {
     type: "TAKEAWAYS",
     title: "Key Takeaways",
     desc: "Bullet points of the main findings",
-    icon: <ListChecks className="w-4 h-4 text-zinc-300" />,
+    icon: <ListChecks className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
   {
     type: "FLASHCARDS",
     title: "Flashcards",
     desc: "Interactive flip study cards deck",
-    icon: <Layers className="w-4 h-4 text-zinc-300" />,
+    icon: <Layers className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
   {
     type: "QUIZ",
     title: "Practice Quiz",
     desc: "Test your understanding with instant score",
-    icon: <HelpCircle className="w-4 h-4 text-zinc-300" />,
+    icon: <HelpCircle className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
   {
     type: "MINDMAP",
     title: "Mind Map",
     desc: "Hierarchical concept branches & nodes",
-    icon: <Network className="w-4 h-4 text-zinc-300" />,
+    icon: <Network className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
   {
     type: "REPORT",
     title: "AI Report",
     desc: "Long-form structured briefing report",
-    icon: <FileText className="w-4 h-4 text-zinc-300" />,
+    icon: <FileText className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
   },
 ];
 
@@ -97,17 +97,17 @@ export function StudioPanel({
   const getTypeIcon = (type: ArtifactType) => {
     switch (type) {
       case "SUMMARY":
-        return <BookOpen className="w-3.5 h-3.5 text-zinc-300" />;
+        return <BookOpen className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "FLASHCARDS":
-        return <Layers className="w-3.5 h-3.5 text-zinc-300" />;
+        return <Layers className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "QUIZ":
-        return <HelpCircle className="w-3.5 h-3.5 text-zinc-300" />;
+        return <HelpCircle className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "MINDMAP":
-        return <Network className="w-3.5 h-3.5 text-zinc-300" />;
+        return <Network className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "TAKEAWAYS":
-        return <ListChecks className="w-3.5 h-3.5 text-zinc-300" />;
+        return <ListChecks className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "REPORT":
-        return <FileText className="w-3.5 h-3.5 text-zinc-300" />;
+        return <FileText className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
     }
   };
 

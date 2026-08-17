@@ -33,13 +33,13 @@ export function SourceItem({
   const getIcon = () => {
     switch (source.type) {
       case "PDF":
-        return <FileText className="w-4 h-4 text-foreground" />;
+        return <FileText className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
       case "WEBSITE":
-        return <Globe className="w-4 h-4 text-foreground" />;
+        return <Globe className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
       case "YOUTUBE":
-        return <Video className="w-4 h-4 text-foreground" />;
+        return <Video className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
       default:
-        return <FileCode className="w-4 h-4 text-foreground" />;
+        return <FileCode className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
     }
   };
 

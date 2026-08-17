@@ -86,7 +86,7 @@
   }
 }
 
-/* Custom sleek dark scrollbar matching reference */
+/* Custom sleek scrollbar matching light and dark modes */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -97,19 +97,30 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #d4d4d8;
   border-radius: 9999px;
   border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #27272a;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
-  background-clip: padding-box;
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
+.dark * {
   scrollbar-color: #27272a transparent;
 }

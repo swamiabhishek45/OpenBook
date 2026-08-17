@@ -24,5 +24,5 @@ interface SourceTypeIconProps {
 
 export function SourceTypeIcon({ type, className }: SourceTypeIconProps) {
   const Icon = iconMap[type] || FileText;
-  return <Icon className={cn("w-4 h-4 shrink-0", className)} />;
+  return <Icon className={cn("w-4 h-4 shrink-0 text-zinc-800 dark:text-zinc-200", className)} />;
 }

@@ -31,8 +31,8 @@ export function ChatMessage({
     if (!content) {
       if (!isUser && isLast && isStreaming) {
         return (
-          <span className="inline-flex items-center gap-1.5 text-zinc-400 italic text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground italic text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse" />
             Thinking and searching sources...
           </span>
         );
@@ -41,7 +41,7 @@ export function ChatMessage({
     }
 
     return (
-      <div className="space-y-3 leading-relaxed whitespace-pre-wrap font-sans text-sm">
+      <div className="space-y-3 leading-relaxed whitespace-pre-wrap font-sans text-sm text-foreground">
         {content}
       </div>
     );
@@ -50,19 +50,19 @@ export function ChatMessage({
   return (
     <div
       className={cn(
-        "group relative flex gap-3 p-4 rounded-2xl transition-colors",
+        "group relative flex gap-3.5 p-4 rounded-2xl transition-all shadow-xs",
         isUser
-          ? "bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 max-w-[85%] ml-auto"
-          : "bg-zinc-950/40 border border-zinc-800/40 text-zinc-200 max-w-[95%] mr-auto"
+          ? "bg-zinc-100/90 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700/60 text-foreground max-w-[85%] ml-auto"
+          : "bg-card dark:bg-zinc-900/40 border border-border text-foreground max-w-[95%] mr-auto"
       )}
     >
       {/* Role Avatar Icon */}
       <div
         className={cn(
-          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5",
+          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 shadow-xs",
           isUser
-            ? "bg-zinc-800 border-zinc-700 text-white"
-            : "bg-white border-white text-black shadow-xs"
+            ? "bg-zinc-900 dark:bg-zinc-100 border-zinc-800 dark:border-zinc-200 text-white dark:text-zinc-900"
+            : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
         )}
       >
         {isUser ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
@@ -71,7 +71,7 @@ export function ChatMessage({
       {/* Message Content */}
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-zinc-400">
+          <span className="text-xs font-semibold text-foreground/80">
             {isUser ? "You" : "OpenBook"}
           </span>
 
@@ -79,29 +79,29 @@ export function ChatMessage({
             type="button"
             onClick={handleCopy}
             title="Copy message"
-            className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-white rounded transition-all"
+            className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground rounded transition-all cursor-pointer"
           >
             {copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
             ) : (
               <Copy className="w-3.5 h-3.5" />
             )}
           </button>
         </div>
 
-        <div className="text-zinc-200">{renderFormattedContent(message.content)}</div>
+        <div>{renderFormattedContent(message.content)}</div>
 
         {/* Citations List if available on message */}
         {!isUser && message.citations && message.citations.length > 0 && (
-          <div className="pt-3 mt-3 border-t border-zinc-800/60 space-y-1.5">
-            <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider block">
+          <div className="pt-3 mt-3 border-t border-border space-y-1.5">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
               Sources Cited ({message.citations.length})
             </span>
             <div className="flex flex-wrap gap-1.5">
               {message.citations.map((citation, idx) => (
                 <div key={idx} className="flex items-center gap-1">
                   <CitationBadge citation={citation} index={idx} />
-                  <span className="text-[11px] text-zinc-400 max-w-[140px] truncate">
+                  <span className="text-[11px] text-muted-foreground max-w-[160px] truncate">
                     {citation.sourceTitle || citation.url || "Source"}
                   </span>
                 </div>
@@ -113,3 +113,4 @@ export function ChatMessage({
     </div>
   );
 }
+

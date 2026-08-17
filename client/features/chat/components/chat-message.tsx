@@ -65,7 +65,7 @@ export function ChatMessage({
             : "bg-white border-zinc-200 shadow-xs"
         )}
       >
-        {isUser ? <User className="w-4 h-4" /> : <ThemeBlob size={20} />}
+        {isUser ? <User className="w-4 h-4" /> : <ThemeBlob size={26} />}
       </div>
 
       {/* Message Content */}

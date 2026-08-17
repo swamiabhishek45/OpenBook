@@ -11,7 +11,7 @@ import {
 } from "@/components/home";
 
 export const metadata = {
-  title: "OpenBook - Grounded AI Workspace & Research Notebook",
+  title: "OpenBook - Grounded AI Workspace & Research Workbench",
   description:
     "Turn your PDFs, web articles, and YouTube videos into grounded intelligence. Chat with citations, study with flashcards and mindmaps, and personalize learning with memory.",
 };

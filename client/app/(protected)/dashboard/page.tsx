@@ -277,7 +277,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-              Your Notebooks ({filteredWorkspaces.length})
+              Your Workspaces ({filteredWorkspaces.length})
             </h2>
           </div>
 
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                   <Plus className="w-5 h-5" />
                 </div>
                 <span className="text-sm font-medium text-foreground transition-colors">
-                  Create New Notebook
+                  Create New Workspace
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
                   Upload PDFs, audio, YouTube &amp; web links
@@ -443,7 +443,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <FolderPlus className="w-5 h-5 text-foreground" />
-                <h3 className="text-base font-semibold text-foreground">Create New Notebook</h3>
+                <h3 className="text-base font-semibold text-foreground">Create New Workspace</h3>
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
@@ -457,7 +457,7 @@ export default function DashboardPage() {
               {/* Icon Picker Field */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-foreground flex items-center justify-between">
-                  <span>Notebook Icon</span>
+                  <span>Workspace Icon</span>
                   <span className="text-muted-foreground text-[11px]">Selected: {newIcon}</span>
                 </label>
                 <div className="flex flex-wrap gap-1.5 p-2 rounded-xl border border-border bg-muted/30 max-h-28 overflow-y-auto">

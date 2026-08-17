@@ -41,15 +41,18 @@ export function SourceCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {onToggleSelect && (
-              <input
-                type="checkbox"
-                checked={selected}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onToggleSelect(source.id);
-                }}
-                className="rounded border-border text-primary focus:ring-0 cursor-pointer shrink-0"
-              />
+              <div onClick={(e) => e.stopPropagation()} className="flex items-center shrink-0">
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelect(source.id);
+                  }}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-0 cursor-pointer shrink-0"
+                />
+              </div>
             )}
             <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
               <SourceTypeIcon type={source.type} />

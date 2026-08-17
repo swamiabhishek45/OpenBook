@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   BookOpen,
   LayoutGrid,
@@ -10,6 +10,8 @@ import {
   Search,
   Trash2,
   X,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import {
   useBulkDeleteSources,
@@ -40,6 +42,24 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
   const [filters, setFilters] = useState<SourceFilters>({});
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
+
+  const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const typeRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
+        setIsTypeOpen(false);
+      }
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setIsStatusOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { data: sources, isLoading, error } = useSources(workspaceId, filters);
   const deleteSourceMutation = useDeleteSource(workspaceId);
@@ -118,43 +138,137 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
 
           {/* Type & Status Selects & View Toggle */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Type Select */}
-            <select
-              value={filters.type || "all"}
-              onChange={(e) =>
-                setFilters((curr) => ({
-                  ...curr,
-                  type: e.target.value === "all" ? undefined : (e.target.value as SourceType),
-                }))
-              }
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Types</option>
-              {SOURCE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {SOURCE_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
+            {/* Custom Type Dropdown */}
+            <div className="relative" ref={typeRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTypeOpen(!isTypeOpen);
+                  setIsStatusOpen(false);
+                }}
+                className="px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>
+                  {filters.type ? SOURCE_TYPE_LABELS[filters.type] : "All Types"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 shrink-0",
+                    isTypeOpen && "rotate-180"
+                  )}
+                />
+              </button>
 
-            {/* Status Select */}
-            <select
-              value={filters.status || "all"}
-              onChange={(e) =>
-                setFilters((curr) => ({
-                  ...curr,
-                  status: e.target.value === "all" ? undefined : (e.target.value as SourceStatus),
-                }))
-              }
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Statuses</option>
-              {SOURCE_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {SOURCE_STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
+              {isTypeOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-40 rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilters((curr) => ({ ...curr, type: undefined }));
+                      setIsTypeOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                      !filters.type
+                        ? "bg-foreground text-background font-semibold"
+                        : "hover:bg-muted text-foreground"
+                    )}
+                  >
+                    <span>All Types</span>
+                    {!filters.type && <Check className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+
+                  {SOURCE_TYPES.map((t) => {
+                    const isSelected = filters.type === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setFilters((curr) => ({ ...curr, type: t }));
+                          setIsTypeOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                          isSelected
+                            ? "bg-foreground text-background font-semibold"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                      >
+                        <span>{SOURCE_TYPE_LABELS[t]}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Status Dropdown */}
+            <div className="relative" ref={statusRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsStatusOpen(!isStatusOpen);
+                  setIsTypeOpen(false);
+                }}
+                className="px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>
+                  {filters.status ? SOURCE_STATUS_LABELS[filters.status] : "All Statuses"}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 shrink-0",
+                    isStatusOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {isStatusOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-40 rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilters((curr) => ({ ...curr, status: undefined }));
+                      setIsStatusOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                      !filters.status
+                        ? "bg-foreground text-background font-semibold"
+                        : "hover:bg-muted text-foreground"
+                    )}
+                  >
+                    <span>All Statuses</span>
+                    {!filters.status && <Check className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+
+                  {SOURCE_STATUSES.map((s) => {
+                    const isSelected = filters.status === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setFilters((curr) => ({ ...curr, status: s }));
+                          setIsStatusOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                          isSelected
+                            ? "bg-foreground text-background font-semibold"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                      >
+                        <span>{SOURCE_STATUS_LABELS[s]}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             {/* View Mode Toggle */}
             <div className="flex items-center rounded-xl border border-border bg-card p-0.5">

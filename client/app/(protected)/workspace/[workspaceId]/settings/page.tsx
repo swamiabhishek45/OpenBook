@@ -1,11 +1,25 @@
 "use client";
 
-import React, { use, useState, useEffect } from "react";
+import React, { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, Save, Settings } from "lucide-react";
+import { ArrowLeft, Trash2, Save, Settings, ChevronDown, Check } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useWorkspace, useWorkspaces } from "@/features/workspaces";
+import { cn } from "@/lib/utils";
+
+const MODEL_OPTIONS = [
+  {
+    id: "gpt-4o-mini",
+    title: "GPT-4o Mini",
+    desc: "Fast & Accurate RAG with rapid response times",
+  },
+  {
+    id: "gpt-4o",
+    title: "GPT-4o",
+    desc: "Deep Reasoning & Complex Multi-source Synthesis",
+  },
+];
 
 const NOTEBOOK_ICONS = [
   "📚",
@@ -48,6 +62,18 @@ export default function WorkspaceSettingsPage({
   const [icon, setIcon] = useState("📚");
   const [defaultModel, setDefaultModel] = useState("gpt-4o-mini");
   const [isSaved, setIsSaved] = useState(false);
+  const [isModelOpen, setIsModelOpen] = useState(false);
+  const modelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (modelRef.current && !modelRef.current.contains(e.target as Node)) {
+        setIsModelOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (workspace) {
@@ -150,16 +176,67 @@ export default function WorkspaceSettingsPage({
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" ref={modelRef}>
             <label className="text-xs font-medium text-foreground">Default AI Model</label>
-            <select
-              value={defaultModel}
-              onChange={(e) => setDefaultModel(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-            >
-              <option value="gpt-4o-mini">GPT-4o Mini (Fast &amp; Accurate RAG)</option>
-              <option value="gpt-4o">GPT-4o (Deep Reasoning &amp; Complex Synthesis)</option>
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsModelOpen(!isModelOpen)}
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background hover:bg-muted/40 text-foreground flex items-center justify-between transition-colors cursor-pointer text-left"
+              >
+                <div>
+                  <span className="font-semibold block text-xs">
+                    {MODEL_OPTIONS.find((m) => m.id === defaultModel)?.title || defaultModel}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground block mt-0.5">
+                    {MODEL_OPTIONS.find((m) => m.id === defaultModel)?.desc}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                    isModelOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {isModelOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-full rounded-xl border border-border bg-card shadow-2xl p-1.5 z-30 animate-fadeIn space-y-1">
+                  {MODEL_OPTIONS.map((opt) => {
+                    const isSelected = opt.id === defaultModel;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setDefaultModel(opt.id);
+                          setIsModelOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-colors cursor-pointer",
+                          isSelected
+                            ? "bg-foreground text-background font-semibold"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                      >
+                        <div>
+                          <p className="text-xs font-medium">{opt.title}</p>
+                          <p
+                            className={cn(
+                              "text-[11px] mt-0.5",
+                              isSelected ? "text-background/80" : "text-muted-foreground"
+                            )}
+                          >
+                            {opt.desc}
+                          </p>
+                        </div>
+                        {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-border">

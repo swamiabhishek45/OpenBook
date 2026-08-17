@@ -190,7 +190,7 @@ export function AddSourceDialog({
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-2">
             <Plus className="w-4 h-4 text-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Add Source to Notebook</h2>
+            <h2 className="text-sm font-semibold text-foreground">Add Source to Openbook</h2>
           </div>
           <button
             onClick={handleClose}

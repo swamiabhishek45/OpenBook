@@ -6,6 +6,7 @@ interface LogoProps {
   showText?: boolean;
   textSize?: string;
   textColor?: string;
+  textClassName?: string;
 }
 
 export function OpenBookLogo({
@@ -14,6 +15,7 @@ export function OpenBookLogo({
   showText = true,
   textSize = "text-2xl",
   textColor = "text-foreground",
+  textClassName = "",
 }: LogoProps) {
   // SVG aspect ratio is 200x120
   const width = Math.round(size * (200 / 120));
@@ -46,7 +48,7 @@ export function OpenBookLogo({
 
       {showText && (
         <span
-          className={`font-serif tracking-tight font-medium ${textSize} ${textColor}`}
+          className={`font-serif tracking-tight font-medium ${textSize} ${textColor} ${textClassName}`}
           style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
         >
           OpenBook

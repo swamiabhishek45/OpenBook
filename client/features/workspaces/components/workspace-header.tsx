@@ -39,13 +39,19 @@ export function WorkspaceHeader({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const workspaceId = workspace?.id || "";
 
-  // Close dropdown on click outside
+  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -55,9 +61,9 @@ export function WorkspaceHeader({
   return (
     <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between select-none shrink-0 z-20">
       {/* Left: OpenBook logo + Workspace Switcher Dropdown */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Link href="/dashboard" className="shrink-0 flex items-center gap-2" title="Go to Dashboard">
-          <OpenBookLogo size={22} textSize="text-base" textColor="text-foreground" />
+          <OpenBookLogo size={22} textSize="text-base" textColor="text-foreground" textClassName="hidden sm:inline" />
         </Link>
 
         <div className="h-4 w-px bg-border shrink-0" />
@@ -67,7 +73,7 @@ export function WorkspaceHeader({
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 py-1 px-2.5 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer group max-w-[240px] sm:max-w-[320px]"
+            className="flex items-center gap-1.5 sm:gap-2 py-1 px-2 sm:px-2.5 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer group max-w-[130px] xs:max-w-[180px] sm:max-w-[240px] md:max-w-[320px]"
             title="Switch Workspace"
           >
             <span className="text-sm shrink-0">{workspace?.icon || "📚"}</span>
@@ -165,11 +171,11 @@ export function WorkspaceHeader({
           </div>
         )}
 
-        {/* Model dropdown */}
+        {/* Model dropdown - hidden on mobile/tablet screens */}
         <select
           value={workspace?.defaultModel || "gpt-4o-mini"}
           onChange={(e) => onUpdateModel?.(e.target.value)}
-          className="px-2.5 py-1 rounded-lg bg-muted border border-border text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-muted/80 transition-colors font-medium"
+          className="hidden md:block px-2.5 py-1 rounded-lg bg-muted border border-border text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-muted/80 transition-colors font-medium"
           title="Select AI Model"
         >
           <option value="gpt-4o-mini">gpt-4o-mini</option>
@@ -179,24 +185,90 @@ export function WorkspaceHeader({
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* User profile dropdown pill */}
+        {/* User profile dropdown button & popover menu */}
         {session?.user && (
-          <div className="flex items-center gap-2 pl-2 border-l border-border">
-            <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center text-[10px] font-semibold text-foreground">
+          <div className="relative pl-1 sm:pl-2 border-l border-border" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="w-7 h-7 rounded-full bg-muted border border-border hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-center text-xs font-semibold text-foreground transition-colors cursor-pointer shadow-xs"
+              title="User menu"
+            >
               {session.user.name ? (
                 session.user.name.charAt(0).toUpperCase()
               ) : (
-                <User className="w-3 h-3" />
+                <User className="w-3.5 h-3.5" />
               )}
-            </div>
-
-            <button
-              onClick={() => logoutMutation.mutate()}
-              title="Sign out"
-              className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
             </button>
+
+            {/* Profile Dropdown Popover Menu */}
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-card shadow-2xl p-1.5 z-50 animate-fadeIn text-xs space-y-1">
+                {/* Header User Info */}
+                <div className="px-3 py-2 border-b border-border">
+                  <p className="font-semibold text-foreground truncate">
+                    {session.user.name || "User"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {session.user.email}
+                  </p>
+                </div>
+
+                {/* Workspace Navigation Links (Library, Memory, Settings) */}
+                <div className="space-y-0.5 pt-1">
+                  {workspaceId && (
+                    <Link
+                      href={`/workspace/${workspaceId}/sources`}
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>Library</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
+                        {sourcesCount}
+                      </span>
+                    </Link>
+                  )}
+
+                  <Link
+                    href="/settings/memory"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Memory</span>
+                  </Link>
+
+                  {workspaceId && (
+                    <Link
+                      href={`/workspace/${workspaceId}/settings`}
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Settings</span>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Divider & Logout */}
+                <div className="pt-1 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      logoutMutation.mutate();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-destructive hover:bg-destructive/10 transition-colors font-medium text-left cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChatMessage } from "./chat-message";
 import { ChatInput } from "./chat-input";
 import { ChatMessage as ChatMessageType, Conversation } from "../types";
@@ -12,8 +12,11 @@ import {
   HelpCircle,
   BookOpen,
   FileSearch,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
   messages: ChatMessageType[];
@@ -34,17 +37,23 @@ const STARTER_PROMPTS = [
   {
     icon: <BookOpen className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Summarize sources",
-    prompt: "Provide a comprehensive summary of all key concepts across my selected sources.",
+    desc: "Provide a comprehensive summary of all key concepts across my selected sources.",
+    prompt:
+      "Please provide a comprehensive and detailed summary of all key concepts across my selected sources.",
   },
   {
     icon: <FileSearch className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Key takeaways & insights",
-    prompt: "Extract the top 5 most important takeaways with supporting evidence.",
+    desc: "Extract the top 5 most important takeaways with supporting evidence.",
+    prompt:
+      "What are the top 5 most important takeaways and insights from these documents? Explain each clearly.",
   },
   {
     icon: <HelpCircle className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
     title: "Find connections",
-    prompt: "What are the common themes and contrasting arguments across these documents?",
+    desc: "What are the common themes and contrasting arguments across these documents?",
+    prompt:
+      "Analyze the connections, common themes, and contrasting viewpoints across my sources.",
   },
 ];
 
@@ -63,59 +72,126 @@ export function ChatPanel({
   onDeleteConversation,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isConvMenuOpen, setIsConvMenuOpen] = useState(false);
+  const convMenuRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom as messages stream
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming]);
 
+  // Click outside to close conversation menu
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (convMenuRef.current && !convMenuRef.current.contains(e.target as Node)) {
+        setIsConvMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const currentConv = conversations.find((c) => c.id === currentConversationId);
+
   return (
     <div className="h-full flex flex-col bg-background text-foreground relative select-text">
       {/* Top Chat Sub-header */}
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-card/60">
-        <div className="flex items-center gap-2 min-w-0">
-          <MessageSquare className="w-4 h-4 text-muted-foreground" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
+      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border flex items-center justify-between bg-card/60 gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-foreground shrink-0 hidden sm:inline">
             Chat
           </span>
 
-          {conversations.length > 0 && (
-            <select
-              value={currentConversationId || ""}
-              onChange={(e) => onSelectConversation(e.target.value)}
-              className="ml-2 px-2.5 py-1 bg-muted border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring max-w-[200px] truncate cursor-pointer font-medium"
+          {/* Custom Compact Conversation Selector Dropdown */}
+          <div className="relative min-w-0 flex-1 max-w-[200px] sm:max-w-[240px]" ref={convMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsConvMenuOpen(!isConvMenuOpen)}
+              className="w-full flex items-center justify-between gap-1 px-2 py-1 bg-muted/80 hover:bg-muted border border-border rounded-lg text-xs text-foreground font-medium transition-colors cursor-pointer"
             >
-              <option value="">+ New Conversation</option>
-              {conversations.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title || "Untitled Chat"}
-                </option>
-              ))}
-            </select>
-          )}
+              <span className="truncate text-left">
+                {currentConv ? currentConv.title || "Untitled Chat" : "+ New Conversation"}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "w-3 h-3 text-muted-foreground shrink-0 transition-transform duration-200",
+                  isConvMenuOpen && "rotate-180"
+                )}
+              />
+            </button>
+
+            {isConvMenuOpen && (
+              <div className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 rounded-xl border border-border bg-card shadow-2xl p-1.5 z-40 animate-fadeIn space-y-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsConvMenuOpen(false);
+                    onNewChat();
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                    !currentConversationId
+                      ? "bg-foreground text-background font-semibold"
+                      : "hover:bg-muted text-foreground"
+                  )}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Conversation</span>
+                </button>
+
+                {conversations.length > 0 && (
+                  <div className="pt-1 border-t border-border max-h-52 overflow-y-auto space-y-0.5">
+                    {conversations.map((c) => {
+                      const isActive = c.id === currentConversationId;
+                      return (
+                        <div
+                          key={c.id}
+                          className={cn(
+                            "flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg group transition-colors cursor-pointer",
+                            isActive
+                              ? "bg-muted font-semibold text-foreground"
+                              : "hover:bg-muted/60 text-foreground"
+                          )}
+                          onClick={() => {
+                            setIsConvMenuOpen(false);
+                            onSelectConversation(c.id);
+                          }}
+                        >
+                          <span className="truncate flex-1 text-xs">{c.title || "Untitled Chat"}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isActive && <Check className="w-3.5 h-3.5 text-foreground" />}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm("Delete this conversation?")) {
+                                  onDeleteConversation(c.id);
+                                }
+                              }}
+                              title="Delete chat"
+                              className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {currentConversationId && (
-            <button
-              onClick={() => {
-                if (confirm("Delete this conversation?")) {
-                  onDeleteConversation(currentConversationId);
-                }
-              }}
-              title="Delete conversation"
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={onNewChat}
-            className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New Chat</span>
+            <span className="hidden sm:inline">New Chat</span>
           </button>
         </div>
       </div>

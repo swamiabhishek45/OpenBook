@@ -18,7 +18,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 interface StudioPanelProps {
   artifacts: LearningArtifact[];
@@ -232,7 +232,7 @@ export function StudioPanel({
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-2.5 h-2.5" />
-                            {new Date(artifact.createdAt).toLocaleDateString()}
+                            {formatDate(artifact.createdAt)}
                           </span>
                         </div>
                       </div>

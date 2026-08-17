@@ -7,6 +7,7 @@ import { QuizViewer } from "./quiz-viewer";
 import { MindmapViewer } from "./mindmap-viewer";
 import { TakeawaysViewer } from "./takeaways-viewer";
 import { SummaryViewer } from "./summary-viewer";
+import { formatDate } from "@/lib/utils";
 import {
   X,
   BookOpen,
@@ -85,7 +86,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
                 <span>•</span>
                 <span className="flex items-center gap-1 font-sans">
                   <Calendar className="w-3 h-3" />
-                  {new Date(artifact.createdAt).toLocaleDateString()}
+                  {formatDate(artifact.createdAt)}
                 </span>
               </div>
             </div>

@@ -153,7 +153,7 @@ export async function generateArtifactContent(
                 model: openai(CHAT_MODEL),
                 system,
                 output: Output.object({ schema: takeawaysSchema }),
-                prompt: `Extract the most important key takeaways as concise bullet points from:\n\n${sourceText}`,
+                prompt: `Extract the most important key takeaways as clear, concise bullet points (without markdown asterisks like **bold**) from:\n\n${sourceText}`,
             });
             return result.output;
         }

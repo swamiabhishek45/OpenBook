@@ -8,6 +8,29 @@ interface TakeawaysViewerProps {
   content: string | string[] | Record<string, unknown>;
 }
 
+function renderFormattedTakeaway(text: string) {
+  if (!text.includes("**")) {
+    return <span>{text}</span>;
+  }
+
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <span>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          const inner = part.slice(2, -2);
+          return (
+            <strong key={i} className="font-semibold text-foreground">
+              {inner}
+            </strong>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </span>
+  );
+}
+
 export function TakeawaysViewer({ content }: TakeawaysViewerProps) {
   const items: string[] = Array.isArray(content)
     ? content
@@ -54,7 +77,9 @@ export function TakeawaysViewer({ content }: TakeawaysViewerProps) {
                   <Square className="w-4 h-4" />
                 )}
               </button>
-              <p className="text-xs leading-relaxed flex-1">{item}</p>
+              <p className="text-xs leading-relaxed flex-1">
+                {renderFormattedTakeaway(item)}
+              </p>
             </div>
           );
         })}
@@ -62,3 +87,4 @@ export function TakeawaysViewer({ content }: TakeawaysViewerProps) {
     </div>
   );
 }
+

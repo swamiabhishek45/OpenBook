@@ -20,6 +20,7 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -237,7 +238,7 @@ export default function DashboardPage() {
                   <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {new Date(ws.updatedAt || ws.createdAt).toLocaleDateString()}
+                      {formatDate(ws.updatedAt || ws.createdAt)}
                     </span>
 
                     <Link

@@ -6,6 +6,7 @@ import { X, Calendar, Layers, ExternalLink } from "lucide-react";
 import { SourceTypeIcon } from "./source-type-icon";
 import { SourceStatusBadge } from "./source-status-badge";
 import { MarkdownPreview } from "./markdown-preview";
+import { formatDate } from "@/lib/utils";
 
 interface SourcePreviewDialogProps {
   source: Source | null;
@@ -42,7 +43,7 @@ export function SourcePreviewDialog({
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {new Date(source.createdAt).toLocaleDateString()}
+                  {formatDate(source.createdAt)}
                 </span>
                 {chunkCount !== null && (
                   <>

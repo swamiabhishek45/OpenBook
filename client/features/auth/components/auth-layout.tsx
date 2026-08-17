@@ -1,7 +1,6 @@
 import React from "react";
 import Image from "next/image";
 import { AuthForm } from "./auth-form";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface AuthLayoutProps {
   mode: "login" | "signup";
@@ -10,11 +9,6 @@ interface AuthLayoutProps {
 export function AuthLayout({ mode }: AuthLayoutProps) {
   return (
     <div className="min-h-screen w-full bg-[#0a0a0c] text-foreground flex items-center justify-center p-3 sm:p-5 lg:p-6 select-none relative">
-      {/* Top right theme toggle */}
-      <div className="absolute top-4 right-4 z-30">
-        <ThemeToggle />
-      </div>
-
       {/* Outer Shell container */}
       <div className="w-full max-w-350 h-[calc(100vh-2rem)] min-h-160 max-h-230 rounded-8 sm:rounded-8 overflow-hidden border border-zinc-800/60 bg-black flex flex-col lg:flex-row shadow-2xl relative">
         {/* Left Section - Cosmic Halftone Pillars Illustration */}

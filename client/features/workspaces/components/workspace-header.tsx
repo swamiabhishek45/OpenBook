@@ -116,18 +116,11 @@ export function WorkspaceHeader({
               <span>Library ({sourcesCount})</span>
             </Link>
             <Link
-              href={`/workspace/${workspaceId}/learn`}
-              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Studio</span>
-            </Link>
-            <Link
               href={`/settings/memory`}
               className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
             >
               <Brain className="w-3 h-3" />
-              <span>Mem0</span>
+              <span>Memory</span>
             </Link>
             <Link
               href={`/workspace/${workspaceId}/settings`}

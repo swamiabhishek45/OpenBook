@@ -142,7 +142,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
 
           {/* Mindmap Nodes View */}
           {artifact.type === "MINDMAP" && (
-            <MindmapViewer content={artifact.content?.nodes || artifact.content || {}} />
+            <MindmapViewer content={artifact.content} />
           )}
         </div>
       </div>

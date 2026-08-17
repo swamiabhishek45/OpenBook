@@ -3,7 +3,7 @@ import { MemorySettingsView } from "@/features/memory";
 
 export const metadata: Metadata = {
   title: "Personal Memory Settings - OpenBook",
-  description: "Manage your Mem0 personalized long-term AI memory profile and study preferences.",
+  description: "Manage your personalized long-term AI memory profile and study preferences.",
 };
 
 export default function MemorySettingsPage() {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Globe, Sparkles, CornerDownLeft } from "lucide-react";
+import { ArrowUp, Globe, FileText, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -63,7 +63,7 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder={
             selectedSourcesCount > 0
-              ? `Ask a question about your ${selectedSourcesCount} selected sources...`
+              ? `Ask a question about your selected sources...`
               : "Ask anything, or add sources to ground your chat..."
           }
           rows={1}
@@ -76,7 +76,7 @@ export function ChatInput({
           <div className="flex items-center gap-2">
             {/* Source grounding status pill */}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/70 border border-border text-[11px] text-muted-foreground">
-              <Sparkles className="w-3 h-3 text-foreground" />
+              <FileText className="w-3 h-3 text-foreground" />
               <span>
                 {selectedSourcesCount > 0
                   ? `${selectedSourcesCount} sources`

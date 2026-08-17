@@ -116,7 +116,6 @@ export function StudioPanel({
       {/* Studio Header */}
       <div className="p-3.5 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-foreground" />
           <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
             Studio
           </span>

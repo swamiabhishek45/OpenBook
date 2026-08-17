@@ -36,7 +36,7 @@ export function MemoryList({ memories }: MemoryListProps) {
         <Brain className="w-8 h-8 text-muted-foreground mx-auto" />
         <p className="text-xs font-medium text-foreground">No memories recorded yet</p>
         <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
-          As you converse with your notebooks, Mem0 automatically learns your preferences and domain insights, or you can add custom facts above.
+          As you converse with your notebooks, Memory automatically learns your preferences and domain insights, or you can add custom facts above.
         </p>
       </div>
     );

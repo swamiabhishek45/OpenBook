@@ -180,7 +180,13 @@ export async function generateArtifactContent(
                 model: openai(CHAT_MODEL),
                 system,
                 output: Output.object({ schema: mindmapSchema }),
-                prompt: `Create a mind map as nodes and edges. Use a central topic node and branch out logically from:\n\n${sourceText}`,
+                prompt: `Generate a structured, deeply informative mind map strictly from the provided source materials.
+1. The root node (id: "1") MUST be the exact central subject/title of the provided material.
+2. Create 3 to 6 major theme/category nodes (e.g. id "2", "3", etc.) branching out from the root node.
+3. Under each major theme node, attach 2 to 5 specific sub-branches or concept nodes detailing concrete findings, definitions, examples, or mechanisms from the text.
+4. Provide all directed edges (source to target) connecting the root to the major categories, and the categories to their sub-branches.
+
+Source material:\n\n${sourceText}`,
             });
             return result.output;
         }

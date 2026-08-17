@@ -57,7 +57,7 @@ export function AddMemoryDialog({ open, onOpenChange }: AddMemoryDialogProps) {
               className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
             />
             <p className="text-[11px] text-muted-foreground">
-              Mem0 will store this fact and personalize AI responses across your workspaces.
+              Memory will store this fact and personalize AI responses across your workspaces.
             </p>
           </div>
 

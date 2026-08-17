@@ -31,7 +31,7 @@ export function MemorySettingsView() {
               </h2>
             </div>
             <p className="text-xs text-muted-foreground">
-              Mem0 long-term memory engine personalizes study notes and answers based on your background and past sessions.
+              Long-term memory engine personalizes study notes and answers based on your background and past sessions.
             </p>
           </div>
         </div>

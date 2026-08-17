@@ -100,7 +100,7 @@ export function SourcesPanel({
               ) : (
                 <Square className="w-3.5 h-3.5 text-muted-foreground" />
               )}
-              <span>{allSelected ? "Deselect all" : "Select all for chat"}</span>
+              <span>{allSelected ? "Deselect all" : "Select all"}</span>
             </button>
 
             <span className="font-mono text-muted-foreground">
@@ -152,19 +152,6 @@ export function SourcesPanel({
             />
           ))
         )}
-      </div>
-
-      {/* Footer Grounding Info */}
-      <div className="p-3 border-t border-border bg-muted/30 text-[11px] text-muted-foreground flex items-center justify-between">
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <Sparkles className="w-3 h-3 text-foreground" />
-          <span>AI Grounding</span>
-        </span>
-        <span>
-          {selectedSourceIds.length > 0
-            ? `${selectedSourceIds.length} sources enabled`
-            : "No sources active"}
-        </span>
       </div>
 
       {/* Add Source Dialog Modal */}

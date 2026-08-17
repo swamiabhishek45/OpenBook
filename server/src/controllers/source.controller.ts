@@ -14,13 +14,17 @@ import {
     bulkDeleteSourcesForWorkspace,
     createTextOrMarkdownSource,
     deleteSourceForWorkspace,
+    getSourceChunksForWorkspace,
     getSourceForWorkspace,
     importWebsiteSource,
+    importWebSearchSource,
     importYoutubeSource,
     listSourcesForWorkspace,
+    reprocessSourceForWorkspace,
+    reprocessSourcesForWorkspace,
     uploadPdfSource,
-
 } from "../services/source.services.js";
+import { importWebSearchSchema, reprocessSourcesSchema } from "../validators/source.validator.js";
 
 function parseWorkspaceId(params: Request["params"]) {
     const parsed = workspaceIdParamSchema.safeParse(params);
@@ -180,4 +184,47 @@ export async function importYoutube(req: Request, res: Response) {
         input,
     );
     res.status(201).json(source);
+}
+
+export async function importWebSearch(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+    const input = importWebSearchSchema.parse(req.body);
+    const source = await importWebSearchSource(
+        workspaceId,
+        req.session.user.id,
+        input,
+    );
+    res.status(201).json(source);
+}
+
+export async function reprocessSource(req: Request, res: Response) {
+    const { workspaceId, sourceId } = parseSourceParams(req.params);
+    const result = await reprocessSourceForWorkspace(
+        workspaceId,
+        sourceId,
+        req.session.user.id,
+    );
+    res.json(result);
+}
+
+export async function reprocessSources(req: Request, res: Response) {
+    const { workspaceId } = parseWorkspaceId(req.params);
+    const parsed = reprocessSourcesSchema.safeParse(req.body);
+    const sourceIds = parsed.success ? parsed.data.sourceIds : undefined;
+    const result = await reprocessSourcesForWorkspace(
+        workspaceId,
+        req.session.user.id,
+        sourceIds,
+    );
+    res.json(result);
+}
+
+export async function getSourceChunks(req: Request, res: Response) {
+    const { workspaceId, sourceId } = parseSourceParams(req.params);
+    const result = await getSourceChunksForWorkspace(
+        workspaceId,
+        sourceId,
+        req.session.user.id,
+    );
+    res.json(result);
 }

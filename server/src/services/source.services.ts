@@ -85,13 +85,13 @@ export async function createTextOrMarkdownSource(
 ) {
     await assertWorkspaceAccess(workspaceId, userId);
 
-    // return createAndProcessSource({
-    //     workspaceId,
-    //     type: input.type,
-    //     title: input.title,
-    //     content: input.content,
-    //     status: "PENDING",
-    // });
+    return createAndProcessSource({
+        workspaceId,
+        type: input.type,
+        title: input.title,
+        content: input.content,
+        status: "PENDING",
+    });
 }
 
 export async function importWebsiteSource(
@@ -124,11 +124,6 @@ export async function uploadPdfSource(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 
-    const upload = await uploadPdfToCloudinary(
-        file.buffer,
-        file.originalname,
-    );
-
     let content: string | null = null;
     let pageCount: number | undefined;
 
@@ -136,8 +131,29 @@ export async function uploadPdfSource(
         const extracted = await extractPdfFromBuffer(file.buffer);
         content = extracted.text;
         pageCount = extracted.pageCount;
-    } catch {
-        // Inngest will retry extraction from Cloudinary if upload-time parse fails.
+    } catch (parseErr) {
+        console.warn("Direct PDF buffer extraction notice:", parseErr);
+    }
+
+    let uploadMetadata: Record<string, unknown> = {};
+    try {
+        const upload = await uploadPdfToCloudinary(
+            file.buffer,
+            file.originalname,
+        );
+        uploadMetadata = {
+            fileUrl: upload.secureUrl,
+            fileName: upload.originalFilename,
+            fileSize: upload.bytes,
+            publicId: upload.publicId,
+            resourceType: upload.resourceType,
+        };
+    } catch (cloudErr) {
+        console.warn("Cloudinary upload skipped or failed (PDF will still be indexed locally):", cloudErr);
+        uploadMetadata = {
+            fileName: file.originalname,
+            fileSize: file.size,
+        };
     }
 
     return createAndProcessSource({
@@ -147,11 +163,7 @@ export async function uploadPdfSource(
         content,
         status: "PENDING",
         metadata: {
-            fileUrl: upload.secureUrl,
-            fileName: upload.originalFilename,
-            fileSize: upload.bytes,
-            publicId: upload.publicId,
-            resourceType: upload.resourceType,
+            ...uploadMetadata,
             pageCount,
         },
     });
@@ -169,12 +181,86 @@ export async function importYoutubeSource(
     return createAndProcessSource({
         workspaceId,
         type: "YOUTUBE",
-        title: input.title || `YouTube: ${transcript.videoId}`,
+        title: input.title?.trim() || transcript.title || `YouTube: ${transcript.videoId}`,
         content: transcript.content,
         url: input.url,
         status: "PENDING",
         metadata: {
             videoId: transcript.videoId,
+            videoTitle: transcript.title,
         },
     });
+}
+
+export async function importWebSearchSource(
+    workspaceId: string,
+    userId: string,
+    input: { title: string; content: string; url: string },
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "WEBSITE",
+        title: input.title,
+        content: input.content,
+        url: input.url,
+        status: "PENDING",
+        metadata: {
+            importedFrom: input.url,
+            isWebSearch: true,
+        },
+    });
+}
+
+export async function reprocessSourceForWorkspace(
+    workspaceId: string,
+    sourceId: string,
+    userId: string,
+) {
+    const source = await getSourceForWorkspace(workspaceId, sourceId, userId);
+
+    await enqueueSourceProcessing({
+        sourceId: source.id,
+        workspaceId: source.workspaceId,
+    });
+
+    return { reprocessed: true };
+}
+
+export async function reprocessSourcesForWorkspace(
+    workspaceId: string,
+    userId: string,
+    sourceIds?: string[],
+) {
+    await assertWorkspaceAccess(workspaceId, userId);
+
+    const sources = await findSourcesByWorkspaceId(workspaceId);
+    const targetSources = sourceIds?.length
+        ? sources.filter((s) => sourceIds.includes(s.id))
+        : sources;
+
+    for (const source of targetSources) {
+        await enqueueSourceProcessing({
+            sourceId: source.id,
+            workspaceId: source.workspaceId,
+        });
+    }
+
+    return { reprocessed: targetSources.length };
+}
+
+export async function getSourceChunksForWorkspace(
+    workspaceId: string,
+    sourceId: string,
+    userId: string,
+) {
+    await getSourceForWorkspace(workspaceId, sourceId, userId);
+    const chunks = await (await import("../repository/source-chunk.repository.js")).findChunksBySourceId(sourceId);
+    return {
+        sourceId,
+        workspaceId,
+        chunks,
+        count: chunks.length,
+    };
 }

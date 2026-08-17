@@ -57,3 +57,58 @@ export function findChunksBySourceId(sourceId: string) {
         orderBy: { index: "asc" },
     });
 }
+
+export function findChunksByWorkspaceId(workspaceId: string, limit = 10) {
+    return prisma.sourceChunk.findMany({
+        where: {
+            source: {
+                workspaceId,
+                status: "READY",
+            },
+        },
+        select: {
+            ...sourceChunkSelect,
+            source: {
+                select: {
+                    id: true,
+                    title: true,
+                    type: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+    });
+}
+
+export function searchChunksByWorkspace(workspaceId: string, queryTerms: string[], limit = 6) {
+    const filters = queryTerms
+        .filter((term) => term.length >= 2)
+        .map((term) => ({
+            content: {
+                contains: term,
+                mode: "insensitive" as const,
+            },
+        }));
+
+    return prisma.sourceChunk.findMany({
+        where: {
+            source: {
+                workspaceId,
+            },
+            ...(filters.length > 0 ? { OR: filters } : {}),
+        },
+        select: {
+            ...sourceChunkSelect,
+            source: {
+                select: {
+                    id: true,
+                    title: true,
+                    type: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+    });
+}

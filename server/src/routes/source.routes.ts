@@ -4,14 +4,19 @@ import {
     bulkDeleteSources,
     createSource,
     deleteSource,
-    getSource, importWebsite, importYoutube, listSources,
+    getSource,
+    getSourceChunks,
+    importWebsite,
+    importWebSearch,
+    importYoutube,
+    listSources,
+    reprocessSource,
+    reprocessSources,
     uploadPdf,
-
 } from "../controllers/source.controller.js";
 import { uploadSinglePdf } from "../middleware/upload.middleware.js";
 
-
-export const sourceRoutes = Router({ mergeParams: true }); // source ka parent route -> workspace
+export const sourceRoutes = Router({ mergeParams: true });
 
 sourceRoutes.post(
     "/upload",
@@ -21,6 +26,10 @@ sourceRoutes.post(
 
 sourceRoutes.post("/import/youtube", asyncHandler(importYoutube));
 sourceRoutes.post("/import/website", asyncHandler(importWebsite));
+sourceRoutes.post("/import/web-search", asyncHandler(importWebSearch));
+sourceRoutes.post("/reprocess", asyncHandler(reprocessSources));
+sourceRoutes.post("/:sourceId/reprocess", asyncHandler(reprocessSource));
+sourceRoutes.get("/:sourceId/chunks", asyncHandler(getSourceChunks));
 sourceRoutes.get("/", asyncHandler(listSources));
 sourceRoutes.post("/", asyncHandler(createSource));
 sourceRoutes.post("/bulk-delete", asyncHandler(bulkDeleteSources));

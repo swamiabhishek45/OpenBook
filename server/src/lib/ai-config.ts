@@ -20,7 +20,7 @@ export const CHUNK_OVERLAP = 100;
 export const RAG_TOP_K = 6;
 
 /** Minimum cosine similarity score for a retrieved chunk to be included in context. */
-export const RAG_MIN_SCORE = 0.35;
+export const RAG_MIN_SCORE = 0.20;
 
 /** Enqueue a conversation summary job every N persisted messages. */
 export const CONVERSATION_SUMMARY_INTERVAL = 8;

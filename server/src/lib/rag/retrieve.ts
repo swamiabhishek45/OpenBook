@@ -1,6 +1,8 @@
 import { RAG_MIN_SCORE, RAG_TOP_K } from "../ai-config.js";
 import { embedTexts } from "../openai.js";
 import { queryWorkspaceVectors } from "../pinecone.js";
+import { searchChunksByWorkspace, findChunksByWorkspaceId } from "../../repository/source-chunk.repository.js";
+import { findSourcesByWorkspaceId } from "../../repository/source.repository.js";
 
 export type RetrievedChunk = {
     sourceId: string;
@@ -17,57 +19,140 @@ export async function retrieveWorkspaceContext(
     workspaceId: string,
     query: string,
 ): Promise<RetrievedChunk[]> {
+    const chunks: RetrievedChunk[] = [];
+
+    // 1. Try vector retrieval via Pinecone
     try {
         const [embedding] = await embedTexts([query]);
-        if (!embedding) return [];
+        if (embedding) {
+            const matches = await queryWorkspaceVectors(
+                workspaceId,
+                embedding,
+                RAG_TOP_K,
+            );
 
-        const matches = await queryWorkspaceVectors(
+            for (const match of matches) {
+                const score = match.score ?? 0;
+                if (score < RAG_MIN_SCORE) {
+                    continue;
+                }
+
+                const metadata = match.metadata as
+                    | Record<string, unknown>
+                    | undefined;
+                if (
+                    !metadata ||
+                    typeof metadata.sourceId !== "string" ||
+                    typeof metadata.sourceTitle !== "string" ||
+                    typeof metadata.sourceType !== "string" ||
+                    typeof metadata.chunkId !== "string" ||
+                    typeof metadata.text !== "string"
+                ) {
+                    continue;
+                }
+
+                chunks.push({
+                    sourceId: metadata.sourceId,
+                    sourceTitle: metadata.sourceTitle,
+                    sourceType: metadata.sourceType,
+                    chunkId: metadata.chunkId,
+                    chunkIndex: Number(metadata.chunkIndex ?? 0),
+                    ...(typeof metadata.page === "number"
+                        ? { page: metadata.page }
+                        : {}),
+                    text: metadata.text,
+                    score,
+                });
+            }
+        }
+    } catch (err) {
+        console.warn("Vector retrieval notice (falling back to database source search):", err);
+    }
+
+    // 2. If vector retrieval found matches, return them
+    if (chunks.length > 0) {
+        return chunks;
+    }
+
+    // 3. Fallback: Search PostgreSQL source chunks directly
+    try {
+        const queryTerms = query
+            .toLowerCase()
+            .replace(/[^\w\s]/g, " ")
+            .split(/\s+/)
+            .filter((t) => t.length >= 3);
+
+        const dbChunks = await searchChunksByWorkspace(
             workspaceId,
-            embedding,
+            queryTerms,
             RAG_TOP_K,
         );
 
-        const chunks: RetrievedChunk[] = [];
+        if (dbChunks.length > 0) {
+            return dbChunks.map((chunk) => {
+                const meta =
+                    chunk.metadata &&
+                    typeof chunk.metadata === "object" &&
+                    !Array.isArray(chunk.metadata)
+                        ? (chunk.metadata as Record<string, unknown>)
+                        : {};
 
-        for (const match of matches) {
-            const score = match.score ?? 0;
-            if (score < RAG_MIN_SCORE) {
-                continue;
-            }
-
-            const metadata = match.metadata as
-                | Record<string, unknown>
-                | undefined;
-            if (
-                !metadata ||
-                typeof metadata.sourceId !== "string" ||
-                typeof metadata.sourceTitle !== "string" ||
-                typeof metadata.sourceType !== "string" ||
-                typeof metadata.chunkId !== "string" ||
-                typeof metadata.text !== "string"
-            ) {
-                continue;
-            }
-
-            chunks.push({
-                sourceId: metadata.sourceId,
-                sourceTitle: metadata.sourceTitle,
-                sourceType: metadata.sourceType,
-                chunkId: metadata.chunkId,
-                chunkIndex: Number(metadata.chunkIndex ?? 0),
-                ...(typeof metadata.page === "number"
-                    ? { page: metadata.page }
-                    : {}),
-                text: metadata.text,
-                score,
+                return {
+                    sourceId: chunk.sourceId,
+                    sourceTitle: chunk.source.title,
+                    sourceType: chunk.source.type,
+                    chunkId: chunk.id,
+                    chunkIndex: chunk.index,
+                    page: typeof meta.page === "number" ? meta.page : undefined,
+                    text: chunk.content,
+                    score: 0.8,
+                };
             });
         }
 
-        return chunks;
-    } catch (err) {
-        console.warn("Vector retrieval fallback (no matches or vector service down):", err);
-        return [];
+        // If no keyword matches, fetch recent chunks from this workspace
+        const recentChunks = await findChunksByWorkspaceId(workspaceId, RAG_TOP_K);
+        if (recentChunks.length > 0) {
+            return recentChunks.map((chunk) => {
+                const meta =
+                    chunk.metadata &&
+                    typeof chunk.metadata === "object" &&
+                    !Array.isArray(chunk.metadata)
+                        ? (chunk.metadata as Record<string, unknown>)
+                        : {};
+
+                return {
+                    sourceId: chunk.sourceId,
+                    sourceTitle: chunk.source.title,
+                    sourceType: chunk.source.type,
+                    chunkId: chunk.id,
+                    chunkIndex: chunk.index,
+                    page: typeof meta.page === "number" ? meta.page : undefined,
+                    text: chunk.content,
+                    score: 0.5,
+                };
+            });
+        }
+
+        // 4. Last fallback: Read directly from sources that have content
+        const sources = await findSourcesByWorkspaceId(workspaceId);
+        const readySources = sources.filter((s) => s.content && s.content.trim().length > 0);
+        for (const source of readySources.slice(0, 3)) {
+            chunks.push({
+                sourceId: source.id,
+                sourceTitle: source.title,
+                sourceType: source.type,
+                chunkId: `${source.id}-root`,
+                chunkIndex: 0,
+                text: source.content!.slice(0, 2500),
+                score: 0.5,
+            });
+        }
+    } catch (fallbackErr) {
+        console.warn("Database source retrieval fallback error:", fallbackErr);
     }
+
+    return chunks;
 }
 
 export type UserMemoryContext = string;

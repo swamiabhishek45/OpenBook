@@ -1,18 +1,17 @@
-import React from "react";
 import {
   FileText,
   Globe,
-  Video,
   Type,
   FileCode,
 } from "lucide-react";
+import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { cn } from "@/lib/utils";
 import type { SourceType } from "../lib/types";
 
 const iconMap = {
   PDF: FileText,
   WEBSITE: Globe,
-  YOUTUBE: Video,
+  YOUTUBE: YoutubeIcon,
   TEXT: Type,
   MARKDOWN: FileCode,
 } as const;

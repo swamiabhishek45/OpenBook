@@ -18,6 +18,7 @@ interface ChatPanelProps {
   messages: ChatMessageType[];
   isStreaming: boolean;
   onSendMessage: (message: string) => void;
+  onStopStreaming?: () => void;
   onNewChat: () => void;
   selectedSourcesCount: number;
   webSearchEnabled: boolean;
@@ -50,6 +51,7 @@ export function ChatPanel({
   messages,
   isStreaming,
   onSendMessage,
+  onStopStreaming,
   onNewChat,
   selectedSourcesCount,
   webSearchEnabled,
@@ -76,13 +78,13 @@ export function ChatPanel({
             Chat
           </span>
 
-          {conversations.length > 1 && (
+          {conversations.length > 0 && (
             <select
               value={currentConversationId || ""}
               onChange={(e) => onSelectConversation(e.target.value)}
-              className="ml-2 px-2 py-1 bg-muted border border-border rounded text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring max-w-[160px] truncate"
+              className="ml-2 px-2.5 py-1 bg-muted border border-border rounded-lg text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring max-w-[200px] truncate cursor-pointer font-medium"
             >
-              <option value="">New Conversation</option>
+              <option value="">+ New Conversation</option>
               {conversations.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title || "Untitled Chat"}
@@ -175,6 +177,7 @@ export function ChatPanel({
       {/* Input Bar */}
       <ChatInput
         onSendMessage={onSendMessage}
+        onStopStreaming={onStopStreaming}
         isStreaming={isStreaming}
         selectedSourcesCount={selectedSourcesCount}
         webSearchEnabled={webSearchEnabled}

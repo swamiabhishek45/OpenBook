@@ -10,7 +10,6 @@ import {
   Search,
   Trash2,
   X,
-  Loader2,
 } from "lucide-react";
 import {
   useBulkDeleteSources,

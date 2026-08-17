@@ -2,7 +2,8 @@
 
 import React, { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useArtifacts } from "@/features/learn";
 import { FlashcardsViewer } from "@/features/learn/components/flashcards-viewer";
 import { QuizViewer } from "@/features/learn/components/quiz-viewer";
@@ -28,7 +29,7 @@ export default function FullscreenArtifactPage({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <ThemeLoader size={36} />
       </div>
     );
   }

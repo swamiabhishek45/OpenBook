@@ -14,12 +14,12 @@ import {
   FolderPlus,
   Trash2,
   Sparkles,
-  Loader2,
   FileText,
   Clock,
   ChevronRight,
   User,
 } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { formatDate } from "@/lib/utils";
 
 export default function DashboardPage() {
@@ -72,8 +72,8 @@ export default function DashboardPage() {
 
   if (isAuthPending) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-black text-white">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-500" />
+      <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
+        <ThemeLoader size={36} />
       </div>
     );
   }
@@ -311,7 +311,7 @@ export default function DashboardPage() {
                   disabled={isCreating || !newTitle.trim()}
                   className="px-4 py-2 bg-white hover:bg-zinc-200 text-black text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
-                  {isCreating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  {isCreating ? <ThemeLoader size={16} /> : null}
                   <span>Create Notebook</span>
                 </button>
               </div>

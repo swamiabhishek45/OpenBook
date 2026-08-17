@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, Edit2, Check, X, Brain, Sparkles, Loader2 } from "lucide-react";
+import { Trash2, Edit2, Check, X, Brain, Sparkles } from "lucide-react";
 import type { AppMemory } from "../lib/types";
 import { useMemories } from "../hooks/use-memories";
 import { cn } from "@/lib/utils";

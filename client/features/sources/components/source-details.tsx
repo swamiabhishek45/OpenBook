@@ -3,7 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, ExternalLink, RefreshCw, Layers, Calendar, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw, Layers, Calendar, FileText } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useSource, useReprocessSource } from "../hooks/use-sources";
 import { SOURCE_TYPE_LABELS } from "../lib/constants";
 import { sourceRoutes } from "../lib/routes";
@@ -24,7 +25,7 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
   if (isLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-12 text-muted-foreground gap-3">
-        <Loader2 className="w-6 h-6 animate-spin" />
+        <ThemeLoader size={32} />
         <span className="text-xs">Loading source details...</span>
       </div>
     );
@@ -147,7 +148,7 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
       {/* Main Content / Status State */}
       {isProcessing ? (
         <div className="p-12 text-center border border-dashed border-border rounded-2xl bg-card space-y-2">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto" />
+          <ThemeLoader size={36} className="mx-auto" />
           <p className="text-xs font-medium text-foreground">Processing Source</p>
           <p className="text-[11px] text-muted-foreground">
             Extracting text, chunking passages, and embedding vector index.

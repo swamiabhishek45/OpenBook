@@ -17,6 +17,7 @@ app.use(
     cors({
         origin: clientUrl,
         credentials: true,
+        exposedHeaders: ["X-Conversation-Id", "x-conversation-id"],
     }),
 );
 

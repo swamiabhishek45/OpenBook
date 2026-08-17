@@ -24,12 +24,14 @@ interface WorkspaceHeaderProps {
   workspace: WorkspaceDetail | null;
   sourcesCount: number;
   onUpdateTitle: (title: string) => Promise<unknown>;
+  onUpdateModel?: (model: string) => Promise<unknown>;
 }
 
 export function WorkspaceHeader({
   workspace,
   sourcesCount,
   onUpdateTitle,
+  onUpdateModel,
 }: WorkspaceHeaderProps) {
   const { session, logoutMutation } = useAuth();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -48,24 +50,13 @@ export function WorkspaceHeader({
 
   return (
     <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between select-none shrink-0 z-20">
-      {/* Left: Back button + OpenBook logo + Editable Title */}
+      {/* Left: OpenBook logo + Editable Title */}
       <div className="flex items-center gap-3 min-w-0">
-        <Link
-          href="/dashboard"
-          title="Back to Dashboard"
-          className="flex items-center gap-1 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span className="text-xs hidden sm:inline">Dashboard</span>
-        </Link>
-
-        <div className="h-4 w-px bg-border shrink-0" />
-
-        <Link href="/dashboard" className="shrink-0 hidden md:block">
+        <Link href="/dashboard" className="shrink-0 flex items-center gap-2" title="Go to Dashboard">
           <OpenBookLogo size={22} textSize="text-base" textColor="text-foreground" />
         </Link>
 
-        <div className="h-4 w-px bg-border shrink-0 hidden md:block" />
+        <div className="h-4 w-px bg-border shrink-0" />
 
         {/* Title / Inline edit */}
         <div className="flex items-center gap-2 min-w-0">
@@ -147,13 +138,16 @@ export function WorkspaceHeader({
           </div>
         )}
 
-        {/* Model badge */}
-        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted border border-border text-[11px] text-foreground">
-          <Sparkles className="w-3 h-3 text-foreground" />
-          <span className="font-mono">
-            {workspace?.defaultModel || "gpt-4o-mini"}
-          </span>
-        </div>
+        {/* Model dropdown */}
+        <select
+          value={workspace?.defaultModel || "gpt-4o-mini"}
+          onChange={(e) => onUpdateModel?.(e.target.value)}
+          className="px-2.5 py-1 rounded-lg bg-muted border border-border text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-muted/80 transition-colors font-medium"
+          title="Select AI Model"
+        >
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
+          <option value="gpt-4o">gpt-4o</option>
+        </select>
 
         {/* Theme Toggle */}
         <ThemeToggle />

@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "../lib/auth-client";
 import { authRoutes } from "../lib/auth-routes";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
 
 interface SignOutButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -53,7 +54,7 @@ export function SignOutButton({
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <ThemeLoader size={14} />
       ) : (
         <LogOut className="w-3.5 h-3.5" />
       )}

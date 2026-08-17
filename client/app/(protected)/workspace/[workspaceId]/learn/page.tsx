@@ -2,7 +2,7 @@
 
 import React, { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus } from "lucide-react";
 import { StudioPanel, useArtifacts } from "@/features/learn";
 import { useSources } from "@/features/sources";
 

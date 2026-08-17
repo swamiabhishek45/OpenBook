@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { OpenBookLogo } from "./openbook-logo";
 import { useAuth } from "../hooks/use-auth";
-import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
@@ -165,7 +166,7 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-zinc-800 hover:bg-zinc-900 active:scale-[0.99] text-white font-medium text-sm rounded-lg shadow-sm transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <ThemeLoader size={18} />
             ) : (
               <>
                 <span>{mode === "login" ? "Log in" : "Sign up"}</span>

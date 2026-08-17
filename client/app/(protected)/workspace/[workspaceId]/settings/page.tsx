@@ -3,7 +3,8 @@
 import React, { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, Save, Settings, Loader2 } from "lucide-react";
+import { ArrowLeft, Trash2, Save, Settings } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useWorkspace, useWorkspaces } from "@/features/workspaces";
 
 interface WorkspaceSettingsPageProps {
@@ -55,7 +56,7 @@ export default function WorkspaceSettingsPage({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <ThemeLoader size={36} />
       </div>
     );
   }

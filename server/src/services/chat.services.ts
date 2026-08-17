@@ -367,6 +367,7 @@ export async function streamWorkspaceChat(
         stream,
         headers: {
             "X-Conversation-Id": conversation.id,
+            "Access-Control-Expose-Headers": "X-Conversation-Id, x-conversation-id",
         },
     });
 }

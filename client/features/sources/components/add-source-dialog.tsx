@@ -4,13 +4,13 @@ import React, { useState, useRef } from "react";
 import {
   Upload,
   Globe,
-  Video,
   FileText,
   FileCode,
-  Loader2,
   X,
   Plus,
 } from "lucide-react";
+import { YoutubeIcon } from "@/components/ui/youtube-icon";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
 import {
   useCreateSource,
@@ -249,7 +249,7 @@ export function AddSourceDialog({
                 : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
-            <Video className="w-3.5 h-3.5" />
+            <YoutubeIcon className="w-3.5 h-3.5 text-red-500" />
             <span>YouTube</span>
           </button>
 
@@ -479,7 +479,7 @@ export function AddSourceDialog({
               disabled={isLoading}
               className="px-4 py-1.5 bg-foreground hover:opacity-90 text-background text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-xs"
             >
-              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              {isLoading ? <ThemeLoader size={16} /> : null}
               <span>Import Source</span>
             </button>
           </div>

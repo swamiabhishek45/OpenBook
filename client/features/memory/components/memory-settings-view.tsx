@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Brain, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, Brain, Plus } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useMemories } from "../hooks/use-memories";
 import { MemoryList } from "./memory-list";
 import { AddMemoryDialog } from "./add-memory-dialog";
@@ -47,8 +48,8 @@ export function MemorySettingsView() {
 
       {/* Memory Content */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-12 text-muted-foreground gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" />
+        <div className="flex items-center justify-center p-12 text-muted-foreground gap-3">
+          <ThemeLoader size={32} />
           <span className="text-xs">Loading memory profile...</span>
         </div>
       ) : (

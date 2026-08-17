@@ -5,14 +5,14 @@ import { Source } from "../lib/types";
 import {
   FileText,
   Globe,
-  Video,
   FileCode,
   Trash2,
   Check,
   AlertCircle,
-  Loader2,
   Eye,
 } from "lucide-react";
+import { YoutubeIcon } from "@/components/ui/youtube-icon";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
 
 interface SourceItemProps {
@@ -37,7 +37,7 @@ export function SourceItem({
       case "WEBSITE":
         return <Globe className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
       case "YOUTUBE":
-        return <Video className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
+        return <YoutubeIcon className="w-4 h-4 text-red-500 dark:text-red-400" />;
       default:
         return <FileCode className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
     }
@@ -51,7 +51,7 @@ export function SourceItem({
       case "PENDING":
         return (
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+            <ThemeLoader size={12} />
             Indexing
           </span>
         );
@@ -70,8 +70,8 @@ export function SourceItem({
       className={cn(
         "group relative flex items-center justify-between p-2.5 rounded-xl border transition-all duration-150 select-none",
         isSelected
-          ? "border-primary bg-muted/80 shadow-xs"
-          : "border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-card hover:bg-muted/40"
+          ? "border-border bg-muted/60 dark:bg-muted/30 shadow-xs"
+          : "border-border hover:border-zinc-300 dark:hover:border-zinc-700 bg-card hover:bg-muted/30"
       )}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">

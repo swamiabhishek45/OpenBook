@@ -11,13 +11,13 @@ import {
   ListChecks,
   Network,
   FileText,
-  Loader2,
   Trash2,
   ChevronRight,
   Clock,
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn, formatDate } from "@/lib/utils";
 
 interface StudioPanelProps {
@@ -164,7 +164,7 @@ export function StudioPanel({
                 >
                   <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
                     {isThisGenerating ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground" />
+                      <ThemeLoader size={16} />
                     ) : (
                       tool.icon
                     )}
@@ -241,7 +241,7 @@ export function StudioPanel({
                     <div className="flex items-center gap-1.5 shrink-0">
                       {isPending && (
                         <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          <ThemeLoader size={12} />
                           Building
                         </span>
                       )}

@@ -33,7 +33,7 @@ export function SourceCard({
       onClick={() => onSelect?.(source)}
       className={cn(
         "group relative flex flex-col justify-between p-4 rounded-xl border border-border bg-card hover:bg-muted/30 transition-all cursor-pointer shadow-xs",
-        selected && "ring-1 ring-primary border-primary/50",
+        selected && "bg-muted/40 border-border",
         className
       )}
     >

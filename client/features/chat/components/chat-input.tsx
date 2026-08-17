@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+  onStopStreaming?: () => void;
   isStreaming: boolean;
   selectedSourcesCount: number;
   webSearchEnabled: boolean;
@@ -14,6 +15,7 @@ interface ChatInputProps {
 
 export function ChatInput({
   onSendMessage,
+  onStopStreaming,
   isStreaming,
   selectedSourcesCount,
   webSearchEnabled,
@@ -99,18 +101,26 @@ export function ChatInput({
             </button>
           </div>
 
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={!input.trim() || isStreaming}
-            className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary hover:opacity-90 active:scale-95 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
-          >
-            {isStreaming ? (
-              <span className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
-            ) : (
+          {/* Submit / Stop button */}
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={onStopStreaming}
+              title="Stop generating"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground text-background hover:opacity-90 active:scale-95 transition-all shadow-md cursor-pointer"
+            >
+              <span className="w-2.5 h-2.5 rounded-[2px] bg-background" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              title="Send message"
+              className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary hover:opacity-90 active:scale-95 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
+            >
               <ArrowUp className="w-4 h-4 stroke-[2.5]" />
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </form>
     </div>

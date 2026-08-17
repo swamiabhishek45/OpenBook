@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "../types";
-import { CitationBadge } from "./citation-badge";
 import { Sparkles, User, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -90,25 +89,6 @@ export function ChatMessage({
         </div>
 
         <div>{renderFormattedContent(message.content)}</div>
-
-        {/* Citations List if available on message */}
-        {!isUser && message.citations && message.citations.length > 0 && (
-          <div className="pt-3 mt-3 border-t border-border space-y-1.5">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
-              Sources Cited ({message.citations.length})
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {message.citations.map((citation, idx) => (
-                <div key={idx} className="flex items-center gap-1">
-                  <CitationBadge citation={citation} index={idx} />
-                  <span className="text-[11px] text-muted-foreground max-w-[160px] truncate">
-                    {citation.sourceTitle || citation.url || "Source"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

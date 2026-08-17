@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, X, Brain, Loader2 } from "lucide-react";
+import { Plus, X, Brain } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useMemories } from "../hooks/use-memories";
 
 interface AddMemoryDialogProps {
@@ -73,7 +74,7 @@ export function AddMemoryDialog({ open, onOpenChange }: AddMemoryDialogProps) {
               disabled={createMemory.isPending || !memoryText.trim()}
               className="px-4 py-1.5 bg-foreground hover:opacity-90 text-background text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-xs"
             >
-              {createMemory.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              {createMemory.isPending ? <ThemeLoader size={16} /> : <Plus className="w-3.5 h-3.5" />}
               <span>Save Memory</span>
             </button>
           </div>

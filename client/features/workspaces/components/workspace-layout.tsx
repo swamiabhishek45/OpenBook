@@ -19,7 +19,8 @@ import {
 import { ChatPanel, useChat } from "@/features/chat";
 import { StudioPanel, useArtifacts } from "@/features/learn";
 import { useWorkspace } from "../hooks/use-workspace";
-import { Layers, MessageSquare, Sparkles, Loader2 } from "lucide-react";
+import { Layers, MessageSquare, Sparkles } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
 
 interface WorkspaceLayoutProps {
@@ -66,6 +67,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     messages,
     isStreaming,
     sendMessage,
+    stopStreaming,
     startNewChat,
     webSearchEnabled,
     setWebSearchEnabled,
@@ -85,7 +87,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   if (isWorkspaceLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <ThemeLoader size={36} />
       </div>
     );
   }
@@ -97,6 +99,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
         workspace={workspace || null}
         sourcesCount={sources.length}
         onUpdateTitle={(title) => updateWorkspace({ title })}
+        onUpdateModel={(defaultModel) => updateWorkspace({ defaultModel })}
       />
 
       {/* Desktop / Tablet: 3-Column Resizable Split View */}
@@ -135,6 +138,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}
+              onStopStreaming={stopStreaming}
               onNewChat={startNewChat}
               selectedSourcesCount={selectedSourceIds.length}
               webSearchEnabled={webSearchEnabled}
@@ -201,6 +205,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}
+              onStopStreaming={stopStreaming}
               onNewChat={startNewChat}
               selectedSourcesCount={selectedSourceIds.length}
               webSearchEnabled={webSearchEnabled}

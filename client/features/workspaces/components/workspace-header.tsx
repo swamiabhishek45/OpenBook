@@ -1,56 +1,60 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { OpenBookLogo } from "@/features/auth";
 import { useAuth } from "@/features/auth";
 import { WorkspaceDetail } from "../hooks/use-workspace";
+import { useWorkspaces, Workspace } from "../hooks/use-workspaces";
 import {
-  ChevronLeft,
+  ChevronDown,
   Sparkles,
   Layers,
-  Edit2,
   Check,
-  X,
   LogOut,
   User,
   Settings,
   Brain,
+  LayoutGrid,
 } from "lucide-react";
-
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface WorkspaceHeaderProps {
   workspace: WorkspaceDetail | null;
   sourcesCount: number;
-  onUpdateTitle: (title: string) => Promise<unknown>;
+  onUpdateTitle?: (title: string) => Promise<unknown>;
   onUpdateModel?: (model: string) => Promise<unknown>;
 }
 
 export function WorkspaceHeader({
   workspace,
   sourcesCount,
-  onUpdateTitle,
   onUpdateModel,
 }: WorkspaceHeaderProps) {
+  const router = useRouter();
   const { session, logoutMutation } = useAuth();
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(workspace?.title || "");
-
-  const handleSaveTitle = async () => {
-    if (!editedTitle.trim() || editedTitle === workspace?.title) {
-      setIsEditingTitle(false);
-      return;
-    }
-    await onUpdateTitle(editedTitle.trim());
-    setIsEditingTitle(false);
-  };
+  const { workspaces } = useWorkspaces();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const workspaceId = workspace?.id || "";
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between select-none shrink-0 z-20">
-      {/* Left: OpenBook logo + Editable Title */}
+      {/* Left: OpenBook logo + Workspace Switcher Dropdown */}
       <div className="flex items-center gap-3 min-w-0">
         <Link href="/dashboard" className="shrink-0 flex items-center gap-2" title="Go to Dashboard">
           <OpenBookLogo size={22} textSize="text-base" textColor="text-foreground" />
@@ -58,47 +62,76 @@ export function WorkspaceHeader({
 
         <div className="h-4 w-px bg-border shrink-0" />
 
-        {/* Title / Inline edit */}
-        <div className="flex items-center gap-2 min-w-0">
-          {isEditingTitle ? (
-            <div className="flex items-center gap-1">
-              <input
-                type="text"
-                autoFocus
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSaveTitle();
-                  if (e.key === "Escape") setIsEditingTitle(false);
-                }}
-                className="px-2 py-0.5 bg-muted border border-border rounded text-xs text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              <button
-                onClick={handleSaveTitle}
-                className="p-1 text-emerald-500 hover:bg-muted rounded"
-              >
-                <Check className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setIsEditingTitle(false)}
-                className="p-1 text-muted-foreground hover:bg-muted rounded"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <div
-              onClick={() => {
-                setEditedTitle(workspace?.title || "");
-                setIsEditingTitle(true);
-              }}
-              className="flex items-center gap-1.5 cursor-pointer group py-1 px-2 rounded-lg hover:bg-muted/80 transition-colors min-w-0"
-            >
-              <span className="text-sm shrink-0">{workspace?.icon || "📚"}</span>
-              <span className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                {workspace?.title || "Untitled Notebook"}
-              </span>
-              <Edit2 className="w-3 h-3 text-muted-foreground group-hover:text-foreground shrink-0 transition-colors" />
+        {/* Workspace Dropdown Switcher */}
+        <div className="relative min-w-0" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2 py-1 px-2.5 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer group max-w-[240px] sm:max-w-[320px]"
+            title="Switch Workspace"
+          >
+            <span className="text-sm shrink-0">{workspace?.icon || "📚"}</span>
+            <span className="text-xs sm:text-sm font-semibold truncate">
+              {workspace?.title || "Untitled Notebook"}
+            </span>
+            <ChevronDown
+              className={cn(
+                "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 shrink-0",
+                isDropdownOpen && "rotate-180"
+              )}
+            />
+          </button>
+
+          {/* Dropdown Menu */}
+          {isDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl border border-border bg-card shadow-2xl p-2 z-50 animate-fadeIn space-y-1">
+              <div className="px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-b border-border">
+                <span>Switch Notebook</span>
+                <span className="font-mono text-[10px]">{workspaces.length} total</span>
+              </div>
+
+              {/* Workspaces List */}
+              <div className="max-h-64 overflow-y-auto space-y-1 py-1">
+                {workspaces.map((ws: Workspace) => {
+                  const isCurrent = ws.id === workspaceId;
+                  return (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        if (!isCurrent) {
+                          router.push(`/workspace/${ws.id}`);
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between gap-2.5 p-2 rounded-xl text-left text-xs transition-colors cursor-pointer",
+                        isCurrent
+                          ? "bg-foreground text-background font-semibold"
+                          : "text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-sm shrink-0">{ws.icon || "📚"}</span>
+                        <span className="truncate">{ws.title}</span>
+                      </div>
+                      {isCurrent && <Check className="w-3.5 h-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="pt-1.5 border-t border-border">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Dashboard · All Notebooks</span>
+                </Link>
+              </div>
             </div>
           )}
         </div>

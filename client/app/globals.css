@@ -29,23 +29,23 @@
 }
 
 :root {
-  --background: #ffffff;
+  --background: #f6efe7;
   --foreground: #09090b;
-  --card: #ffffff;
+  --card: #fcf9f5;
   --card-foreground: #09090b;
-  --popover: #ffffff;
+  --popover: #fcf9f5;
   --popover-foreground: #09090b;
   --primary: #18181b;
   --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
+  --secondary: #ede3d7;
   --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
+  --muted: #ede3d7;
+  --muted-foreground: #70685e;
+  --accent: #ede3d7;
   --accent-foreground: #18181b;
   --destructive: #ef4444;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --border: #e3d7c8;
+  --input: #e3d7c8;
   --ring: #18181b;
   --radius: 0.625rem;
 }
@@ -97,14 +97,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
+  background: #d6c8b8;
   border-radius: 9999px;
   border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa;
+  background: #b8a896;
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -118,7 +118,7 @@
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #d4d4d8 transparent;
+  scrollbar-color: #d6c8b8 transparent;
 }
 
 .dark * {

@@ -13,6 +13,7 @@ import {
   BookOpen,
   FileSearch,
 } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
 
 interface ChatPanelProps {
   messages: ChatMessageType[];
@@ -122,19 +123,19 @@ export function ChatPanel({
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-10 space-y-6 animate-fadeIn">
-            <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center text-foreground shadow-xs">
-              <Sparkles className="w-6 h-6" />
-            </div>
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto  space-y-6 animate-fadeIn">
+            {/* <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center shadow-xs"> */}
+              <ThemeLoader size={86} />
+            {/* </div> */}
 
             <div className="space-y-2">
               <h3 className="text-lg font-medium text-foreground tracking-tight">
                 Ask anything about your notes &amp; sources
               </h3>
-              <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+              {/* <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
                 OpenBook retrieves relevant excerpts directly from your indexed
                 materials and synthesizes answers with source citations.
-              </p>
+              </p> */}
             </div>
 
             {/* Starter Prompt Cards */}

@@ -45,7 +45,7 @@ export function AuthLayout({ mode }: AuthLayoutProps) {
 
         {/* Right Section - Form Panel */}
         <div className="w-full lg:w-120 xl:w-130 flex items-center justify-center bg-[#09090b] lg:p-4 z-10 shrink-0">
-          <div className="w-full h-full lg:h-auto max-w-110 lg:rounded-8 bg-[#fafafc] dark:bg-[#121214] border-0 lg:border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl flex items-center justify-center">
+          <div className="w-full h-full lg:h-auto max-w-110 lg:rounded-8 bg-[#f6efe7] dark:bg-[#121214] border-0 lg:border border-zinc-200/80 dark:border-zinc-800/80 shadow-xl flex items-center justify-center">
             <React.Suspense fallback={<div className="min-h-160 w-full" />}>
               <AuthForm initialMode={mode} />
             </React.Suspense>

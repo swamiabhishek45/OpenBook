@@ -7,7 +7,7 @@ export interface ThemeLoaderProps {
   label?: string;
 }
 
-export function ThemeLoader({ size = 24, className, label }: ThemeLoaderProps) {
+export function ThemeLoader({ size = 34, className, label }: ThemeLoaderProps) {
   const pixelSize = typeof size === "number" ? `${size}px` : size;
 
   return (

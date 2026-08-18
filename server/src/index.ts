@@ -25,6 +25,8 @@ app.all('/api/auth/*splat', toNodeHandler(auth));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use("/uploads", express.static("uploads"));
+
 
 // Set up the "/api/inngest" (recommended) routes with the serve handler
 app.use("/api/inngest", serve({ client: inngest, functions }));

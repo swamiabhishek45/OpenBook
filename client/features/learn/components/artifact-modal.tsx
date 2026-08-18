@@ -7,6 +7,7 @@ import { QuizViewer } from "./quiz-viewer";
 import { MindmapViewer } from "./mindmap-viewer";
 import { TakeawaysViewer } from "./takeaways-viewer";
 import { SummaryViewer } from "./summary-viewer";
+import { PodcastViewer } from "./podcast-viewer";
 import { formatDate } from "@/lib/utils";
 import {
   X,
@@ -19,6 +20,7 @@ import {
   Copy,
   Check,
   Calendar,
+  Headphones,
 } from "lucide-react";
 
 interface ArtifactModalProps {
@@ -41,6 +43,10 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
       textToCopy = artifact.content.cards
         .map((c) => `Q: ${c.front}\nA: ${c.back}\n`)
         .join("\n---\n");
+    } else if (artifact.content?.podcast?.transcript) {
+      textToCopy = artifact.content.podcast.transcript
+        .map((t) => `${t.speaker.toUpperCase()}:\n${t.text}`)
+        .join("\n\n");
     }
     if (textToCopy) {
       navigator.clipboard.writeText(textToCopy);
@@ -63,6 +69,8 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
         return <ListChecks className="w-5 h-5 text-foreground" />;
       case "REPORT":
         return <FileText className="w-5 h-5 text-foreground" />;
+      case "PODCAST":
+        return <Headphones className="w-5 h-5 text-foreground" />;
       default:
         return <BookOpen className="w-5 h-5 text-foreground" />;
     }
@@ -82,7 +90,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
                 {artifact.title}
               </h2>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5 font-mono">
-                <span>{artifact.type}</span>
+                <span>{artifact.type === "PODCAST" ? "AUDIO PODCAST" : artifact.type}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1 font-sans">
                   <Calendar className="w-3 h-3" />
@@ -117,6 +125,11 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Podcast Debate View */}
+          {artifact.type === "PODCAST" && (
+            <PodcastViewer content={artifact.content} />
+          )}
+
           {/* Flashcards View */}
           {artifact.type === "FLASHCARDS" && artifact.content?.cards && (
             <FlashcardsViewer cards={artifact.content.cards} />

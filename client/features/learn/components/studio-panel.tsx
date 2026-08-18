@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import { LearningArtifact, ArtifactType } from "../types";
 import { ArtifactModal } from "./artifact-modal";
 import {
+
   Sparkles,
   Trash2,
   ChevronRight,
   Clock,
   AlertCircle,
   CheckCircle2,
+  Headphones,
 } from "lucide-react";
 import {
   AnimatedBookOpen,
@@ -36,6 +38,18 @@ const STUDIO_TOOLS: {
   desc: string;
   renderIcon: (isHovered: boolean) => React.ReactNode;
 }[] = [
+  {
+    type: "PODCAST",
+    title: "Audio Debate Podcast",
+    desc: "Two AI hosts debate & analyze your sources into an audio show",
+    renderIcon: (isHovered) => (
+      <Headphones
+        className={`w-4 h-4 text-zinc-800 dark:text-zinc-200 transition-transform ${
+          isHovered ? "scale-110" : ""
+        }`}
+      />
+    ),
+  },
   {
     type: "SUMMARY",
     title: "Summary",
@@ -96,18 +110,6 @@ const STUDIO_TOOLS: {
       />
     ),
   },
-  {
-    type: "REPORT",
-    title: "AI Report",
-    desc: "Long-form structured briefing report",
-    renderIcon: (isHovered) => (
-      <AnimatedFileText
-        size={16}
-        isHovered={isHovered}
-        className="text-zinc-800 dark:text-zinc-200"
-      />
-    ),
-  },
 ];
 
 export function StudioPanel({
@@ -135,6 +137,8 @@ export function StudioPanel({
 
   const getTypeIcon = (type: ArtifactType) => {
     switch (type) {
+      case "PODCAST":
+        return <Headphones className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
       case "SUMMARY":
         return <AnimatedBookOpen size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "FLASHCARDS":
@@ -147,8 +151,11 @@ export function StudioPanel({
         return <AnimatedListChecks size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "REPORT":
         return <AnimatedFileText size={14} className="text-zinc-800 dark:text-zinc-200" />;
+      default:
+        return <AnimatedBookOpen size={14} className="text-zinc-800 dark:text-zinc-200" />;
     }
   };
+
 
   return (
     <div className="h-full flex flex-col bg-card border-l border-border text-foreground select-none">

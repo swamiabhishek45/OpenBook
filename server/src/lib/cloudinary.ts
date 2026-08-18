@@ -102,3 +102,66 @@ export async function uploadPdfToCloudinary(
         resourceType: result.resource_type === "image" ? "image" : "raw",
     };
 }
+
+/**
+ * Uploads an MP3 audio buffer to Cloudinary using an unsigned upload preset.
+ *
+ * @param buffer - MP3 audio file bytes
+ * @param filename - Filename for the audio file (e.g. podcast.mp3)
+ * @returns Upload result with secure URL
+ */
+export async function uploadAudioToCloudinary(
+    buffer: Buffer,
+    filename: string,
+): Promise<CloudinaryUploadResult> {
+    if (!cloudName) {
+        throw new ValidationError("Cloudinary is not configured on the server");
+    }
+
+    const form = new FormData();
+    form.append(
+        "file",
+        new Blob([new Uint8Array(buffer)], { type: "audio/mpeg" }),
+        filename,
+    );
+    form.append("upload_preset", uploadPreset);
+    form.append("folder", "chaibook/podcasts");
+
+    const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+        { method: "POST", body: form },
+    );
+
+    const result = (await response.json()) as CloudinaryUploadResponse;
+
+    if (!response.ok) {
+        // Fallback to raw upload if video/upload fails on preset
+        const rawResponse = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+            { method: "POST", body: form },
+        );
+        const rawResult = (await rawResponse.json()) as CloudinaryUploadResponse;
+        if (!rawResponse.ok) {
+            const message =
+                rawResult.error?.message ??
+                result.error?.message ??
+                `Cloudinary audio upload failed (${response.status})`;
+            throw new ValidationError(message);
+        }
+        return {
+            secureUrl: rawResult.secure_url,
+            publicId: rawResult.public_id,
+            bytes: rawResult.bytes,
+            originalFilename: filename,
+            resourceType: "raw",
+        };
+    }
+
+    return {
+        secureUrl: result.secure_url,
+        publicId: result.public_id,
+        bytes: result.bytes,
+        originalFilename: filename,
+        resourceType: "raw",
+    };
+}

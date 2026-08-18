@@ -4,7 +4,8 @@ export type ArtifactType =
   | "FLASHCARDS"
   | "QUIZ"
   | "MINDMAP"
-  | "REPORT";
+  | "REPORT"
+  | "PODCAST";
 
 export type ArtifactStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
 
@@ -36,6 +37,19 @@ export interface ReportSection {
   content: string;
 }
 
+export interface PodcastTurn {
+  speaker: "Alex" | "Jordan";
+  text: string;
+}
+
+export interface PodcastContent {
+  audioUrl?: string | null;
+  topic?: string;
+  summary?: string;
+  durationEstimate?: string;
+  transcript?: PodcastTurn[];
+}
+
 export interface ArtifactContent {
   markdown?: string;
   items?: string[];
@@ -44,6 +58,7 @@ export interface ArtifactContent {
   nodes?: MindmapNode[];
   edges?: MindmapEdge[];
   sections?: ReportSection[];
+  podcast?: PodcastContent;
 }
 
 export interface LearningArtifact {

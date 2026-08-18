@@ -5,6 +5,12 @@ import { CHAT_MODEL } from "../lib/ai-config.js";
 import { findSourcesByWorkspaceId } from "../repository/source.repository.js";
 import type { ArtifactRecord } from "../repository/artifact.repository.js";
 import { ValidationError } from "../types/app-error.js";
+import {
+    generateMultiSpeakerPodcastAudio,
+    savePodcastAudioLocally,
+} from "../lib/elevenlabs.js";
+import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
+
 
 const MAX_CONTEXT_CHARS = 120_000;
 
@@ -67,6 +73,21 @@ const reportSchema = z.object({
     ),
 });
 
+const podcastDebateSchema = z.object({
+    topic: z.string(),
+    summary: z.string(),
+    durationEstimate: z.string(),
+    turns: z
+        .array(
+            z.object({
+                speaker: z.enum(["Alex", "Jordan"]),
+                text: z.string(),
+            }),
+        )
+        .min(4)
+        .max(14),
+});
+
 /**
  * Collects and concatenates text from READY workspace sources for artifact generation.
  *
@@ -74,9 +95,6 @@ const reportSchema = z.object({
  * @param sourceIds - Optional subset of source ids; defaults to all READY sources
  * @returns Combined source text (max 120k chars) and the ids actually used
  * @throws {ValidationError} When no ready sources exist or none have extracted content
- *
- *
- *
  */
 export async function gatherSourceContext(
     workspaceId: string,
@@ -121,13 +139,10 @@ export async function gatherSourceContext(
 /**
  * Generates structured or markdown content for a learning artifact using the AI SDK.
  *
- * @param type - Artifact type (`SUMMARY`, `QUIZ`, `FLASHCARDS`, etc.)
+ * @param type - Artifact type (`SUMMARY`, `QUIZ`, `FLASHCARDS`, `MINDMAP`, `REPORT`, `PODCAST`)
  * @param sourceText - Combined source material from {@link gatherSourceContext}
  * @returns Type-specific JSON content stored on the artifact row
  * @throws {ValidationError} When the artifact type is unsupported
- *
- *
- *
  */
 export async function generateArtifactContent(
     type: ArtifactRecord["type"],
@@ -199,6 +214,62 @@ Source material:\n\n${sourceText}`,
             });
             return result.output;
         }
+        case "PODCAST": {
+            const result = await generateText({
+                model: openai(CHAT_MODEL),
+                system: [
+                    "You are the executive producer of an acclaimed deep-dive audio podcast and intellectual debate show (like NotebookLM Audio Overviews).",
+                    "Generate a concise 1-minute audio debate dialogue between two sharp, articulate AI hosts: Alex and Jordan.",
+                    "- Alex: Analytical, inquisitive, grounded in facts, raises tough questions and examines evidence.",
+                    "- Jordan: Big-picture, energetic, challenges assumptions, offers contrasting perspectives and real-world analogies.",
+                    "The conversation should be conversational, engaging, and genuinely debate key ideas, trade-offs, and insights from the provided sources.",
+                    "Use spoken, audio-friendly language (no markdown syntax, no bullet points, no URLs, no citations like [1]).",
+                    "CRITICAL: Keep the debate strictly to 5-6 short, punchy turns (~20-25 words each, total ~130 words) so it fits into a 1-minute audio show.",
+                ].join("\n"),
+                output: Output.object({ schema: podcastDebateSchema }),
+                prompt: `Produce a 5-6 turn, 1-minute audio debate analyzing the following source materials:\n\n${sourceText}`,
+            });
+
+            const debateData = result.output;
+
+            // Generate multi-speaker audio with ElevenLabs
+            let audioUrl: string | null = null;
+            try {
+                const mp3Buffer = await generateMultiSpeakerPodcastAudio(
+                    debateData.turns,
+                );
+                const filename = `podcast_${Date.now()}.mp3`;
+
+                // 1. Save locally for 100% reliable direct streaming
+                audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
+
+                // 2. Also try uploading to Cloudinary
+                try {
+                    const uploadResult = await uploadAudioToCloudinary(
+                        mp3Buffer,
+                        filename,
+                    );
+                    if (uploadResult?.secureUrl) {
+                        audioUrl = uploadResult.secureUrl;
+                    }
+                } catch {
+                    // Local audioUrl already set as reliable fallback
+                }
+            } catch (audioErr) {
+                console.error("Audio synthesis failed:", audioErr);
+            }
+
+            return {
+                podcast: {
+                    topic: debateData.topic,
+                    summary: debateData.summary,
+                    durationEstimate: "1 min",
+                    audioUrl,
+                    transcript: debateData.turns,
+                },
+            };
+        }
+
         default:
             throw new ValidationError(`Unsupported artifact type: ${type}`);
     }

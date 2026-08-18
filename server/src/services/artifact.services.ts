@@ -103,7 +103,9 @@ export async function createArtifactForWorkspace(
                     QUIZ: "Quiz",
                     MINDMAP: "Mind Map",
                     REPORT: "AI Report",
+                    PODCAST: "Audio Debate & Podcast",
                 }[input.type]
+
             } · ${new Date().toLocaleDateString()}`,
         sourceIds: context.sourceIds,
         status: "PENDING",

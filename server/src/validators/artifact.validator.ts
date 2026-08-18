@@ -8,7 +8,9 @@ export const artifactTypes = [
     "QUIZ",
     "MINDMAP",
     "REPORT",
+    "PODCAST",
 ] as const;
+
 
 export const artifactIdParamSchema = workspaceIdParamSchema.extend({
     artifactId: z.string().trim().min(1, "Artifact id is required"),

@@ -70,7 +70,7 @@ function CustomMindmapNode({ data }: NodeProps) {
     <div
       onClick={handleClick}
       className={cn(
-        "group relative flex items-center gap-2 border transition-all duration-200 select-none cursor-pointer hover:scale-[1.02] max-w-[220px]",
+        "group relative flex items-center gap-2 border transition-all duration-200 select-none cursor-pointer hover:scale-[1.02] max-w-55",
         getNodeStyles()
       )}
     >
@@ -79,12 +79,12 @@ function CustomMindmapNode({ data }: NodeProps) {
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-2 !h-2 !bg-muted-foreground !border-none"
+          className="w-2! h-2! bg-muted-foreground! border-none!"
         />
       )}
 
       {/* Node Text Label */}
-      <span className="leading-snug break-words text-left flex-1">
+      <span className="leading-snug wrap-break-word text-left flex-1">
         {label}
       </span>
 
@@ -114,7 +114,7 @@ function CustomMindmapNode({ data }: NodeProps) {
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-2 !h-2 !bg-muted-foreground !border-none"
+          className="w-2! h-2! bg-muted-foreground! border-none!"
         />
       )}
     </div>
@@ -342,7 +342,7 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
   }, [rawGraph, collapsedIds, toggleNode]);
 
   return (
-    <div className="w-full h-[560px] rounded-2xl border border-border bg-card/60 text-foreground overflow-hidden relative select-none">
+    <div className="w-full h-140 rounded-2xl border border-border bg-card/60 text-foreground overflow-hidden relative select-none">
       <ReactFlow
         nodes={nodes}
         edges={edges}

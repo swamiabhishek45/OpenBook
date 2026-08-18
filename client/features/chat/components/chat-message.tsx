@@ -2,8 +2,11 @@
 
 import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "../types";
-import { Sparkles, User, Copy, Check } from "lucide-react";
+import { User, Copy, Check } from "lucide-react";
 import { ThemeBlob } from "@/components/ui/theme-blob";
+import { StreamingResponse } from "@/components/agents/streaming-response";
+import { ReasoningText } from "@/components/agents/loading-states/reasoning-text";
+import { ChatMarkdown } from "@/components/ui/chat-markdown";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -26,24 +29,41 @@ export function ChatMessage({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Format content with basic line break & citation helpers
+  // Format content with full markdown & code blocks
   const renderFormattedContent = (content: string) => {
     if (!content) {
       if (!isUser && isLast && isStreaming) {
         return (
-          <span className="inline-flex items-center gap-1.5 text-muted-foreground italic text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse" />
-            Thinking and searching sources...
-          </span>
+          <ReasoningText
+            variant="cascade"
+            phrases={[
+              "Thinking",
+              "Reading the request",
+              "Working through the details",
+              "Preparing the answer",
+            ]}
+            className="py-1"
+          />
         );
       }
       return null;
     }
 
+    if (isUser) {
+      return (
+        <div className="space-y-2 leading-relaxed whitespace-pre-wrap font-sans text-sm text-foreground select-text cursor-text">
+          {content}
+        </div>
+      );
+    }
+
     return (
-      <div className="space-y-3 leading-relaxed whitespace-pre-wrap font-sans text-sm text-foreground select-text cursor-text">
-        {content}
-      </div>
+      <StreamingResponse
+        status={isLast && isStreaming ? "streaming" : "complete"}
+        copyText={content}
+      >
+        <ChatMarkdown content={content} />
+      </StreamingResponse>
     );
   };
 
@@ -75,18 +95,20 @@ export function ChatMessage({
             {isUser ? "You" : "OpenBook"}
           </span>
 
-          <button
-            type="button"
-            onClick={handleCopy}
-            title="Copy message"
-            className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground rounded transition-all cursor-pointer"
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
+          {isUser && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copy message"
+              className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground rounded transition-all cursor-pointer"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
         </div>
 
         <div>{renderFormattedContent(message.content)}</div>
@@ -94,4 +116,3 @@ export function ChatMessage({
     </div>
   );
 }
-

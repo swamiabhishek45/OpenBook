@@ -194,44 +194,62 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
 
+          let updated = false;
+
           for (const line of lines) {
             const trimmed = line.trim();
-            if (!trimmed) continue;
-
-            if (trimmed === "data: [DONE]") {
-              continue;
-            }
+            if (!trimmed || trimmed === "data: [DONE]") continue;
 
             if (trimmed.startsWith("data: ")) {
               try {
                 const jsonStr = trimmed.slice(6);
                 const data = JSON.parse(jsonStr);
-                if (data.type === "text-delta" && typeof data.delta === "string") {
-                  accumulated += data.delta;
-                } else if (data.type === "text" && typeof data.text === "string") {
-                  accumulated += data.text;
+                
+                // Extract any text delta variation from AI SDK
+                const deltaText =
+                  typeof data === "string"
+                    ? data
+                    : data.textDelta ??
+                      data.delta ??
+                      data.text ??
+                      data.value ??
+                      (data.type === "text-delta" ? data.content : "") ??
+                      "";
+
+                if (typeof deltaText === "string" && deltaText.length > 0) {
+                  accumulated += deltaText;
+                  updated = true;
                 }
               } catch {
-                // Ignore incomplete SSE chunks
+                // Incomplete JSON or malformed line, continue
               }
             } else if (trimmed.startsWith("0:")) {
               try {
                 const jsonStr = trimmed.slice(2);
                 const text = JSON.parse(jsonStr);
-                accumulated += text;
+                if (typeof text === "string") {
+                  accumulated += text;
+                  updated = true;
+                }
               } catch {
-                accumulated += trimmed.slice(2);
+                const raw = trimmed.slice(2);
+                if (raw.startsWith('"') && raw.endsWith('"')) {
+                  accumulated += raw.slice(1, -1);
+                  updated = true;
+                }
               }
             }
           }
 
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId
-                ? { ...msg, content: accumulated }
-                : msg
-            )
-          );
+          if (updated) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: accumulated }
+                  : msg
+              )
+            );
+          }
         }
 
         if (buffer.trim()) {
@@ -239,8 +257,16 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
             try {
               const data = JSON.parse(trimmed.slice(6));
-              if (data.type === "text-delta" && typeof data.delta === "string") {
-                accumulated += data.delta;
+              const deltaText =
+                typeof data === "string"
+                  ? data
+                  : data.textDelta ??
+                    data.delta ??
+                    data.text ??
+                    data.value ??
+                    "";
+              if (typeof deltaText === "string" && deltaText.length > 0) {
+                accumulated += deltaText;
                 setMessages((prev) =>
                   prev.map((msg) =>
                     msg.id === assistantMessageId
@@ -252,6 +278,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
             } catch {}
           }
         }
+
 
         queryClient.invalidateQueries({
           queryKey: ["conversations", workspaceId],

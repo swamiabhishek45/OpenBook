@@ -84,7 +84,20 @@
   html {
     @apply font-sans;
   }
+
+  /* Theme-matching text selection (replaces default system blue) */
+  ::selection {
+    background-color: #dfcfbc;
+    color: #18181b;
+  }
+
+  .dark ::selection,
+  .dark *::selection {
+    background-color: #3f3f46;
+    color: #fafafa;
+  }
 }
+
 
 /* Custom sleek scrollbar matching light and dark modes */
 ::-webkit-scrollbar {

@@ -13,7 +13,7 @@ export async function generateMetadata({
 }: WorkspacePageProps): Promise<Metadata> {
   const { workspaceId } = await params;
   return {
-    title: `Notebook - OpenBook`,
+    title: `OpenBook`,
     description: `AI Notebook Workspace ${workspaceId}`,
   };
 }

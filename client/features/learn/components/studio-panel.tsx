@@ -239,7 +239,7 @@ export function StudioPanel({
           {artifacts.length === 0 ? (
             <div className="p-6 text-center border border-dashed border-border rounded-2xl text-muted-foreground space-y-1 bg-card">
               <p className="text-xs font-medium text-foreground">No artifacts generated yet</p>
-              <p className="text-[11px] text-muted-foreground max-w-[200px] mx-auto">
+              <p className="text-[11px] text-muted-foreground max-w-50 mx-auto">
                 Click any tool above to synthesize notes, quizzes, or flashcards.
               </p>
             </div>

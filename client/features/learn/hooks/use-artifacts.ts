@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { LearningArtifact, ArtifactType } from "../types";
+import { useUpgradeModal } from "@/features/billing";
 
 export function useArtifacts(workspaceId: string) {
   const queryClient = useQueryClient();
@@ -46,8 +47,24 @@ export function useArtifacts(workspaceId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["artifacts", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["user-usage"] });
     },
+    onError: (error: Error) => {
+      if (
+        error.message?.includes("limit") ||
+        error.message?.includes("Free tier") ||
+        error.message?.includes("plan limit") ||
+        error.message?.includes("403")
+      ) {
+        useUpgradeModal.getState().openUpgradeModal({
+          reason: error.message || "Artifact limit reached. Upgrade your plan for more learning artifacts.",
+          limitType: "artifacts",
+        });
+      }
+    },
+
   });
+
 
   const deleteArtifactMutation = useMutation({
     mutationFn: async (artifactId: string) => {

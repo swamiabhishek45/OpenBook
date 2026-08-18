@@ -13,10 +13,12 @@ import {
 import { NotFoundError } from "../types/app-error.js";
 import { CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput, ListSourcesQuery } from "../validators/source.validator.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
+import { assertCanCreateSource } from "./usage.services.js";
 
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 }
+
 
 async function createAndProcessSource(
     data: Parameters<typeof createSourceRecord>[0],
@@ -84,6 +86,7 @@ export async function createTextOrMarkdownSource(
     input: CreateSourceInput,
 ) {
     await assertWorkspaceAccess(workspaceId, userId);
+    await assertCanCreateSource(userId);
 
     return createAndProcessSource({
         workspaceId,
@@ -100,6 +103,7 @@ export async function importWebsiteSource(
     input: ImportWebsiteInput,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateSource(userId);
 
     const scraped = await scrapeWebsite(input.url);
 
@@ -123,6 +127,7 @@ export async function uploadPdfSource(
     title?: string,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateSource(userId);
 
     let content: string | null = null;
     let pageCount: number | undefined;
@@ -175,6 +180,7 @@ export async function importYoutubeSource(
     input: ImportYoutubeInput,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateSource(userId);
 
     const transcript = await fetchYoutubeTranscript(input.url);
 
@@ -198,6 +204,7 @@ export async function importWebSearchSource(
     input: { title: string; content: string; url: string },
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateSource(userId);
 
     return createAndProcessSource({
         workspaceId,
@@ -212,6 +219,7 @@ export async function importWebSearchSource(
         },
     });
 }
+
 
 export async function reprocessSourceForWorkspace(
     workspaceId: string,

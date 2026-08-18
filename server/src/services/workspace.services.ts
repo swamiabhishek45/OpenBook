@@ -31,12 +31,16 @@ export async function getWorkspaceByIdForUser(
 }
 
 
-export function createWorkspaceForUser(
+import { assertCanCreateWorkspace } from "./usage.services.js";
+
+export async function createWorkspaceForUser(
     userId: string,
     input: CreateWorkspaceInput,
 ) {
+    await assertCanCreateWorkspace(userId);
     return createWorkspaceRecord(userId, input);
 }
+
 
 
 export async function updateWorkspaceForUser(

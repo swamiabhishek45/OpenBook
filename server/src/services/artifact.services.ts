@@ -15,6 +15,7 @@ import {
     generateArtifactContent,
 } from "./artifact-generation.services.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
+import { assertCanCreateArtifact } from "./usage.services.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
 
 /**
@@ -81,6 +82,8 @@ export async function createArtifactForWorkspace(
     input: CreateArtifactInput,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateArtifact(userId);
+
 
     const context = await gatherSourceContext(
         workspaceId,

@@ -24,6 +24,8 @@ import { ThemeLoader } from "@/components/ui/theme-loader";
 import { GooeyInput } from "@/components/ui/gooey-input";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { ProBadge, UsageIndicator, useUsage, useUpgradeModal } from "@/features/billing";
+
 
 const NOTEBOOK_ICONS = [
   "📚",
@@ -51,6 +53,9 @@ const NOTEBOOK_ICONS = [
 export default function DashboardPage() {
   const router = useRouter();
   const { session, isPending: isAuthPending, logoutMutation } = useAuth();
+  const { isPro, isProPlus, plan, usage } = useUsage();
+  const { openUpgradeModal } = useUpgradeModal();
+
   const {
     workspaces,
     isLoading: isWorkspacesLoading,
@@ -128,6 +133,16 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
+    const wsLimit = usage?.workspaces.limit ?? (plan === "FREE" ? 1 : plan === "PRO" ? 3 : 10);
+    if (workspaces.length >= wsLimit) {
+      const nextPlan = plan === "FREE" ? "Pro (3 workspaces)" : "Pro+ (10 workspaces)";
+      openUpgradeModal({
+        reason: `${plan} plan limit reached: You can create a maximum of ${wsLimit} workspace${wsLimit > 1 ? "s" : ""} on your plan. Upgrade to ${nextPlan} for more workspaces.`,
+        limitType: "workspaces",
+      });
+      return;
+    }
+
     try {
       const created = await createWorkspace({
         title: newTitle.trim(),
@@ -143,8 +158,17 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Failed to create workspace:", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("limit") || msg.includes("Free tier") || msg.includes("403")) {
+        openUpgradeModal({
+          reason: msg || "Plan limit reached. Upgrade for more workspaces.",
+          limitType: "workspaces",
+        });
+      }
     }
   };
+
+
 
   const handleEditWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +239,9 @@ export default function DashboardPage() {
 
         {/* User profile & theme actions */}
         <div className="flex items-center gap-3">
+          <UsageIndicator variant="compact" />
+          <ProBadge />
+
           <ThemeToggle />
 
           <div className="h-4 w-px bg-border mx-1" />
@@ -260,6 +287,15 @@ export default function DashboardPage() {
 
             <button
               onClick={() => {
+                const wsLimit = usage?.workspaces.limit ?? (plan === "FREE" ? 1 : plan === "PRO" ? 3 : 10);
+                if (workspaces.length >= wsLimit) {
+                  const nextPlan = plan === "FREE" ? "Pro (3 workspaces)" : "Pro+ (10 workspaces)";
+                  openUpgradeModal({
+                    reason: `${plan} plan limit reached: You have created ${wsLimit} of ${wsLimit} allowed workspaces. Upgrade to ${nextPlan} to create more.`,
+                    limitType: "workspaces",
+                  });
+                  return;
+                }
                 setNewTitle("");
                 setNewDescription("");
                 setNewIcon("📚");
@@ -267,11 +303,14 @@ export default function DashboardPage() {
               }}
               className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground hover:opacity-90 active:scale-95 rounded-xl text-xs font-medium transition-all shadow-xs shrink-0 cursor-pointer h-10"
             >
+
+
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Notebook</span>
             </button>
           </div>
         </div>
+
 
         {/* Workspaces Grid */}
         <div className="space-y-4">

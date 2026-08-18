@@ -22,6 +22,23 @@ import type {
     ImportYoutubeInput,
     SourceFilters,
 } from "../lib/types";
+import { useUpgradeModal } from "@/features/billing";
+
+function handleSourceLimitError(error: unknown) {
+    const msg = error instanceof Error ? error.message : "";
+    if (
+        msg.includes("limit") ||
+        msg.includes("Free tier") ||
+        msg.includes("plan limit") ||
+        msg.includes("403")
+    ) {
+        useUpgradeModal.getState().openUpgradeModal({
+            reason: msg || "Source limit reached. Upgrade your plan for more sources.",
+            limitType: "sources",
+        });
+    }
+}
+
 
 export function sourceKeys(workspaceId: string) {
     return {
@@ -82,7 +99,11 @@ export function useCreateSource(workspaceId: string) {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,
             });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
         },
+        onError: handleSourceLimitError,
     });
 }
 
@@ -101,7 +122,11 @@ export function useUploadPdfSource(workspaceId: string) {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,
             });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
         },
+        onError: handleSourceLimitError,
     });
 }
 
@@ -115,7 +140,11 @@ export function useImportWebsiteSource(workspaceId: string) {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,
             });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
         },
+        onError: handleSourceLimitError,
     });
 }
 
@@ -129,9 +158,14 @@ export function useImportYoutubeSource(workspaceId: string) {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,
             });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
         },
+        onError: handleSourceLimitError,
     });
 }
+
 
 export function useDeleteSource(workspaceId: string) {
     const queryClient = useQueryClient();

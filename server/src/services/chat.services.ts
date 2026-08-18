@@ -48,7 +48,9 @@ import {
     getTextFromUIMessage,
 } from "../utils/chat-message.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
+import { assertCanSendMessage } from "./usage.services.js";
 import { addMemoriesFromMessages, searchUserMemories } from "../lib/mem0.js";
+
 
 /**
  * Lists all conversations in a workspace for the sidebar/history UI.
@@ -222,6 +224,8 @@ export async function streamWorkspaceChat(
     if (!userText) {
         throw new ValidationError("A user message is required");
     }
+
+    await assertCanSendMessage(userId);
 
     const conversation = await resolveConversation(
         workspaceId,

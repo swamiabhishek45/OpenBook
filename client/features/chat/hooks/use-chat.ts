@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ChatMessage, Conversation } from "../types";
 import { useChatPreferences } from "../stores/chat-preferences";
+import { useUpgradeModal } from "@/features/billing";
+
 
 export function useChat(workspaceId: string, activeConversationId?: string) {
   const queryClient = useQueryClient();
@@ -254,6 +256,9 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
         queryClient.invalidateQueries({
           queryKey: ["conversations", workspaceId],
         });
+        queryClient.invalidateQueries({
+          queryKey: ["user-usage"],
+        });
         if (currentConversationIdRef.current) {
           queryClient.invalidateQueries({
             queryKey: ["messages", workspaceId, currentConversationIdRef.current],
@@ -265,8 +270,22 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           return;
         }
         console.error("Chat stream error:", err);
-        const errorMsg =
-          err instanceof Error ? err.message : "Error receiving AI response.";
+        const rawMsg = err instanceof Error ? err.message : "Error receiving AI response.";
+        let errorMsg = rawMsg;
+        const isLimitError =
+          rawMsg.includes("limit reached") ||
+          rawMsg.includes("LIMIT_REACHED") ||
+          rawMsg.includes("403");
+
+        if (isLimitError) {
+          errorMsg = "Free chat limit reached (10 messages max). Please upgrade to Pro for unlimited chat.";
+          useUpgradeModal.getState().openUpgradeModal({
+            reason: "Free tier limit reached: Max 10 messages allowed. Upgrade to Pro for unlimited chat.",
+            limitType: "messages",
+          });
+          queryClient.invalidateQueries({ queryKey: ["user-usage"] });
+        }
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMessageId
@@ -274,7 +293,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
                   ...msg,
                   content:
                     msg.content ||
-                    `⚠️ ${errorMsg}. Please ensure you have added and indexed sources, or retry.`,
+                    `⚠️ ${errorMsg}`,
                 }
               : msg
           )
@@ -283,6 +302,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
         abortControllerRef.current = null;
         setIsStreaming(false);
       }
+
     },
     [
       messages,

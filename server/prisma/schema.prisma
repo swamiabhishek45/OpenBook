@@ -12,21 +12,56 @@ model Test {
   title String
 }
 
+enum PlanType {
+  FREE
+  PRO
+  PRO_PLUS
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model User {
-  id            String      @id
+  id            String          @id
   name          String
   email         String
-  emailVerified Boolean     @default(false)
+  emailVerified Boolean         @default(false)
   image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  plan          PlanType        @default(FREE)
+  planExpiresAt DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   sessions      Session[]
   accounts      Account[]
   workspaces    Workspace[]
+  payments      PaymentRecord[]
 
   @@unique([email])
   @@map("user")
 }
+
+model PaymentRecord {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              PlanType      @default(PRO)
+  razorpayOrderId   String        @unique
+  razorpayPaymentId String?       @unique
+  razorpaySignature String?
+  amount            Int           // in paise
+  currency          String        @default("INR")
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+  @@map("payment_record")
+}
+
+
 
 model Session {
   id        String   @id

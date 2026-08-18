@@ -17,9 +17,12 @@ import {
   Settings,
   Brain,
   LayoutGrid,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ProBadge, useUpgradeModal, useUsage } from "@/features/billing";
+
 
 interface WorkspaceHeaderProps {
   workspace: WorkspaceDetail | null;
@@ -36,8 +39,12 @@ export function WorkspaceHeader({
   const router = useRouter();
   const { session, logoutMutation } = useAuth();
   const { workspaces } = useWorkspaces();
+  const { isPro, isProPlus } = useUsage();
+  const { openUpgradeModal } = useUpgradeModal();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -182,6 +189,9 @@ export function WorkspaceHeader({
           <option value="gpt-4o">gpt-4o</option>
         </select>
 
+        {/* Pro Plan Badge */}
+        <ProBadge />
+
         {/* Theme Toggle */}
         <ThemeToggle />
 
@@ -213,6 +223,34 @@ export function WorkspaceHeader({
                     {session.user.email}
                   </p>
                 </div>
+
+                {/* Upgrade prompt if not on highest tier */}
+                {!isProPlus && (
+                  <div className="p-1 border-b border-border">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        openUpgradeModal({
+                          reason: "Upgrade your subscription for higher workspace, source, and artifact limits.",
+                        });
+                      }}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border transition-colors font-medium cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 fill-primary text-primary" />
+                        <span className="text-xs font-semibold">
+                          {isPro ? "Upgrade to Pro+" : "Upgrade Plan"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">
+                        {isPro ? "₹499" : "₹199"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+
 
                 {/* Workspace Navigation Links (Library, Memory, Settings) */}
                 <div className="space-y-0.5 pt-1">
@@ -255,6 +293,7 @@ export function WorkspaceHeader({
 
                 {/* Divider & Logout */}
                 <div className="pt-1 border-t border-border">
+
                   <button
                     type="button"
                     onClick={() => {

@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { artifactRoutes } from "./artifact.routes.js";
 import { chatRoutes, conversationRoutes } from "./chat.routes.js";
 import { memoryRoutes } from "./memory.routes.js";
+import { paymentRoutes } from "./payment.routes.js";
 import { sourceRoutes } from "./source.routes.js";
+import { userRoutes } from "./user.routes.js";
 import { workspaceRoutes } from "./workspace.routes.js";
 
 export function registerRoutes(app: Express): void {
@@ -12,4 +14,6 @@ export function registerRoutes(app: Express): void {
     workspaceRoutes.use("/:workspaceId/chat", chatRoutes);
     app.use("/api/workspaces", workspaceRoutes);
     app.use("/api/memory", memoryRoutes);
-}
+    app.use("/api/payment", paymentRoutes);
+    app.use("/api/user", userRoutes);
+}

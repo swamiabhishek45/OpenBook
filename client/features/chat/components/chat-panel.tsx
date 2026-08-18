@@ -14,6 +14,7 @@ import {
   FileSearch,
   ChevronDown,
   Check,
+  ArrowUp,
 } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
@@ -72,13 +73,38 @@ export function ChatPanel({
   onDeleteConversation,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isConvMenuOpen, setIsConvMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const convMenuRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom as messages stream
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isStreaming]);
+
+  // Track scroll position for go-to-top button
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      setShowScrollTop(scrollContainerRef.current.scrollTop > 150);
+    }
+  };
+
+  const scrollToTop = () => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDeleteActiveChat = () => {
+    if (currentConversationId) {
+      if (confirm("Are you sure you want to delete this chat conversation?")) {
+        onDeleteConversation(currentConversationId);
+      }
+    } else if (messages.length > 0) {
+      if (confirm("Clear current chat messages?")) {
+        onNewChat();
+      }
+    }
+  };
 
   // Click outside to close conversation menu
   useEffect(() => {
@@ -185,8 +211,24 @@ export function ChatPanel({
           </div>
         </div>
 
+        {/* Header Action Buttons: Delete, New Chat */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* Delete Active Chat Button */}
+          {(currentConversationId || messages.length > 0) && (
+            <button
+              type="button"
+              onClick={handleDeleteActiveChat}
+              title="Delete conversation"
+              className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-muted-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Delete</span>
+            </button>
+          )}
+
+          {/* New Chat Button */}
           <button
+            type="button"
             onClick={onNewChat}
             className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
           >
@@ -197,8 +239,14 @@ export function ChatPanel({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
-        {messages.length === 0 ? (
+      <div className="flex-1 relative min-h-0 overflow-hidden flex flex-col">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar"
+        >
+          {messages.length === 0 ? (
+
           <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto  space-y-6 animate-fadeIn">
             {/* <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center shadow-xs"> */}
               <ThemeLoader size={86} />
@@ -248,8 +296,23 @@ export function ChatPanel({
           ))
         )}
 
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Go To Top Floating Button at Bottom Right */}
+        {showScrollTop && messages.length > 0 && (
+          <button
+            type="button"
+            onClick={scrollToTop}
+            className="absolute bottom-3 right-4 z-20 w-8 h-8 rounded-full bg-card/95 hover:bg-muted border border-border text-foreground shadow-lg backdrop-blur-xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer animate-fadeIn"
+            title="Go to top"
+            aria-label="Scroll to top of chat"
+          >
+            <ArrowUp className="w-4 h-4" />
+          </button>
+        )}
       </div>
+
 
       {/* Input Bar */}
       <ChatInput

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { User, LogOut } from "lucide-react";
 import { OpenBookLogo } from "@/features/auth";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { ProBadge, UsageIndicator } from "@/features/billing";
 
 interface DashboardHeaderProps {

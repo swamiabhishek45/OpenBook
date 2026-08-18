@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { OpenBookLogo } from "@/features/auth";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { ArrowRight, Menu, X, Sparkles, Layers, Brain, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 

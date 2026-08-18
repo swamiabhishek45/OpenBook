@@ -15,7 +15,7 @@ import {
     generateArtifactContent,
 } from "./artifact-generation.services.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
-import { assertCanCreateArtifact } from "./usage.services.js";
+import { assertCanCreateArtifact, incrementArtifactCount } from "./usage.services.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
 
 /**
@@ -110,6 +110,9 @@ export async function createArtifactForWorkspace(
         sourceIds: context.sourceIds,
         status: "PENDING",
     });
+
+    // Increment lifetime artifact counter (deletions won't restore quota)
+    await incrementArtifactCount(userId);
 
     await enqueueArtifactGeneration({
         artifactId: artifact.id,

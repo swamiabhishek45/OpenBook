@@ -11,8 +11,8 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  Headphones,
 } from "lucide-react";
+import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import {
   AnimatedBookOpen,
   AnimatedListChecks,
@@ -43,8 +43,9 @@ const STUDIO_TOOLS: {
     title: "Audio Debate Podcast",
     desc: "Two AI hosts debate & analyze your sources into an audio show",
     renderIcon: (isHovered) => (
-      <Headphones
-        className={`w-4 h-4 text-zinc-800 dark:text-zinc-200 transition-transform ${
+      <AudioLinesIcon
+        size={16}
+        className={`text-zinc-800 dark:text-zinc-200 transition-transform ${
           isHovered ? "scale-110" : ""
         }`}
       />
@@ -138,7 +139,7 @@ export function StudioPanel({
   const getTypeIcon = (type: ArtifactType) => {
     switch (type) {
       case "PODCAST":
-        return <Headphones className="w-3.5 h-3.5 text-zinc-800 dark:text-zinc-200" />;
+        return <AudioLinesIcon size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "SUMMARY":
         return <AnimatedBookOpen size={14} className="text-zinc-800 dark:text-zinc-200" />;
       case "FLASHCARDS":

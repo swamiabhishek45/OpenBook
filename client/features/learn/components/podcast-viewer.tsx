@@ -11,12 +11,12 @@ import {
   Download,
   Copy,
   Check,
-  Headphones,
   Sparkles,
   Radio,
   User,
   Users,
 } from "lucide-react";
+import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import { PodcastContent } from "../types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,7 +143,7 @@ export function PodcastViewer({ content }: PodcastViewerProps) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-primary text-primary-foreground">
-              <Headphones className="w-5 h-5" />
+              <AudioLinesIcon size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">

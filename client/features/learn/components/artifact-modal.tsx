@@ -20,8 +20,8 @@ import {
   Copy,
   Check,
   Calendar,
-  Headphones,
 } from "lucide-react";
+import { AudioLinesIcon } from "@/components/ui/audio-lines";
 
 interface ArtifactModalProps {
   artifact: LearningArtifact | null;
@@ -70,7 +70,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
       case "REPORT":
         return <FileText className="w-5 h-5 text-foreground" />;
       case "PODCAST":
-        return <Headphones className="w-5 h-5 text-foreground" />;
+        return <AudioLinesIcon size={20} className="text-foreground" />;
       default:
         return <BookOpen className="w-5 h-5 text-foreground" />;
     }

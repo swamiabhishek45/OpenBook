@@ -25,19 +25,20 @@ enum PaymentStatus {
 }
 
 model User {
-  id            String          @id
-  name          String
-  email         String
-  emailVerified Boolean         @default(false)
-  image         String?
-  plan          PlanType        @default(FREE)
-  planExpiresAt DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  workspaces    Workspace[]
-  payments      PaymentRecord[]
+  id                    String          @id
+  name                  String
+  email                 String
+  emailVerified         Boolean         @default(false)
+  image                 String?
+  plan                  PlanType        @default(FREE)
+  planExpiresAt         DateTime?
+  totalArtifactsCreated Int             @default(0)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  sessions              Session[]
+  accounts              Account[]
+  workspaces            Workspace[]
+  payments              PaymentRecord[]
 
   @@unique([email])
   @@map("user")

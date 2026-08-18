@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChatMessage as ChatMessageType } from "../types";
 import { User, Copy, Check } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 import { ThemeBlob } from "@/components/ui/theme-blob";
 import { StreamingResponse } from "@/components/agents/streaming-response";
 import { ReasoningText } from "@/components/agents/loading-states/reasoning-text";
@@ -20,6 +21,7 @@ export function ChatMessage({
   isLast,
   isStreaming,
 }: ChatMessageProps) {
+  const { data: session } = useSession();
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -85,7 +87,19 @@ export function ChatMessage({
             : "bg-white border-zinc-200 shadow-xs"
         )}
       >
-        {isUser ? <User className="w-4 h-4" /> : <ThemeBlob size={26} />}
+        {isUser ? (
+          session?.user?.image ? (
+            <img
+              src={session.user.image}
+              alt={session.user.name || "You"}
+              className="w-full h-full object-cover rounded-lg"
+            />
+          ) : (
+            <User className="w-4 h-4" />
+          )
+        ) : (
+          <ThemeBlob size={26} />
+        )}
       </div>
 
       {/* Message Content */}

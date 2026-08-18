@@ -125,9 +125,9 @@ export function CodeBlock({ language = "code", code }: CodeBlockProps) {
   const displayLanguage = language.trim() || "code";
 
   return (
-    <div className="my-3.5 rounded-xl overflow-hidden border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-xs">
+    <div className="my-4 rounded-xl overflow-hidden border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-xs">
       {/* Code Header Bar */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-200/80 dark:bg-zinc-900 border-b border-zinc-300/80 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-400 select-none">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-200/80 dark:bg-zinc-900 border-b border-zinc-300/80 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-400 select-none">
         <div className="flex items-center gap-1.5 font-medium lowercase">
           <Terminal className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
           <span>{displayLanguage}</span>
@@ -136,25 +136,25 @@ export function CodeBlock({ language = "code", code }: CodeBlockProps) {
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-1 px-2.5 py-0.8 rounded-md bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/80 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all text-[11px] font-medium cursor-pointer shadow-2xs"
-          title="Copy code"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700/80 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all text-[11px] font-medium cursor-pointer shadow-2xs"
+          title="Copy"
         >
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copied!</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copied</span>
             </>
           ) : (
             <>
               <Copy className="w-3.5 h-3.5" />
-              <span>Copy code</span>
+              <span>Copy</span>
             </>
           )}
         </button>
       </div>
 
       {/* Code Body */}
-      <div className="p-4 overflow-x-auto font-mono text-[13px] leading-6 bg-zinc-100 dark:bg-zinc-950 selection:bg-[#dfcfbc] dark:selection:bg-[#3f3f46]">
+      <div className="px-5 py-4.5 overflow-x-auto font-mono text-[13px] leading-6 bg-zinc-100 dark:bg-zinc-950 selection:bg-[#dfcfbc] dark:selection:bg-[#3f3f46]">
         <pre className="m-0 p-0 font-mono">
           <code>{highlightCode(code, displayLanguage)}</code>
         </pre>

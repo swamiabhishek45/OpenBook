@@ -201,10 +201,16 @@ export function WorkspaceHeader({
             <button
               type="button"
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="w-7 h-7 rounded-full bg-muted border border-border hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-center text-xs font-semibold text-foreground transition-colors cursor-pointer shadow-xs"
+              className="w-7 h-7 rounded-full bg-muted border border-border hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-center text-xs font-semibold text-foreground transition-colors cursor-pointer shadow-xs overflow-hidden shrink-0"
               title="User menu"
             >
-              {session.user.name ? (
+              {session.user.image ? (
+                <img
+                  src={session.user.image}
+                  alt={session.user.name || "Profile"}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : session.user.name ? (
                 session.user.name.charAt(0).toUpperCase()
               ) : (
                 <User className="w-3.5 h-3.5" />
@@ -215,13 +221,28 @@ export function WorkspaceHeader({
             {isProfileMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-card shadow-2xl p-1.5 z-50 animate-fadeIn text-xs space-y-1">
                 {/* Header User Info */}
-                <div className="px-3 py-2 border-b border-border">
-                  <p className="font-semibold text-foreground truncate">
-                    {session.user.name || "User"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {session.user.email}
-                  </p>
+                <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border">
+                  <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden shrink-0">
+                    {session.user.image ? (
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || "Profile"}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : session.user.name ? (
+                      session.user.name.charAt(0).toUpperCase()
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground truncate">
+                      {session.user.name || "User"}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {session.user.email}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Upgrade prompt if not on highest tier */}

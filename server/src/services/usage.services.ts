@@ -64,7 +64,7 @@ export async function getUserUsage(userId: string) {
     const { plan, isPro, isProPlus, planExpiresAt, limits } =
         await getUserPlan(userId);
 
-    const [workspaceCount, sourceCount, artifactCount, messageCount] =
+    const [workspaceCount, sourceCount, user, messageCount] =
         await Promise.all([
             prisma.workspace.count({
                 where: { userId },
@@ -72,8 +72,9 @@ export async function getUserUsage(userId: string) {
             prisma.source.count({
                 where: { workspace: { userId } },
             }),
-            prisma.learningArtifact.count({
-                where: { workspace: { userId } },
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: { totalArtifactsCreated: true },
             }),
             prisma.message.count({
                 where: {
@@ -82,6 +83,8 @@ export async function getUserUsage(userId: string) {
                 },
             }),
         ]);
+
+    const totalArtifactsCreated = user?.totalArtifactsCreated ?? 0;
 
     return {
         plan,
@@ -99,9 +102,9 @@ export async function getUserUsage(userId: string) {
             exceeded: sourceCount >= limits.SOURCES,
         },
         artifacts: {
-            count: artifactCount,
+            count: totalArtifactsCreated,
             limit: limits.ARTIFACTS,
-            exceeded: artifactCount >= limits.ARTIFACTS,
+            exceeded: totalArtifactsCreated >= limits.ARTIFACTS,
         },
         messages: {
             count: messageCount,
@@ -155,22 +158,32 @@ export async function assertCanCreateSource(userId: string): Promise<void> {
 export async function assertCanCreateArtifact(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
-    const count = await prisma.learningArtifact.count({
-        where: { workspace: { userId } },
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { totalArtifactsCreated: true },
     });
-    if (count >= limits.ARTIFACTS) {
+    const totalCreated = user?.totalArtifactsCreated ?? 0;
+
+    if (totalCreated >= limits.ARTIFACTS) {
         const nextPlan = plan === "FREE" ? "Pro" : "Pro+";
         throw new ForbiddenError(
-            `${plan} plan limit reached: You can create a maximum of ${limits.ARTIFACTS} learning artifacts on the ${plan} plan. Upgrade to ${nextPlan} for more artifacts.`,
+            `${plan} plan limit reached: You have already created ${totalCreated} of ${limits.ARTIFACTS} allowed artifacts on the ${plan} plan. Deleting artifacts does not restore your quota. Upgrade to ${nextPlan} for more artifacts.`,
             {
                 code: "LIMIT_REACHED",
                 limitType: "artifacts",
-                current: count,
+                current: totalCreated,
                 max: limits.ARTIFACTS,
                 plan,
             } satisfies LimitDetails & { code: string },
         );
     }
+}
+
+export async function incrementArtifactCount(userId: string): Promise<void> {
+    await prisma.user.update({
+        where: { id: userId },
+        data: { totalArtifactsCreated: { increment: 1 } },
+    });
 }
 
 export async function assertCanSendMessage(userId: string): Promise<void> {

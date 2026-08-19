@@ -5,3 +5,5 @@ export * from "./stores/use-upgrade-modal";
 export * from "./components/upgrade-modal";
 export * from "./components/pro-badge";
 export * from "./components/usage-indicator";
+export * from "./components/premium-avatar";
+

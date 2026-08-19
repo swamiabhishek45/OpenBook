@@ -5,7 +5,7 @@ import Link from "next/link";
 import { User, LogOut } from "lucide-react";
 import { OpenBookLogo } from "@/features/auth";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
-import { ProBadge } from "@/features/billing";
+import { PremiumAvatar, ProBadge, useUsage } from "@/features/billing";
 
 interface DashboardHeaderProps {
   user: {
@@ -17,6 +17,8 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
+  const { plan } = useUsage();
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md px-6 py-3.5 flex items-center justify-between">
       <div className="flex items-center gap-8">
@@ -35,19 +37,22 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 
         {/* User profile pill */}
         <div className="flex items-center gap-2 px-2 py-1 rounded-lg border border-border bg-card">
-          <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden shrink-0">
-            {user.image ? (
-              <img
-                src={user.image}
-                alt={user.name || "Profile"}
-                className="w-full h-full object-cover rounded-full"
-              />
-            ) : user.name ? (
-              user.name.charAt(0).toUpperCase()
-            ) : (
-              <User className="w-3.5 h-3.5" />
-            )}
-          </div>
+          <PremiumAvatar plan={plan} size="sm" className="w-6 h-6">
+            <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
+              {user.image ? (
+                <img
+                  src={user.image}
+                  alt={user.name || "Profile"}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : user.name ? (
+                user.name.charAt(0).toUpperCase()
+              ) : (
+                <User className="w-3.5 h-3.5" />
+              )}
+            </div>
+          </PremiumAvatar>
+
           <span className="text-xs text-muted-foreground hidden sm:inline max-w-30 truncate">
             {user.name || user.email}
           </span>

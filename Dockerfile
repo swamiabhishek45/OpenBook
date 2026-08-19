@@ -7,12 +7,13 @@ WORKDIR /app
 
 # Copy dependency definitions and Prisma schema
 COPY server/package*.json ./
+COPY server/.npmrc* ./
 COPY server/prisma ./prisma/
 COPY server/prisma.config.ts ./
 COPY server/tsconfig.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with legacy peer deps to bypass mem0ai strict pg peer version
+RUN npm install --legacy-peer-deps
 
 # Copy server source code
 COPY server/src ./src

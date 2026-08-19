@@ -42,13 +42,27 @@ export interface PodcastTurn {
   text: string;
 }
 
+export interface InterruptionItem {
+  id: string;
+  timestamp: number;
+  userQuestion: string;
+  audioUrl: string | null;
+  dialogue: Array<{
+    speaker: "Alex" | "Jordan";
+    text: string;
+  }>;
+  createdAt: string;
+}
+
 export interface PodcastContent {
   audioUrl?: string | null;
   topic?: string;
   summary?: string;
   durationEstimate?: string;
   transcript?: PodcastTurn[];
+  interruptions?: InterruptionItem[];
 }
+
 
 export interface ArtifactContent {
   markdown?: string;

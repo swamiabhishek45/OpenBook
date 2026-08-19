@@ -4,6 +4,7 @@ import {
     deleteArtifact,
     getArtifact,
     listArtifacts,
+    interruptPodcast,
 } from "../controllers/artifact.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
@@ -13,3 +14,4 @@ artifactRoutes.get("/", asyncHandler(listArtifacts));
 artifactRoutes.post("/", asyncHandler(createArtifact));
 artifactRoutes.get("/:artifactId", asyncHandler(getArtifact));
 artifactRoutes.delete("/:artifactId", asyncHandler(deleteArtifact));
+artifactRoutes.post("/:artifactId/podcast/interrupt", asyncHandler(interruptPodcast));

@@ -50,3 +50,22 @@ export async function deleteArtifact(req: Request, res: Response) {
     );
     res.status(204).send();
 }
+
+export async function interruptPodcast(req: Request, res: Response) {
+    const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
+    const { question, timestamp } = req.body;
+
+    const { processPodcastInterruption } = await import(
+        "../services/podcast-interruption.services.js"
+    );
+
+    const interruption = await processPodcastInterruption({
+        artifactId,
+        workspaceId,
+        userId: req.session.user.id,
+        question: String(question || ""),
+        timestamp: Number(timestamp || 0),
+    });
+
+    res.json(interruption);
+}

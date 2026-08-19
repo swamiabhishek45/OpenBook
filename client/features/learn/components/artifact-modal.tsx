@@ -127,8 +127,13 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Podcast Debate View */}
           {artifact.type === "PODCAST" && (
-            <PodcastViewer content={artifact.content} />
+            <PodcastViewer
+              content={artifact.content}
+              artifactId={artifact.id}
+              workspaceId={artifact.workspaceId}
+            />
           )}
+
 
           {/* Flashcards View */}
           {artifact.type === "FLASHCARDS" && artifact.content?.cards && (

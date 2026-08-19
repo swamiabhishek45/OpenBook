@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -32,6 +34,8 @@ type MobileTab = "sources" | "chat" | "studio";
 export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const initialSelectionDone = useRef(false);
+  const prevSourcesLength = useRef(0);
 
   const {
     workspace,
@@ -43,6 +47,65 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   const sources = sourcesQuery.data || [];
   const isSourcesLoading = sourcesQuery.isLoading;
 
+  const storageKey = `openbook_selected_sources_${workspaceId}`;
+
+  // Initial load: restore persisted selection or default to all sources
+  useEffect(() => {
+    if (sources.length > 0 && !initialSelectionDone.current) {
+      if (typeof window !== "undefined") {
+        try {
+          const saved = localStorage.getItem(storageKey);
+          if (saved !== null) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              // Keep only source IDs that still exist in current workspace sources
+              const valid = parsed.filter((id) =>
+                sources.some((s) => s.id === id)
+              );
+              setSelectedSourceIds(valid);
+              initialSelectionDone.current = true;
+              return;
+            }
+          }
+        } catch {}
+      }
+      // If first time, default to all sources and persist
+      const allIds = sources.map((s) => s.id);
+      setSelectedSourceIds(allIds);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(allIds));
+        } catch {}
+      }
+      initialSelectionDone.current = true;
+    }
+  }, [sources, storageKey]);
+
+  // Helper to update selection and persist to localStorage
+  const updateAndPersistSelection = (updater: (prev: string[]) => string[]) => {
+    setSelectedSourceIds((prev) => {
+      const next = updater(prev);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+  };
+
+  // When newly created/imported sources appear, include them in selection and persist
+  useEffect(() => {
+    if (sources.length > prevSourcesLength.current && prevSourcesLength.current > 0) {
+      updateAndPersistSelection((prev) => {
+        const allIds = sources.map((s) => s.id);
+        const added = allIds.filter((id) => !prev.includes(id));
+        return [...prev, ...added];
+      });
+    }
+    prevSourcesLength.current = sources.length;
+  }, [sources]);
+
   const uploadPdfMutation = useUploadPdfSource(workspaceId);
   const importWebsiteMutation = useImportWebsiteSource(workspaceId);
   const importYoutubeMutation = useImportYoutubeSource(workspaceId);
@@ -50,18 +113,21 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
   const deleteSourceMutation = useDeleteSource(workspaceId);
 
   const toggleSourceSelection = (id: string) => {
-    setSelectedSourceIds((prev) =>
+    updateAndPersistSelection((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
   const selectAllSources = () => {
-    setSelectedSourceIds(sources.map((s) => s.id));
+    const allIds = sources.map((s) => s.id);
+    updateAndPersistSelection(() => allIds);
   };
 
   const deselectAllSources = () => {
-    setSelectedSourceIds([]);
+    updateAndPersistSelection(() => []);
   };
+
+
 
   const {
     messages,

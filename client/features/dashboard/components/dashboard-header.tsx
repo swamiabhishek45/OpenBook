@@ -5,7 +5,7 @@ import Link from "next/link";
 import { User, LogOut } from "lucide-react";
 import { OpenBookLogo } from "@/features/auth";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
-import { ProBadge, UsageIndicator } from "@/features/billing";
+import { ProBadge } from "@/features/billing";
 
 interface DashboardHeaderProps {
   user: {
@@ -27,7 +27,6 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 
       {/* User profile & theme actions */}
       <div className="flex items-center gap-3">
-        <UsageIndicator variant="compact" />
         <ProBadge />
 
         <ThemeToggle />

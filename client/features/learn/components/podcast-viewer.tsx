@@ -295,19 +295,14 @@ export function PodcastViewer({
               <AudioLinesIcon size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-foreground">
-                  {podcast.topic || "AI Deep-Dive Debate Podcast"}
-                </h3>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  ElevenLabs AI Voice
-                </Badge>
-              </div>
+              <h3 className="text-sm sm:text-base font-bold text-foreground">
+                {podcast.topic || "AI Deep-Dive Debate Podcast"}
+              </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Hosted by <strong>Alex</strong> (Analyst) & <strong>Jordan</strong> (Challenger)
               </p>
             </div>
+
           </div>
 
           <div className="flex items-center gap-1.5">

@@ -1,9 +1,12 @@
-import prisma from "../lib/db.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import {
     findArtifactByIdAndWorkspaceId,
     updateArtifactRecord,
 } from "../repository/artifact.repository.js";
+import {
+    findFlashcardArtifactsByWorkspaceId,
+    findUserFlashcardArtifacts,
+} from "../repository/srs.repository.js";
 import { NotFoundError, ValidationError } from "../types/app-error.js";
 import type { Prisma } from "../generated/prisma/client.js";
 
@@ -181,19 +184,7 @@ export async function getDueFlashcardsForWorkspace(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 
-    const artifacts = await prisma.learningArtifact.findMany({
-        where: {
-            workspaceId,
-            type: "FLASHCARDS",
-            status: "READY",
-        },
-        select: {
-            id: true,
-            title: true,
-            content: true,
-            updatedAt: true,
-        },
-    });
+    const artifacts = await findFlashcardArtifactsByWorkspaceId(workspaceId);
 
     const now = Date.now();
     let totalDueCardsCount = 0;
@@ -244,18 +235,7 @@ export async function getDueFlashcardsForWorkspace(
  * Aggregates user-wide study stats, streak, and daily heatmap review counts.
  */
 export async function getUserStudyStats(userId: string) {
-    const artifacts = await prisma.learningArtifact.findMany({
-        where: {
-            workspace: { userId },
-            type: "FLASHCARDS",
-            status: "READY",
-        },
-        select: {
-            content: true,
-            metadata: true,
-            updatedAt: true,
-        },
-    });
+    const artifacts = await findUserFlashcardArtifacts(userId);
 
     const now = Date.now();
     let totalCards = 0;

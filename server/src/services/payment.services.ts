@@ -1,8 +1,15 @@
 import crypto from "crypto";
 import Razorpay from "razorpay";
-import prisma from "../lib/db.js";
+import {
+    createPaymentRecord,
+    findPaymentRecordByOrderId,
+    markPaymentRecordFailed,
+    updatePaymentRecordSuccess,
+} from "../repository/payment.repository.js";
+import { findUserPlanDetails, updateUserPlan } from "../repository/user.repository.js";
 import { AppError, ValidationError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
+import type { VerifyPaymentInput } from "../validators/payment.validator.js";
 
 export const PLAN_PRICES: Record<
     "PRO" | "PRO_PLUS",
@@ -42,10 +49,7 @@ export async function createRazorpayOrder(
     userId: string,
     requestedPlan: "PRO" | "PRO_PLUS" = "PRO",
 ) {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, name: true, email: true, plan: true },
-    });
+    const user = await findUserPlanDetails(userId);
 
     if (!user) {
         throw new AppError(404, "User not found");
@@ -73,18 +77,16 @@ export async function createRazorpayOrder(
         });
 
         // Store pending payment in database
-        await prisma.paymentRecord.create({
-            data: {
-                userId,
-                plan,
-                razorpayOrderId: order.id,
-                amount:
-                    typeof order.amount === "number"
-                        ? order.amount
-                        : planConfig.pricePaise,
-                currency: order.currency || "INR",
-                status: "PENDING",
-            },
+        await createPaymentRecord({
+            userId,
+            plan,
+            razorpayOrderId: order.id,
+            amount:
+                typeof order.amount === "number"
+                    ? order.amount
+                    : planConfig.pricePaise,
+            currency: order.currency || "INR",
+            status: "PENDING",
         });
 
         return {
@@ -110,13 +112,6 @@ export async function createRazorpayOrder(
     }
 }
 
-export interface VerifyPaymentInput {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-    plan?: "PRO" | "PRO_PLUS";
-}
-
 export async function verifyRazorpayPayment(
     userId: string,
     input: VerifyPaymentInput,
@@ -138,12 +133,7 @@ export async function verifyRazorpayPayment(
 
     if (expectedSignature !== razorpay_signature) {
         // Mark payment as FAILED if recorded
-        await prisma.paymentRecord
-            .updateMany({
-                where: { razorpayOrderId: razorpay_order_id },
-                data: { status: "FAILED" },
-            })
-            .catch(() => {});
+        await markPaymentRecordFailed(razorpay_order_id).catch(() => {});
 
         throw new ValidationError(
             "Invalid payment signature verification failed",
@@ -151,36 +141,20 @@ export async function verifyRazorpayPayment(
     }
 
     // Find the pending payment record to get the plan purchased
-    const paymentRecord = await prisma.paymentRecord.findUnique({
-        where: { razorpayOrderId: razorpay_order_id },
-    });
+    const paymentRecord = await findPaymentRecordByOrderId(razorpay_order_id);
 
     const targetPlan: PlanType =
         paymentRecord?.plan ?? input.plan ?? "PRO";
 
     // Update payment record to SUCCESS
-    await prisma.paymentRecord.updateMany({
-        where: { razorpayOrderId: razorpay_order_id },
-        data: {
-            razorpayPaymentId: razorpay_payment_id,
-            razorpaySignature: razorpay_signature,
-            status: "SUCCESS",
-        },
+    await updatePaymentRecordSuccess({
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        signature: razorpay_signature,
     });
 
     // Upgrade user to the purchased plan
-    const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-            plan: targetPlan,
-        },
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            plan: true,
-        },
-    });
+    const updatedUser = await updateUserPlan(userId, targetPlan);
 
     const planDisplayName =
         targetPlan === "PRO_PLUS" ? "ChaiBookLM Pro+" : "ChaiBookLM Pro";

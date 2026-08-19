@@ -1,4 +1,3 @@
-import prisma from "../lib/db.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import { assertCanCreateSource } from "./usage.services.js";
 import { createAndProcessSource } from "./source.services.js";
@@ -6,6 +5,10 @@ import {
     findArtifactByIdAndWorkspaceId,
     updateArtifactRecord,
 } from "../repository/artifact.repository.js";
+import {
+    findConnectedAccount,
+    upsertConnectedAccountRecord,
+} from "../repository/integration.repository.js";
 
 import { NotFoundError, ValidationError } from "../types/app-error.js";
 import type { Prisma } from "../generated/prisma/client.js";
@@ -70,30 +73,14 @@ export async function connectNotionWithToken({
     };
     const workspaceName = userData.name || "Connected Notion Workspace";
 
-    const account = await prisma.connectedAccount.upsert({
-        where: {
-            userId_provider: {
-                userId,
-                provider: "NOTION",
-            },
-        },
-        create: {
-            userId,
-            provider: "NOTION",
-            accessToken: token.trim(),
-            metadata: {
-                workspaceName,
-                botId: userData.id || null,
-                avatarUrl: userData.avatar_url || null,
-            },
-        },
-        update: {
-            accessToken: token.trim(),
-            metadata: {
-                workspaceName,
-                botId: userData.id || null,
-                avatarUrl: userData.avatar_url || null,
-            },
+    const account = await upsertConnectedAccountRecord({
+        userId,
+        provider: "NOTION",
+        accessToken: token.trim(),
+        metadata: {
+            workspaceName,
+            botId: userData.id || null,
+            avatarUrl: userData.avatar_url || null,
         },
     });
 
@@ -146,30 +133,14 @@ export async function handleNotionOAuthCallback({
     const { access_token, workspace_name, workspace_icon, workspace_id } =
         tokenData;
 
-    const account = await prisma.connectedAccount.upsert({
-        where: {
-            userId_provider: {
-                userId,
-                provider: "NOTION",
-            },
-        },
-        create: {
-            userId,
-            provider: "NOTION",
-            accessToken: access_token,
-            metadata: {
-                workspaceName: workspace_name || "Notion Workspace",
-                workspaceIcon: workspace_icon || null,
-                workspaceId: workspace_id,
-            },
-        },
-        update: {
-            accessToken: access_token,
-            metadata: {
-                workspaceName: workspace_name || "Notion Workspace",
-                workspaceIcon: workspace_icon || null,
-                workspaceId: workspace_id,
-            },
+    const account = await upsertConnectedAccountRecord({
+        userId,
+        provider: "NOTION",
+        accessToken: access_token,
+        metadata: {
+            workspaceName: workspace_name || "Notion Workspace",
+            workspaceIcon: workspace_icon || null,
+            workspaceId: workspace_id,
         },
     });
 
@@ -180,14 +151,7 @@ export async function handleNotionOAuthCallback({
  * Retrieves valid Notion access token for user.
  */
 async function getNotionToken(userId: string): Promise<string> {
-    const account = await prisma.connectedAccount.findUnique({
-        where: {
-            userId_provider: {
-                userId,
-                provider: "NOTION",
-            },
-        },
-    });
+    const account = await findConnectedAccount(userId, "NOTION");
 
     if (!account) {
         throw new NotFoundError("Notion is not connected. Please connect your Notion workspace first.");
@@ -670,5 +634,4 @@ export async function exportArtifactToNotion({
         url: createdPage.url,
         title: artifact.title,
     };
-
 }

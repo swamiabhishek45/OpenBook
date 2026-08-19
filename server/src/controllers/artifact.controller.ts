@@ -5,10 +5,16 @@ import {
     getArtifactForWorkspace,
     listArtifactsForWorkspace,
 } from "../services/artifact.services.js";
+import { processPodcastInterruption } from "../services/podcast-interruption.services.js";
+import {
+    getDueFlashcardsForWorkspace,
+    reviewFlashcard,
+} from "../services/srs.services.js";
 import {
     artifactIdParamSchema,
     createArtifactSchema,
 } from "../validators/artifact.validator.js";
+import { reviewFlashcardSchema } from "../validators/srs.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 
 export async function listArtifacts(req: Request, res: Response) {
@@ -55,10 +61,6 @@ export async function interruptPodcast(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
     const { question, timestamp } = req.body;
 
-    const { processPodcastInterruption } = await import(
-        "../services/podcast-interruption.services.js"
-    );
-
     const interruption = await processPodcastInterruption({
         artifactId,
         workspaceId,
@@ -72,16 +74,14 @@ export async function interruptPodcast(req: Request, res: Response) {
 
 export async function reviewFlashcardController(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
-    const { cardIndex, rating } = req.body;
-
-    const { reviewFlashcard } = await import("../services/srs.services.js");
+    const { cardIndex, rating } = reviewFlashcardSchema.parse(req.body);
 
     const result = await reviewFlashcard({
         workspaceId,
         artifactId,
         userId: req.session.user.id,
-        cardIndex: Number(cardIndex),
-        rating: Number(rating) as 1 | 2 | 3 | 4,
+        cardIndex,
+        rating,
     });
 
     res.json(result);
@@ -89,10 +89,6 @@ export async function reviewFlashcardController(req: Request, res: Response) {
 
 export async function getDueFlashcardsController(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
-
-    const { getDueFlashcardsForWorkspace } = await import(
-        "../services/srs.services.js"
-    );
 
     const dueData = await getDueFlashcardsForWorkspace(
         workspaceId,

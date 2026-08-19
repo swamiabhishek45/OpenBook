@@ -1,9 +1,13 @@
-import prisma from "../lib/db.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import { assertCanCreateSource } from "./usage.services.js";
 import { createAndProcessSource } from "./source.services.js";
+import {
+    findConnectedAccount,
+    updateConnectedAccountTokens,
+    upsertConnectedAccountRecord,
+} from "../repository/integration.repository.js";
 import { extractText } from "unpdf";
-import { ForbiddenError, NotFoundError, ValidationError } from "../types/app-error.js";
+import { NotFoundError, ValidationError } from "../types/app-error.js";
 import type { Prisma } from "../generated/prisma/client.js";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
@@ -15,7 +19,6 @@ const serverBaseUrl =
 const GOOGLE_REDIRECT_URI =
     process.env.GOOGLE_REDIRECT_URI ||
     `${serverBaseUrl}/api/integrations/google-drive/callback`;
-
 
 /**
  * Returns OAuth authorization URL for Google Drive readonly scope.
@@ -98,27 +101,13 @@ export async function handleGoogleDriveCallback({
         ? new Date(Date.now() + expires_in * 1000)
         : null;
 
-    const account = await prisma.connectedAccount.upsert({
-        where: {
-            userId_provider: {
-                userId,
-                provider: "GOOGLE_DRIVE",
-            },
-        },
-        create: {
-            userId,
-            provider: "GOOGLE_DRIVE",
-            accessToken: access_token,
-            refreshToken: refresh_token || null,
-            expiresAt,
-            metadata: { email, name },
-        },
-        update: {
-            accessToken: access_token,
-            refreshToken: refresh_token ? refresh_token : undefined,
-            expiresAt,
-            metadata: { email, name },
-        },
+    const account = await upsertConnectedAccountRecord({
+        userId,
+        provider: "GOOGLE_DRIVE",
+        accessToken: access_token,
+        refreshToken: refresh_token || null,
+        expiresAt,
+        metadata: { email, name },
     });
 
     return account;
@@ -128,14 +117,7 @@ export async function handleGoogleDriveCallback({
  * Ensures valid access token, automatically refreshing if expired.
  */
 async function getValidAccessToken(userId: string): Promise<string> {
-    const account = await prisma.connectedAccount.findUnique({
-        where: {
-            userId_provider: {
-                userId,
-                provider: "GOOGLE_DRIVE",
-            },
-        },
-    });
+    const account = await findConnectedAccount(userId, "GOOGLE_DRIVE");
 
     if (!account) {
         throw new NotFoundError("Google Drive is not connected for this account.");
@@ -175,12 +157,10 @@ async function getValidAccessToken(userId: string): Promise<string> {
         ? new Date(Date.now() + refreshData.expires_in * 1000)
         : null;
 
-    await prisma.connectedAccount.update({
-        where: { id: account.id },
-        data: {
-            accessToken: newAccessToken,
-            expiresAt: newExpiresAt,
-        },
+    await updateConnectedAccountTokens({
+        id: account.id,
+        accessToken: newAccessToken,
+        expiresAt: newExpiresAt,
     });
 
     return newAccessToken;

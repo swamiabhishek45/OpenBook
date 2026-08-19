@@ -1,4 +1,11 @@
-import prisma from "../lib/db.js";
+import {
+    countUserMessages,
+    countUserSources,
+    countUserWorkspaces,
+    findUserPlanDetails,
+    findUserTotalArtifacts,
+    incrementUserArtifactCount as incrementUserArtifactCountRepo,
+} from "../repository/user.repository.js";
 import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 
@@ -39,10 +46,7 @@ export interface LimitDetails {
 }
 
 export async function getUserPlan(userId: string) {
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { plan: true, planExpiresAt: true },
-    });
+    const user = await findUserPlanDetails(userId);
 
     const isExpired =
         user?.planExpiresAt && new Date(user.planExpiresAt) <= new Date();
@@ -64,27 +68,15 @@ export async function getUserUsage(userId: string) {
     const { plan, isPro, isProPlus, planExpiresAt, limits } =
         await getUserPlan(userId);
 
-    const [workspaceCount, sourceCount, user, messageCount] =
+    const [workspaceCount, sourceCount, userArtifacts, messageCount] =
         await Promise.all([
-            prisma.workspace.count({
-                where: { userId },
-            }),
-            prisma.source.count({
-                where: { workspace: { userId } },
-            }),
-            prisma.user.findUnique({
-                where: { id: userId },
-                select: { totalArtifactsCreated: true },
-            }),
-            prisma.message.count({
-                where: {
-                    role: "USER",
-                    conversation: { workspace: { userId } },
-                },
-            }),
+            countUserWorkspaces(userId),
+            countUserSources(userId),
+            findUserTotalArtifacts(userId),
+            countUserMessages(userId),
         ]);
 
-    const totalArtifactsCreated = user?.totalArtifactsCreated ?? 0;
+    const totalArtifactsCreated = userArtifacts?.totalArtifactsCreated ?? 0;
 
     return {
         plan,
@@ -118,7 +110,7 @@ export async function getUserUsage(userId: string) {
 export async function assertCanCreateWorkspace(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
-    const count = await prisma.workspace.count({ where: { userId } });
+    const count = await countUserWorkspaces(userId);
     if (count >= limits.WORKSPACES) {
         const nextPlan = plan === "FREE" ? "Pro" : "Pro+";
         throw new ForbiddenError(
@@ -137,9 +129,7 @@ export async function assertCanCreateWorkspace(userId: string): Promise<void> {
 export async function assertCanCreateSource(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
-    const count = await prisma.source.count({
-        where: { workspace: { userId } },
-    });
+    const count = await countUserSources(userId);
     if (count >= limits.SOURCES) {
         const nextPlan = plan === "FREE" ? "Pro" : "Pro+";
         throw new ForbiddenError(
@@ -158,10 +148,7 @@ export async function assertCanCreateSource(userId: string): Promise<void> {
 export async function assertCanCreateArtifact(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { totalArtifactsCreated: true },
-    });
+    const user = await findUserTotalArtifacts(userId);
     const totalCreated = user?.totalArtifactsCreated ?? 0;
 
     if (totalCreated >= limits.ARTIFACTS) {
@@ -199,12 +186,8 @@ export async function assertCanCreateArtifactType(
     }
 }
 
-
 export async function incrementArtifactCount(userId: string): Promise<void> {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { totalArtifactsCreated: { increment: 1 } },
-    });
+    await incrementUserArtifactCountRepo(userId);
 }
 
 export async function assertCanSendMessage(userId: string): Promise<void> {
@@ -214,12 +197,7 @@ export async function assertCanSendMessage(userId: string): Promise<void> {
         return; // Unlimited chats
     }
 
-    const count = await prisma.message.count({
-        where: {
-            role: "USER",
-            conversation: { workspace: { userId } },
-        },
-    });
+    const count = await countUserMessages(userId);
     if (count >= limits.MESSAGES) {
         throw new ForbiddenError(
             `${plan} plan limit reached: You can send a maximum of ${limits.MESSAGES} chat messages on the ${plan} plan. Upgrade to Pro for unlimited chats.`,

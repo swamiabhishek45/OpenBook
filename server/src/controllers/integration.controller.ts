@@ -1,5 +1,8 @@
 import type { Request, Response } from "express";
-import prisma from "../lib/db.js";
+import {
+    deleteConnectedAccountByProvider,
+    findConnectedAccountsByUserId,
+} from "../repository/integration.repository.js";
 import {
     getGoogleDriveAuthUrl,
     handleGoogleDriveCallback,
@@ -14,24 +17,22 @@ import {
     importNotionPage,
     exportArtifactToNotion,
 } from "../services/notion.services.js";
+import {
+    connectNotionSchema,
+    exportNotionSchema,
+    importDriveFileSchema,
+    importNotionPageSchema,
+} from "../validators/integration.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 import { artifactIdParamSchema } from "../validators/artifact.validator.js";
 import { ValidationError } from "../types/app-error.js";
+import type { IntegrationProvider } from "../generated/prisma/client.js";
 
 /**
  * List all connected integrations for current user.
  */
 export async function getConnectedIntegrations(req: Request, res: Response) {
-    const accounts = await prisma.connectedAccount.findMany({
-        where: { userId: req.session.user.id },
-        select: {
-            id: true,
-            provider: true,
-            metadata: true,
-            createdAt: true,
-            updatedAt: true,
-        },
-    });
+    const accounts = await findConnectedAccountsByUserId(req.session.user.id);
 
     const result = {
         googleDrive: {
@@ -52,18 +53,12 @@ export async function getConnectedIntegrations(req: Request, res: Response) {
  */
 export async function disconnectIntegration(req: Request, res: Response) {
     const { provider } = req.params;
-    const provUpper = String(provider || "").toUpperCase().replace("-", "_");
+    const provUpper = String(provider || "").toUpperCase().replace("-", "_") as IntegrationProvider;
 
-    await prisma.connectedAccount.deleteMany({
-        where: {
-            userId: req.session.user.id,
-            provider: provUpper as "GOOGLE_DRIVE" | "NOTION",
-        },
-    });
+    await deleteConnectedAccountByProvider(req.session.user.id, provUpper);
 
     res.json({ success: true });
 }
-
 
 // ---------------- Google Drive Handlers ----------------
 
@@ -100,16 +95,12 @@ export async function listDriveFiles(req: Request, res: Response) {
 
 export async function importDriveFile(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
-    const { fileId } = req.body;
-
-    if (!fileId) {
-        throw new ValidationError("File ID is required.");
-    }
+    const { fileId } = importDriveFileSchema.parse(req.body);
 
     const source = await importGoogleDriveFile({
         workspaceId,
         userId: req.session.user.id,
-        fileId: String(fileId),
+        fileId,
     });
 
     res.status(201).json(source);
@@ -123,10 +114,10 @@ export async function getNotionAuth(req: Request, res: Response) {
 }
 
 export async function connectNotionToken(req: Request, res: Response) {
-    const { token } = req.body;
+    const { token } = connectNotionSchema.parse(req.body);
     const account = await connectNotionWithToken({
         userId: req.session.user.id,
-        token: String(token || ""),
+        token,
     });
     res.json({ success: true, account });
 }
@@ -159,16 +150,12 @@ export async function listPages(req: Request, res: Response) {
 
 export async function importPage(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
-    const { pageId } = req.body;
-
-    if (!pageId) {
-        throw new ValidationError("Page ID is required.");
-    }
+    const { pageId } = importNotionPageSchema.parse(req.body);
 
     const source = await importNotionPage({
         workspaceId,
         userId: req.session.user.id,
-        pageId: String(pageId),
+        pageId,
     });
 
     res.status(201).json(source);
@@ -176,13 +163,13 @@ export async function importPage(req: Request, res: Response) {
 
 export async function exportToNotion(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
-    const { parentPageId } = req.body;
+    const { parentPageId } = exportNotionSchema.parse(req.body);
 
     const result = await exportArtifactToNotion({
         workspaceId,
         artifactId,
         userId: req.session.user.id,
-        parentPageId: parentPageId ? String(parentPageId) : undefined,
+        parentPageId,
     });
 
     res.json(result);

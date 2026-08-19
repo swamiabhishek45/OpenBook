@@ -113,6 +113,8 @@ const STUDIO_TOOLS: {
   },
 ];
 
+import { MovingBorderCard } from "@/components/ui/moving-border";
+
 export function StudioPanel({
   artifacts,
   onCreateArtifact,
@@ -157,7 +159,6 @@ export function StudioPanel({
     }
   };
 
-
   return (
     <div className="h-full flex flex-col bg-card border-l border-border text-foreground select-none">
       {/* Studio Header */}
@@ -184,9 +185,13 @@ export function StudioPanel({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Generate from Sources
             </h3>
-            {selectedSourcesCount === 0 && (
-              <span className="text-[10px] text-amber-500/90 font-medium">
-                Add sources first
+            {selectedSourcesCount === 0 ? (
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md font-medium border border-amber-500/20 animate-fadeIn">
+                Select sources to enable
+              </span>
+            ) : (
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {selectedSourcesCount} selected
               </span>
             )}
           </div>
@@ -194,6 +199,40 @@ export function StudioPanel({
           <div className="grid grid-cols-2 gap-2">
             {STUDIO_TOOLS.map((tool) => {
               const isThisGenerating = generatingType === tool.type;
+
+              const cardContent = (
+                <div className="p-3 flex flex-col justify-between h-full w-full">
+                  <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
+                    {isThisGenerating ? (
+                      <ThemeLoader size={16} />
+                    ) : (
+                      tool.renderIcon(hoveredTool === tool.type)
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-foreground block truncate">
+                      {tool.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {isThisGenerating ? "Generating..." : tool.desc}
+                    </span>
+                  </div>
+                </div>
+              );
+
+              if (isThisGenerating) {
+                return (
+                  <MovingBorderCard
+                    key={tool.type}
+                    borderRadius="0.75rem"
+                    duration={2000}
+                    className="bg-card text-left"
+                    containerClassName="w-full h-full min-h-[92px]"
+                  >
+                    {cardContent}
+                  </MovingBorderCard>
+                );
+              }
 
               return (
                 <button
@@ -203,19 +242,20 @@ export function StudioPanel({
                   onMouseEnter={() => setHoveredTool(tool.type)}
                   onMouseLeave={() => setHoveredTool(null)}
                   disabled={isCreating || selectedSourcesCount === 0}
-                  className={cn(
-                    "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group",
+                  title={
                     selectedSourcesCount === 0
-                      ? "border-border bg-muted/20 opacity-60 cursor-not-allowed"
-                      : "border-border bg-card hover:bg-muted/40 hover:border-zinc-400 dark:hover:border-zinc-600 active:scale-[0.99]"
+                      ? "Please select at least one source in the sources panel to generate artifacts"
+                      : `Generate ${tool.title}`
+                  }
+                  className={cn(
+                    "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group min-h-[92px]",
+                    selectedSourcesCount === 0
+                      ? "border-border/60 bg-muted/20 opacity-40 cursor-not-allowed select-none"
+                      : "border-border bg-card hover:bg-muted/40 hover:border-zinc-400 dark:hover:border-zinc-600 active:scale-[0.99] cursor-pointer"
                   )}
                 >
                   <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
-                    {isThisGenerating ? (
-                      <ThemeLoader size={16} />
-                    ) : (
-                      tool.renderIcon(hoveredTool === tool.type)
-                    )}
+                    {tool.renderIcon(hoveredTool === tool.type)}
                   </div>
                   <div>
                     <span className="text-xs font-medium text-foreground block truncate">
@@ -252,6 +292,81 @@ export function StudioPanel({
                   artifact.status === "PENDING" ||
                   artifact.status === "PROCESSING";
 
+                const artifactCardBody = (
+                  <div className="p-3 flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+                        {getTypeIcon(artifact.type)}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          {artifact.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                          <span className="font-mono">{artifact.type}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {formatDate(artifact.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isPending && (
+                        <span className="flex items-center gap-1.5 text-[10px] text-amber-700 dark:text-amber-300 font-medium bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                          <ThemeLoader size={12} />
+                          Generating...
+                        </span>
+                      )}
+
+                      {artifact.status === "FAILED" && (
+                        <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          Failed
+                        </span>
+                      )}
+
+                      {isReady && (
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground opacity-60" />
+                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete "${artifact.title}"?`)) {
+                            onDeleteArtifact(artifact.id);
+                          }
+                        }}
+                        title="Delete artifact"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+
+                if (isPending) {
+                  return (
+                    <MovingBorderCard
+                      key={artifact.id}
+                      borderRadius="0.75rem"
+                      duration={2200}
+                      className="bg-card"
+                      containerClassName="w-full"
+                    >
+                      {artifactCardBody}
+                    </MovingBorderCard>
+                  );
+                }
+
                 return (
                   <div
                     key={artifact.id}
@@ -286,13 +401,6 @@ export function StudioPanel({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {isPending && (
-                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-                          <ThemeLoader size={12} />
-                          Building
-                        </span>
-                      )}
-
                       {artifact.status === "FAILED" && (
                         <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
                           <AlertCircle className="w-2.5 h-2.5" />
@@ -316,7 +424,7 @@ export function StudioPanel({
                           }
                         }}
                         title="Delete artifact"
-                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -328,6 +436,7 @@ export function StudioPanel({
           )}
         </div>
       </div>
+
 
       {/* Artifact Full Modal Viewer */}
       <ArtifactModal

@@ -16,7 +16,9 @@ import {
 } from "./artifact-generation.services.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import { assertCanCreateArtifact, incrementArtifactCount } from "./usage.services.js";
+import { generateArtifactTitleWithGemini } from "../lib/gemini.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
+
 
 /**
  * Lists all learning artifacts in a workspace.
@@ -90,26 +92,19 @@ export async function createArtifactForWorkspace(
         input.sourceIds,
     );
 
+    // Generate smart, contextual title using Gemini free model from the source text
+    const title =
+        input.title?.trim() ||
+        (await generateArtifactTitleWithGemini(input.type, context.text));
+
     const artifact = await createArtifactRecord({
         workspaceId,
         type: input.type,
-        title:
-            input.title ||
-            `${
-                {
-                    SUMMARY: "Summary",
-                    TAKEAWAYS: "Key Takeaways",
-                    FLASHCARDS: "Flashcards",
-                    QUIZ: "Quiz",
-                    MINDMAP: "Mind Map",
-                    REPORT: "AI Report",
-                    PODCAST: "Audio Debate & Podcast",
-                }[input.type]
-
-            } · ${new Date().toLocaleDateString()}`,
+        title,
         sourceIds: context.sourceIds,
         status: "PENDING",
     });
+
 
     // Increment lifetime artifact counter (deletions won't restore quota)
     await incrementArtifactCount(userId);
@@ -176,7 +171,22 @@ export async function processArtifactById(artifactId: string) {
             context.text,
         );
 
+        // If title was a generic date fallback, refine it with specific topic/Gemini
+        let finalTitle = artifact.title;
+        if (finalTitle.includes(" · ")) {
+            if (artifact.type === "PODCAST" && (content as Record<string, unknown>)?.topic) {
+                finalTitle = String((content as Record<string, unknown>).topic);
+            } else {
+                finalTitle = await generateArtifactTitleWithGemini(
+                    artifact.type,
+                    context.text,
+                    artifact.title,
+                );
+            }
+        }
+
         return updateArtifactRecord(artifactId, {
+            title: finalTitle,
             status: "READY",
             content: content as Prisma.InputJsonValue,
             metadata: {
@@ -184,6 +194,7 @@ export async function processArtifactById(artifactId: string) {
                 processingError: undefined,
             },
         });
+
     } catch (error) {
         const message =
             error instanceof Error

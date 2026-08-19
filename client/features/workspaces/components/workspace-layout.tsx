@@ -165,15 +165,12 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               onCreateArtifact={(type) =>
                 createArtifact({
                   type,
-                  sourceIds:
-                    selectedSourceIds.length > 0
-                      ? selectedSourceIds
-                      : undefined,
+                  sourceIds: selectedSourceIds,
                 })
               }
               onDeleteArtifact={deleteArtifact}
               isCreating={isArtifactCreating}
-              selectedSourcesCount={sources.length}
+              selectedSourcesCount={selectedSourceIds.length}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -223,18 +220,16 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               onCreateArtifact={(type) =>
                 createArtifact({
                   type,
-                  sourceIds:
-                    selectedSourceIds.length > 0
-                      ? selectedSourceIds
-                      : undefined,
+                  sourceIds: selectedSourceIds,
                 })
               }
               onDeleteArtifact={deleteArtifact}
               isCreating={isArtifactCreating}
-              selectedSourcesCount={sources.length}
+              selectedSourcesCount={selectedSourceIds.length}
             />
           )}
         </div>
+
 
         {/* Mobile Navigation Tabs */}
         <div className="h-14 border-t border-border bg-card flex items-center justify-around px-4 z-20 shrink-0">

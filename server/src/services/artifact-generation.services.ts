@@ -100,19 +100,27 @@ export async function gatherSourceContext(
     workspaceId: string,
     sourceIds?: string[],
 ) {
+    if (Array.isArray(sourceIds) && sourceIds.length === 0) {
+        throw new ValidationError(
+            "No sources selected. Please select at least one source to generate learning artifacts.",
+        );
+    }
+
     const sources = await findSourcesByWorkspaceId(workspaceId, {
         status: "READY",
     });
 
-    const selected = sourceIds?.length
-        ? sources.filter((source) => sourceIds.includes(source.id))
-        : sources;
+    const selected =
+        sourceIds && sourceIds.length > 0
+            ? sources.filter((source) => sourceIds.includes(source.id))
+            : sources;
 
     if (selected.length === 0) {
         throw new ValidationError(
-            "No ready sources found. Add and process sources before generating learning tools.",
+            "No matching ready sources found. Please select ready sources before generating learning tools.",
         );
     }
+
 
     const withContent = selected.flatMap((source) => {
         const content = source.content?.trim();

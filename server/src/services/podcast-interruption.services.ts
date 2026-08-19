@@ -14,7 +14,10 @@ import {
     savePodcastAudioLocally,
 } from "../lib/elevenlabs.js";
 import { uploadAudioToCloudinary } from "../lib/cloudinary.js";
-import { NotFoundError, ValidationError } from "../types/app-error.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "../types/app-error.js";
+import { getUserPlan } from "./usage.services.js";
+
+
 
 const interruptionSchema = z.object({
     dialogue: z
@@ -59,8 +62,15 @@ export async function processPodcastInterruption({
         throw new ValidationError("Question cannot be empty.");
     }
 
-    // 1. Verify user access
+    // 1. Verify user access and Pro plan
     await getWorkspaceByIdForUser(workspaceId, userId);
+    const { isPro } = await getUserPlan(userId);
+    if (!isPro) {
+        throw new ForbiddenError(
+            "Podcast interruptions are exclusive to Pro and Pro+ members. Upgrade to unlock interactive AI co-host discussions.",
+        );
+    }
+
 
     const artifact = await findArtifactByIdAndWorkspaceId(
         artifactId,

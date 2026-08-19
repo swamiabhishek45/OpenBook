@@ -114,6 +114,8 @@ const STUDIO_TOOLS: {
 ];
 
 import { MovingBorderCard } from "@/components/ui/moving-border";
+import { useUsage, useUpgradeModal } from "@/features/billing";
+import { Crown, Lock } from "lucide-react";
 
 export function StudioPanel({
   artifacts,
@@ -122,11 +124,22 @@ export function StudioPanel({
   isCreating,
   selectedSourcesCount,
 }: StudioPanelProps) {
+  const { isPro } = useUsage();
   const [selectedArtifact, setSelectedArtifact] = useState<LearningArtifact | null>(null);
   const [generatingType, setGeneratingType] = useState<ArtifactType | null>(null);
   const [hoveredTool, setHoveredTool] = useState<ArtifactType | null>(null);
 
   const handleCreate = async (type: ArtifactType) => {
+    // If podcast is clicked by free user, prompt upgrade modal immediately
+    if (type === "PODCAST" && !isPro) {
+      useUpgradeModal.getState().openUpgradeModal({
+        reason:
+          "Audio Debate Podcast is an exclusive feature for Pro and Pro+ members. Upgrade your plan to generate AI voice podcasts.",
+        limitType: "artifacts",
+      });
+      return;
+    }
+
     if (isCreating || selectedSourcesCount === 0) return;
     setGeneratingType(type);
     try {
@@ -199,14 +212,22 @@ export function StudioPanel({
           <div className="grid grid-cols-2 gap-2">
             {STUDIO_TOOLS.map((tool) => {
               const isThisGenerating = generatingType === tool.type;
+              const isPodcastProLocked = tool.type === "PODCAST" && !isPro;
 
               const cardContent = (
                 <div className="p-3 flex flex-col justify-between h-full w-full">
-                  <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
-                    {isThisGenerating ? (
-                      <ThemeLoader size={16} />
-                    ) : (
-                      tool.renderIcon(hoveredTool === tool.type)
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                      {isThisGenerating ? (
+                        <ThemeLoader size={16} />
+                      ) : (
+                        tool.renderIcon(hoveredTool === tool.type)
+                      )}
+                    </div>
+                    {tool.type === "PODCAST" && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5" /> PRO
+                      </span>
                     )}
                   </div>
                   <div>
@@ -241,21 +262,30 @@ export function StudioPanel({
                   onClick={() => handleCreate(tool.type)}
                   onMouseEnter={() => setHoveredTool(tool.type)}
                   onMouseLeave={() => setHoveredTool(null)}
-                  disabled={isCreating || selectedSourcesCount === 0}
+                  disabled={!isPodcastProLocked && (isCreating || selectedSourcesCount === 0)}
                   title={
-                    selectedSourcesCount === 0
+                    isPodcastProLocked
+                      ? "Audio Debate Podcast is exclusive to Pro and Pro+ members"
+                      : selectedSourcesCount === 0
                       ? "Please select at least one source in the sources panel to generate artifacts"
                       : `Generate ${tool.title}`
                   }
                   className={cn(
                     "p-3 rounded-xl border text-left transition-all flex flex-col justify-between group min-h-[92px]",
-                    selectedSourcesCount === 0
+                    !isPodcastProLocked && selectedSourcesCount === 0
                       ? "border-border/60 bg-muted/20 opacity-40 cursor-not-allowed select-none"
                       : "border-border bg-card hover:bg-muted/40 hover:border-zinc-400 dark:hover:border-zinc-600 active:scale-[0.99] cursor-pointer"
                   )}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center mb-2 group-hover:bg-muted/80 transition-colors">
-                    {tool.renderIcon(hoveredTool === tool.type)}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center group-hover:bg-muted/80 transition-colors">
+                      {tool.renderIcon(hoveredTool === tool.type)}
+                    </div>
+                    {tool.type === "PODCAST" && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5" /> PRO
+                      </span>
+                    )}
                   </div>
                   <div>
                     <span className="text-xs font-medium text-foreground block truncate">
@@ -270,6 +300,7 @@ export function StudioPanel({
             })}
           </div>
         </div>
+
 
         {/* Artifacts History List */}
         <div className="space-y-3 pt-2">

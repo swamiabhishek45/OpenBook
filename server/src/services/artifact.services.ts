@@ -15,7 +15,12 @@ import {
     generateArtifactContent,
 } from "./artifact-generation.services.js";
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
-import { assertCanCreateArtifact, incrementArtifactCount } from "./usage.services.js";
+import {
+    assertCanCreateArtifact,
+    assertCanCreateArtifactType,
+    incrementArtifactCount,
+} from "./usage.services.js";
+
 import { generateArtifactTitleWithGemini } from "../lib/gemini.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
 
@@ -85,12 +90,13 @@ export async function createArtifactForWorkspace(
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
     await assertCanCreateArtifact(userId);
-
+    await assertCanCreateArtifactType(userId, input.type);
 
     const context = await gatherSourceContext(
         workspaceId,
         input.sourceIds,
     );
+
 
     // Generate smart, contextual title using Gemini free model from the source text
     const title =

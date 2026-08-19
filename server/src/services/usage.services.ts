@@ -179,6 +179,27 @@ export async function assertCanCreateArtifact(userId: string): Promise<void> {
     }
 }
 
+export async function assertCanCreateArtifactType(
+    userId: string,
+    artifactType: string,
+): Promise<void> {
+    const { plan, isPro } = await getUserPlan(userId);
+
+    if (artifactType === "PODCAST" && !isPro) {
+        throw new ForbiddenError(
+            "Audio Debate Podcast is an exclusive feature for Pro and Pro+ members. Upgrade to Pro to generate AI voice podcasts.",
+            {
+                code: "PRO_FEATURE_REQUIRED",
+                limitType: "artifacts",
+                current: 0,
+                max: 0,
+                plan,
+            } satisfies LimitDetails & { code: string },
+        );
+    }
+}
+
+
 export async function incrementArtifactCount(userId: string): Promise<void> {
     await prisma.user.update({
         where: { id: userId },

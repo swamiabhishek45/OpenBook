@@ -137,3 +137,42 @@
 .dark * {
   scrollbar-color: #27272a transparent;
 }
+
+/* Gold Glitter & Shimmer Effects for PRO+ Tier */
+@keyframes gold-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gold-glitter-badge {
+  background: linear-gradient(
+    135deg,
+    #bf953f 0%,
+    #fcf6ba 25%,
+    #b38728 50%,
+    #fbf5b7 75%,
+    #aa771c 100%
+  );
+  background-size: 200% 200%;
+  animation: gold-shimmer 4s ease infinite;
+}
+
+.gold-glitter-ring {
+  background: linear-gradient(
+    135deg,
+    #d4af37 0%,
+    #fff6cc 25%,
+    #aa771c 50%,
+    #fef08a 75%,
+    #d97706 100%
+  );
+  background-size: 200% 200%;
+  animation: gold-shimmer 4s ease infinite;
+}

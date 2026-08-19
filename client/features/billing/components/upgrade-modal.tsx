@@ -174,7 +174,7 @@ export function UpgradeModal() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 min-h-[32px] leading-relaxed">
+                      <p className="text-xs text-muted-foreground mt-1 min-h-8 leading-relaxed">
                         {planItem.description}
                       </p>
                     </div>
@@ -205,7 +205,7 @@ export function UpgradeModal() {
                                 : "bg-muted text-muted-foreground"
                             )}
                           >
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            <Check className="w-2.5 h-2.5 stroke-3" />
                           </div>
                           <span
                             className={cn(

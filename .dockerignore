@@ -1,0 +1,11 @@
+node_modules
+client
+dist
+uploads
+.git
+.gitignore
+.vscode
+*.log
+.env
+.env.local
+.env.*.local

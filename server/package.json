@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "inngest": "npx inngest-cli@latest dev -u http://localhost:8081/api/inngest",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "prisma generate && tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { FlashcardItem } from "../types";
 import { ChevronLeft, ChevronRight, RotateCw, Shuffle } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface FlashcardsViewerProps {
   cards: FlashcardItem[];
@@ -159,4 +158,3 @@ export function FlashcardsViewer({ cards: initialCards }: FlashcardsViewerProps)
     </div>
   );
 }
-

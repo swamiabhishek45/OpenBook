@@ -4,13 +4,12 @@ import React, { useState } from "react";
 import { LearningArtifact, ArtifactType } from "../types";
 import { ArtifactModal } from "./artifact-modal";
 import {
-
-  Sparkles,
   Trash2,
   ChevronRight,
   Clock,
   AlertCircle,
   CheckCircle2,
+  Crown,
 } from "lucide-react";
 import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import {
@@ -22,6 +21,8 @@ import {
   AnimatedFileText,
 } from "@/components/ui/animated-icons";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { MovingBorderCard } from "@/components/ui/moving-border";
+import { useUpgradeModal, useUsage } from "@/features/billing";
 import { cn, formatDate } from "@/lib/utils";
 
 interface StudioPanelProps {
@@ -112,10 +113,6 @@ const STUDIO_TOOLS: {
     ),
   },
 ];
-
-import { MovingBorderCard } from "@/components/ui/moving-border";
-import { useUsage, useUpgradeModal } from "@/features/billing";
-import { Crown, Lock } from "lucide-react";
 
 export function StudioPanel({
   artifacts,

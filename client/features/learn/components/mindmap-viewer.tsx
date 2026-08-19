@@ -17,7 +17,7 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MindmapViewerProps {
-  content: any;
+  content: unknown;
 }
 
 interface RawNode {
@@ -30,6 +30,13 @@ interface RawEdge {
   id?: string;
   source: string | number;
   target: string | number;
+}
+
+interface RawGraph {
+  nodes?: RawNode[];
+  edges?: RawEdge[];
+  root?: string;
+  title?: string;
 }
 
 interface MindmapNodeData extends Record<string, unknown> {
@@ -125,6 +132,10 @@ const nodeTypes = {
   mindmapNode: CustomMindmapNode,
 };
 
+function isRawGraph(value: unknown): value is RawGraph {
+  return typeof value === "object" && value !== null;
+}
+
 export function MindmapViewer({ content }: MindmapViewerProps) {
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
@@ -142,7 +153,7 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
 
   // Parse raw content into clean node graph
   const rawGraph = useMemo(() => {
-    let parsed: any = content;
+    let parsed: unknown = content;
     if (typeof content === "string") {
       try {
         parsed = JSON.parse(content);
@@ -164,7 +175,7 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
     let rawNodes: RawNode[] = [];
     let rawEdges: RawEdge[] = [];
 
-    if (parsed && typeof parsed === "object") {
+    if (isRawGraph(parsed)) {
       if (Array.isArray(parsed.nodes)) {
         rawNodes = parsed.nodes;
       } else if (Array.isArray(parsed)) {
@@ -176,9 +187,11 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
       }
     }
 
+    const fallbackTitle = isRawGraph(parsed) ? parsed.root ?? parsed.title : undefined;
+
     if (rawNodes.length === 0) {
       rawNodes = [
-        { id: "1", label: parsed?.root || parsed?.title || "Central Subject" },
+        { id: "1", label: fallbackTitle || "Central Subject" },
         { id: "2", label: "Key Concepts" },
         { id: "3", label: "Implementations" },
       ];
@@ -364,5 +377,3 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
     </div>
   );
 }
-
-

@@ -1,19 +1,16 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import {
   Upload,
   Globe,
   FileText,
-  FileCode,
   X,
   Plus,
   FolderOpen,
   BookOpen,
   Search,
   Check,
-  ExternalLink,
-  Lock,
   HelpCircle,
 } from "lucide-react";
 
@@ -28,7 +25,7 @@ import {
   useImportGoogleDriveSource,
   useImportNotionSource,
 } from "../hooks/use-sources";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { NotionTokenGuideModal } from "./notion-token-guide-modal";
 
@@ -50,9 +47,22 @@ type TabType =
   | "website"
   | "youtube"
   | "text"
-  | "markdown"
   | "google-drive"
   | "notion";
+
+const FORM_CONTROL_CLASSNAME =
+  "w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring";
+const TAB_CLASSNAME =
+  "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors";
+
+const SOURCE_TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
+  { id: "pdf", label: "PDF", icon: <Upload className="size-3.5" /> },
+  { id: "google-drive", label: "Google Drive", icon: <FolderOpen className="size-3.5" /> },
+  { id: "notion", label: "Notion", icon: <BookOpen className="size-3.5" /> },
+  { id: "website", label: "Web URL", icon: <Globe className="size-3.5" /> },
+  { id: "youtube", label: "YouTube", icon: <YoutubeIcon size={14} /> },
+  { id: "text", label: "Text", icon: <FileText className="size-3.5" /> },
+];
 
 interface IntegrationsStatus {
   googleDrive: {
@@ -63,6 +73,10 @@ interface IntegrationsStatus {
     connected: boolean;
     account?: { metadata?: { workspaceName?: string } } | null;
   };
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 export function AddSourceDialog({
@@ -77,7 +91,6 @@ export function AddSourceDialog({
   onCreateTextSource,
 }: AddSourceDialogProps) {
   const isDialogOpen = open !== undefined ? open : (isOpen || false);
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>("pdf");
   const [isLoading, setIsLoading] = useState(false);
@@ -100,8 +113,6 @@ export function AddSourceDialog({
   const [youtubeTitle, setYoutubeTitle] = useState("");
   const [textTitle, setTextTitle] = useState("");
   const [textContent, setTextContent] = useState("");
-  const [markdownTitle, setMarkdownTitle] = useState("");
-  const [markdownContent, setMarkdownContent] = useState("");
 
   // Integration specific states
   const [driveSearch, setDriveSearch] = useState("");
@@ -126,7 +137,6 @@ export function AddSourceDialog({
   const {
     data: driveFilesData,
     isLoading: isLoadingDriveFiles,
-    refetch: refetchDriveFiles,
   } = useQuery<{
     files: Array<{
       id: string;
@@ -173,8 +183,6 @@ export function AddSourceDialog({
     setYoutubeTitle("");
     setTextTitle("");
     setTextContent("");
-    setMarkdownTitle("");
-    setMarkdownContent("");
     setSelectedDriveFileId(null);
     setSelectedNotionPageId(null);
     setError(null);
@@ -193,7 +201,7 @@ export function AddSourceDialog({
         window.location.href = res.url;
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to get Google Drive auth URL.");
+      setError(getErrorMessage(err, "Failed to get Google Drive auth URL."));
     }
   };
 
@@ -213,7 +221,7 @@ export function AddSourceDialog({
       await refetchIntegrations();
       await refetchNotionPages();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to connect Notion token.");
+      setError(getErrorMessage(err, "Failed to connect Notion token."));
     } finally {
       setIsConnectingNotion(false);
     }
@@ -222,107 +230,54 @@ export function AddSourceDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
+    const title = (value: string) => value.trim() || undefined;
 
+    if (activeTab === "pdf" && !pdfFile) return setError("Please select a PDF file.");
+    if (activeTab === "website" && !webUrl.trim()) return setError("Please enter a valid website URL.");
+    if (activeTab === "youtube" && !youtubeUrl.trim()) return setError("Please enter a valid YouTube video URL.");
+    if (activeTab === "text" && (!textTitle.trim() || !textContent.trim())) {
+      return setError("Please enter both a title and text content.");
+    }
+    if (activeTab === "google-drive" && !selectedDriveFileId) {
+      return setError("Please select a Google Doc or PDF from the list.");
+    }
+    if (activeTab === "notion" && !selectedNotionPageId) {
+      return setError("Please select a Notion page from the list.");
+    }
+
+    setIsLoading(true);
     try {
-      if (activeTab === "pdf") {
-        if (!pdfFile) {
-          setError("Please select a PDF file.");
-          setIsLoading(false);
-          return;
-        }
-        if (onUploadPdf) {
-          await onUploadPdf(pdfFile, pdfTitle.trim() || undefined);
-        } else if (workspaceId) {
-          await uploadPdfMutation.mutateAsync({
-            file: pdfFile,
-            title: pdfTitle.trim() || undefined,
-          });
-        }
-      } else if (activeTab === "website") {
-        if (!webUrl.trim()) {
-          setError("Please enter a valid website URL.");
-          setIsLoading(false);
-          return;
-        }
-        if (onImportWebsite) {
-          await onImportWebsite(webUrl.trim(), webTitle.trim() || undefined);
-        } else if (workspaceId) {
-          await importWebsiteMutation.mutateAsync({
-            url: webUrl.trim(),
-            title: webTitle.trim() || undefined,
-          });
-        }
-      } else if (activeTab === "youtube") {
-        if (!youtubeUrl.trim()) {
-          setError("Please enter a valid YouTube video URL.");
-          setIsLoading(false);
-          return;
-        }
-        if (onImportYoutube) {
-          await onImportYoutube(youtubeUrl.trim(), youtubeTitle.trim() || undefined);
-        } else if (workspaceId) {
-          await importYoutubeMutation.mutateAsync({
-            url: youtubeUrl.trim(),
-            title: youtubeTitle.trim() || undefined,
-          });
-        }
-      } else if (activeTab === "text") {
-        if (!textTitle.trim() || !textContent.trim()) {
-          setError("Please enter both a title and text content.");
-          setIsLoading(false);
-          return;
-        }
-        if (onCreateTextSource) {
-          await onCreateTextSource(textTitle.trim(), textContent.trim());
-        } else if (workspaceId) {
-          await createSourceMutation.mutateAsync({
-            type: "TEXT",
-            title: textTitle.trim(),
-            content: textContent.trim(),
-          });
-        }
-      } else if (activeTab === "markdown") {
-        if (!markdownTitle.trim() || !markdownContent.trim()) {
-          setError("Please enter both a title and markdown content.");
-          setIsLoading(false);
-          return;
-        }
-        if (workspaceId) {
-          await createSourceMutation.mutateAsync({
-            type: "MARKDOWN",
-            title: markdownTitle.trim(),
-            content: markdownContent.trim(),
-          });
-        } else if (onCreateTextSource) {
-          await onCreateTextSource(markdownTitle.trim(), markdownContent.trim());
-        }
-      } else if (activeTab === "google-drive") {
-        if (!selectedDriveFileId) {
-          setError("Please select a Google Doc or PDF from the list.");
-          setIsLoading(false);
-          return;
-        }
-        if (workspaceId) {
-          await importGoogleDriveMutation.mutateAsync(selectedDriveFileId);
-        }
-      } else if (activeTab === "notion") {
-        if (!selectedNotionPageId) {
-          setError("Please select a Notion page from the list.");
-          setIsLoading(false);
-          return;
-        }
-        if (workspaceId) {
-          await importNotionMutation.mutateAsync(selectedNotionPageId);
-        }
+      switch (activeTab) {
+        case "pdf":
+          await (onUploadPdf
+            ? onUploadPdf(pdfFile!, title(pdfTitle))
+            : uploadPdfMutation.mutateAsync({ file: pdfFile!, title: title(pdfTitle) }));
+          break;
+        case "website":
+          await (onImportWebsite
+            ? onImportWebsite(webUrl.trim(), title(webTitle))
+            : importWebsiteMutation.mutateAsync({ url: webUrl.trim(), title: title(webTitle) }));
+          break;
+        case "youtube":
+          await (onImportYoutube
+            ? onImportYoutube(youtubeUrl.trim(), title(youtubeTitle))
+            : importYoutubeMutation.mutateAsync({ url: youtubeUrl.trim(), title: title(youtubeTitle) }));
+          break;
+        case "text":
+          await (onCreateTextSource
+            ? onCreateTextSource(textTitle.trim(), textContent.trim())
+            : createSourceMutation.mutateAsync({ type: "TEXT", title: textTitle.trim(), content: textContent.trim() }));
+          break;
+        case "google-drive":
+          await importGoogleDriveMutation.mutateAsync(selectedDriveFileId!);
+          break;
+        case "notion":
+          await importNotionMutation.mutateAsync(selectedNotionPageId!);
+          break;
       }
       handleClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to add source. Please try again.");
-      }
+      setError(getErrorMessage(err, "Failed to add source. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -347,107 +302,25 @@ export function AddSourceDialog({
 
         {/* Tab Bar */}
         <div className="flex border-b border-border bg-muted/40 px-6 pt-2 gap-1 overflow-x-auto select-none">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("pdf");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "pdf"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>PDF</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("google-drive");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "google-drive"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <FolderOpen className="w-3.5 h-3.5" />
-            <span>Google Drive</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("notion");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "notion"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Notion</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("website");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "website"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Web URL</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("youtube");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "youtube"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <YoutubeIcon size={14} />
-            <span>YouTube</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("text");
-              setError(null);
-            }}
-            className={cn(
-              "px-3 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap",
-              activeTab === "text"
-                ? "border-foreground text-foreground font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Text</span>
-          </button>
+          {SOURCE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id);
+                setError(null);
+              }}
+              className={cn(
+                TAB_CLASSNAME,
+                activeTab === tab.id
+                  ? "border-foreground font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
         {/* Content Body */}
@@ -499,7 +372,7 @@ export function AddSourceDialog({
                   placeholder="e.g. Research Paper"
                   value={pdfTitle}
                   onChange={(e) => setPdfTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
             </div>
@@ -536,7 +409,7 @@ export function AddSourceDialog({
                       placeholder="Search Google Drive docs & PDFs..."
                       value={driveSearch}
                       onChange={(e) => setDriveSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className={cn(FORM_CONTROL_CLASSNAME, "pl-8 pr-3")}
                     />
                   </div>
 
@@ -615,7 +488,7 @@ export function AddSourceDialog({
                       placeholder="secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                       value={notionTokenInput}
                       onChange={(e) => setNotionTokenInput(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className={cn(FORM_CONTROL_CLASSNAME, "font-mono")}
                     />
                     <button
                       type="button"
@@ -644,7 +517,7 @@ export function AddSourceDialog({
                       placeholder="Search Notion pages..."
                       value={notionSearch}
                       onChange={(e) => setNotionSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      className={cn(FORM_CONTROL_CLASSNAME, "pl-8 pr-3")}
                     />
                   </div>
 
@@ -699,7 +572,7 @@ export function AddSourceDialog({
                   placeholder="https://example.com/article"
                   value={webUrl}
                   onChange={(e) => setWebUrl(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
 
@@ -712,7 +585,7 @@ export function AddSourceDialog({
                   placeholder="Custom title"
                   value={webTitle}
                   onChange={(e) => setWebTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
             </div>
@@ -730,7 +603,7 @@ export function AddSourceDialog({
                   placeholder="https://www.youtube.com/watch?v=..."
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
 
@@ -743,7 +616,7 @@ export function AddSourceDialog({
                   placeholder="Custom video title"
                   value={youtubeTitle}
                   onChange={(e) => setYoutubeTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
             </div>
@@ -761,7 +634,7 @@ export function AddSourceDialog({
                   placeholder="e.g. Chapter 1 Notes"
                   value={textTitle}
                   onChange={(e) => setTextTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  className={FORM_CONTROL_CLASSNAME}
                 />
               </div>
 
@@ -774,7 +647,7 @@ export function AddSourceDialog({
                   placeholder="Paste your text content here..."
                   value={textContent}
                   onChange={(e) => setTextContent(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+                  className={cn(FORM_CONTROL_CLASSNAME, "font-mono")}
                 />
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play,
   Pause,
@@ -11,7 +11,6 @@ import {
   Download,
   Copy,
   Check,
-  Sparkles,
   Radio,
   User,
   Users,
@@ -19,13 +18,11 @@ import {
   Loader2,
   X,
   Send,
-  CornerDownRight,
 } from "lucide-react";
 import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import { PodcastContent, InterruptionItem } from "../types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +38,22 @@ const SUGGESTED_INTERRUPTIONS = [
   "How does this connect to earlier findings in the sources?",
   "Could you summarize the main takeaway in simpler terms?",
 ];
+
+const PLAYBACK_RATES = [1, 1.25, 1.5, 2];
+
+function formatTime(seconds: number) {
+  if (Number.isNaN(seconds)) return "00:00";
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+function getTranscriptText(turns: PodcastContent["transcript"] = []) {
+  return turns.map((turn) => `${turn.speaker.toUpperCase()}:\n${turn.text}`).join("\n\n");
+}
 
 export function PodcastViewer({
   content,
@@ -58,9 +71,7 @@ export function PodcastViewer({
   const [copied, setCopied] = useState(false);
 
   // Interruption State
-  const [interruptions, setInterruptions] = useState<InterruptionItem[]>(
-    podcast?.interruptions || []
-  );
+  const [createdInterruptions, setCreatedInterruptions] = useState<InterruptionItem[]>([]);
   const [isInterruptModalOpen, setIsInterruptModalOpen] = useState(false);
   const [userQuestion, setUserQuestion] = useState("");
   const [isSubmittingInterrupt, setIsSubmittingInterrupt] = useState(false);
@@ -73,13 +84,11 @@ export function PodcastViewer({
 
   const turns = podcast?.transcript || [];
   const mainAudioUrl = podcast?.audioUrl;
-
-  // Sync initial interruptions from prop
-  useEffect(() => {
-    if (podcast?.interruptions) {
-      setInterruptions(podcast.interruptions);
-    }
-  }, [podcast?.interruptions]);
+  const interruptions = useMemo(() => {
+    const persisted = podcast?.interruptions ?? [];
+    const persistedIds = new Set(persisted.map((item) => item.id));
+    return [...persisted, ...createdInterruptions.filter((item) => !persistedIds.has(item.id))];
+  }, [podcast?.interruptions, createdInterruptions]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -150,8 +159,9 @@ export function PodcastViewer({
   };
 
   const cyclePlaybackRate = () => {
-    const rates = [1, 1.25, 1.5, 2];
-    const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length];
+    const nextRate = PLAYBACK_RATES[
+      (PLAYBACK_RATES.indexOf(playbackRate) + 1) % PLAYBACK_RATES.length
+    ];
     setPlaybackRate(nextRate);
     if (audioRef.current) {
       audioRef.current.playbackRate = nextRate;
@@ -166,21 +176,9 @@ export function PodcastViewer({
 
   const copyTranscript = () => {
     if (!turns.length) return;
-    const fullText = turns
-      .map((t) => `${t.speaker.toUpperCase()}:\n${t.text}`)
-      .join("\n\n");
-    navigator.clipboard.writeText(fullText);
+    navigator.clipboard.writeText(getTranscriptText(turns));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const formatTime = (secs: number) => {
-    if (isNaN(secs)) return "00:00";
-    const minutes = Math.floor(secs / 60);
-    const remainingSeconds = Math.floor(secs % 60);
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
   };
 
   // Open "Interrupt & Ask" modal
@@ -214,7 +212,7 @@ export function PodcastViewer({
         }
       );
 
-      setInterruptions((prev) => [...prev, interruption]);
+      setCreatedInterruptions((previous) => [...previous, interruption]);
       setUserQuestion("");
       setIsInterruptModalOpen(false);
 

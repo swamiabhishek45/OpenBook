@@ -28,7 +28,6 @@ import { ThemeLoader } from "@/components/ui/theme-loader";
 import { apiClient } from "@/lib/api-client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 interface ArtifactModalProps {
   artifact: LearningArtifact | null;
@@ -39,16 +38,20 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [isExportingNotion, setIsExportingNotion] = useState(false);
-  const [exportedNotionUrl, setExportedNotionUrl] = useState<string | null>(null);
-
-  // Sync / reset exported Notion URL specifically for the active artifact
-  useEffect(() => {
-    const existingUrl = (artifact?.metadata as Record<string, unknown> | undefined)?.notionPageUrl;
-    setExportedNotionUrl(typeof existingUrl === "string" ? existingUrl : null);
-    setCopied(false);
-  }, [artifact?.id, artifact?.metadata]);
+  const [exportedNotionPage, setExportedNotionPage] = useState<{
+    artifactId: string;
+    url: string;
+  } | null>(null);
 
   if (!artifact) return null;
+
+  const existingNotionUrl = artifact.metadata?.notionPageUrl;
+  const exportedNotionUrl =
+    exportedNotionPage?.artifactId === artifact.id
+      ? exportedNotionPage.url
+      : typeof existingNotionUrl === "string"
+        ? existingNotionUrl
+        : null;
 
   const handleExportNotion = async () => {
     if (!artifact.workspaceId || !artifact.id) return;
@@ -59,7 +62,7 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
         { method: "POST" }
       );
       if (res.url) {
-        setExportedNotionUrl(res.url);
+        setExportedNotionPage({ artifactId: artifact.id, url: res.url });
         void queryClient.invalidateQueries({
           queryKey: ["artifacts", artifact.workspaceId],
         });

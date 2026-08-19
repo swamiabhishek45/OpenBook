@@ -24,9 +24,14 @@ sourceRoutes.post(
     asyncHandler(uploadPdf),
 );
 
+import { importDriveFile, importPage } from "../controllers/integration.controller.js";
+
 sourceRoutes.post("/import/youtube", asyncHandler(importYoutube));
 sourceRoutes.post("/import/website", asyncHandler(importWebsite));
 sourceRoutes.post("/import/web-search", asyncHandler(importWebSearch));
+sourceRoutes.post("/import/google-drive", asyncHandler(importDriveFile));
+sourceRoutes.post("/import/notion", asyncHandler(importPage));
+
 sourceRoutes.post("/reprocess", asyncHandler(reprocessSources));
 sourceRoutes.post("/:sourceId/reprocess", asyncHandler(reprocessSource));
 sourceRoutes.get("/:sourceId/chunks", asyncHandler(getSourceChunks));

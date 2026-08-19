@@ -164,3 +164,30 @@ export function importWebSearchSource(
         },
     );
 }
+
+export function importGoogleDriveSource(
+    workspaceId: string,
+    fileId: string,
+) {
+    return apiFetch<Source>(
+        `/api/workspaces/${workspaceId}/sources/import/google-drive`,
+        {
+            method: "POST",
+            body: JSON.stringify({ fileId }),
+        },
+    );
+}
+
+export function importNotionSource(
+    workspaceId: string,
+    pageId: string,
+) {
+    return apiFetch<Source>(
+        `/api/workspaces/${workspaceId}/sources/import/notion`,
+        {
+            method: "POST",
+            body: JSON.stringify({ pageId }),
+        },
+    );
+}
+

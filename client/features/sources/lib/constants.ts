@@ -6,6 +6,8 @@ export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
     YOUTUBE: "YouTube",
     TEXT: "Text",
     MARKDOWN: "Markdown",
+    GOOGLE_DOC: "Google Doc",
+    NOTION_PAGE: "Notion Page",
 };
 
 export const SOURCE_STATUS_LABELS: Record<SourceStatus, string> = {
@@ -21,7 +23,10 @@ export const SOURCE_TYPES: SourceType[] = [
     "PDF",
     "WEBSITE",
     "YOUTUBE",
+    "GOOGLE_DOC",
+    "NOTION_PAGE",
 ];
+
 
 export const SOURCE_STATUSES: SourceStatus[] = [
     "PENDING",

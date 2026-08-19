@@ -1,4 +1,12 @@
-export type SourceType = "PDF" | "WEBSITE" | "YOUTUBE" | "TEXT" | "MARKDOWN";
+export type SourceType =
+  | "PDF"
+  | "WEBSITE"
+  | "YOUTUBE"
+  | "TEXT"
+  | "MARKDOWN"
+  | "GOOGLE_DOC"
+  | "NOTION_PAGE";
+
 
 export type SourceStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
 

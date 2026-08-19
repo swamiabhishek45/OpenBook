@@ -179,6 +179,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
             className="min-w-55"
           >
             <SourcesPanel
+              workspaceId={workspaceId}
               sources={sources}
               selectedSourceIds={selectedSourceIds}
               onToggleSelect={toggleSourceSelection}
@@ -247,6 +248,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
         <div className="flex-1 overflow-hidden">
           {mobileTab === "sources" && (
             <SourcesPanel
+              workspaceId={workspaceId}
               sources={sources}
               selectedSourceIds={selectedSourceIds}
               onToggleSelect={toggleSourceSelection}
@@ -262,6 +264,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               isLoading={isSourcesLoading}
             />
           )}
+
 
           {mobileTab === "chat" && (
             <ChatPanel

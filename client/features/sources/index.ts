@@ -14,3 +14,5 @@ export * from "./components/source-sidebar";
 export * from "./components/source-status-badge";
 export * from "./components/source-type-icon";
 export * from "./components/markdown-preview";
+export * from "./components/notion-token-guide-modal";
+

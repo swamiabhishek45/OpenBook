@@ -39,10 +39,12 @@ model User {
   accounts              Account[]
   workspaces            Workspace[]
   payments              PaymentRecord[]
+  connectedAccounts     ConnectedAccount[]
 
   @@unique([email])
   @@map("user")
 }
+
 
 model PaymentRecord {
   id                String        @id @default(cuid())
@@ -136,7 +138,32 @@ enum SourceType {
   YOUTUBE
   TEXT
   MARKDOWN
+  GOOGLE_DOC
+  NOTION_PAGE
 }
+
+enum IntegrationProvider {
+  GOOGLE_DRIVE
+  NOTION
+}
+
+model ConnectedAccount {
+  id           String              @id @default(cuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     IntegrationProvider
+  accessToken  String              @db.Text
+  refreshToken String?             @db.Text
+  expiresAt    DateTime?
+  metadata     Json?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("connected_account")
+}
+
 
 enum SourceStatus {
   PENDING

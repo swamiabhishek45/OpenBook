@@ -43,7 +43,7 @@ export default function DashboardPage() {
       if (stored) {
         setPinnedIds(JSON.parse(stored));
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const togglePin = (workspaceId: string, e?: React.MouseEvent) => {
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         : [workspaceId, ...prev];
       try {
         localStorage.setItem("pinned_notebooks", JSON.stringify(next));
-      } catch {}
+      } catch { }
       return next;
     });
     setMenuOpenId(null);

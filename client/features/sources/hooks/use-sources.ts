@@ -11,11 +11,14 @@ import {
     importWebsiteSource,
     importWebSearchSource,
     importYoutubeSource,
+    importGoogleDriveSource,
+    importNotionSource,
     listSources,
     reprocessSource,
     reprocessSources,
     uploadPdfSource,
 } from "../lib/api";
+
 import type {
     CreateSourceInput,
     ImportWebsiteInput,
@@ -245,3 +248,40 @@ export function useImportWebSearchSource(workspaceId: string) {
         },
     });
 }
+
+export function useImportGoogleDriveSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (fileId: string) =>
+            importGoogleDriveSource(workspaceId, fileId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
+        },
+        onError: handleSourceLimitError,
+    });
+}
+
+export function useImportNotionSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (pageId: string) =>
+            importNotionSource(workspaceId, pageId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
+        },
+        onError: handleSourceLimitError,
+    });
+}
+

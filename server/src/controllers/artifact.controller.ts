@@ -68,4 +68,37 @@ export async function interruptPodcast(req: Request, res: Response) {
     });
 
     res.json(interruption);
-}
+}
+
+export async function reviewFlashcardController(req: Request, res: Response) {
+    const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
+    const { cardIndex, rating } = req.body;
+
+    const { reviewFlashcard } = await import("../services/srs.services.js");
+
+    const result = await reviewFlashcard({
+        workspaceId,
+        artifactId,
+        userId: req.session.user.id,
+        cardIndex: Number(cardIndex),
+        rating: Number(rating) as 1 | 2 | 3 | 4,
+    });
+
+    res.json(result);
+}
+
+export async function getDueFlashcardsController(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+
+    const { getDueFlashcardsForWorkspace } = await import(
+        "../services/srs.services.js"
+    );
+
+    const dueData = await getDueFlashcardsForWorkspace(
+        workspaceId,
+        req.session.user.id,
+    );
+
+    res.json(dueData);
+}
+

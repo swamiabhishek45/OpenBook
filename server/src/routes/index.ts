@@ -5,6 +5,7 @@ import { memoryRoutes } from "./memory.routes.js";
 import { paymentRoutes } from "./payment.routes.js";
 import { sourceRoutes } from "./source.routes.js";
 import { userRoutes } from "./user.routes.js";
+import { integrationRoutes } from "./integration.routes.js";
 import { workspaceRoutes } from "./workspace.routes.js";
 
 export function registerRoutes(app: Express): void {
@@ -16,4 +17,6 @@ export function registerRoutes(app: Express): void {
     app.use("/api/memory", memoryRoutes);
     app.use("/api/payment", paymentRoutes);
     app.use("/api/user", userRoutes);
-}
+    app.use("/api/integrations", integrationRoutes);
+}
+

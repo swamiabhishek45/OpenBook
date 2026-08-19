@@ -23,15 +23,60 @@ import {
 } from "lucide-react";
 import { AudioLinesIcon } from "@/components/ui/audio-lines";
 
+import { ExternalLink } from "lucide-react";
+import { ThemeLoader } from "@/components/ui/theme-loader";
+import { apiClient } from "@/lib/api-client";
+
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+
 interface ArtifactModalProps {
   artifact: LearningArtifact | null;
   onClose: () => void;
 }
 
 export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
+  const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
+  const [isExportingNotion, setIsExportingNotion] = useState(false);
+  const [exportedNotionUrl, setExportedNotionUrl] = useState<string | null>(null);
+
+  // Sync / reset exported Notion URL specifically for the active artifact
+  useEffect(() => {
+    const existingUrl = (artifact?.metadata as Record<string, unknown> | undefined)?.notionPageUrl;
+    setExportedNotionUrl(typeof existingUrl === "string" ? existingUrl : null);
+    setCopied(false);
+  }, [artifact?.id, artifact?.metadata]);
 
   if (!artifact) return null;
+
+  const handleExportNotion = async () => {
+    if (!artifact.workspaceId || !artifact.id) return;
+    setIsExportingNotion(true);
+    try {
+      const res = await apiClient<{ success: boolean; url: string }>(
+        `/api/workspaces/${artifact.workspaceId}/artifacts/${artifact.id}/export/notion`,
+        { method: "POST" }
+      );
+      if (res.url) {
+        setExportedNotionUrl(res.url);
+        void queryClient.invalidateQueries({
+          queryKey: ["artifacts", artifact.workspaceId],
+        });
+      }
+    } catch (err: unknown) {
+      console.error("Failed to export to Notion:", err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to export to Notion. Please ensure your Notion workspace is connected in Settings."
+      );
+    } finally {
+      setIsExportingNotion(false);
+    }
+  };
+
+
 
   const handleCopyMarkdown = () => {
     let textToCopy = "";
@@ -101,10 +146,46 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Export to Notion */}
+            <button
+              onClick={handleExportNotion}
+
+              disabled={isExportingNotion}
+              title="1-Click Export to connected Notion Workspace"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground text-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isExportingNotion ? (
+                <ThemeLoader size={13} />
+              ) : exportedNotionUrl ? (
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <BookOpen className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {isExportingNotion
+                  ? "Exporting..."
+                  : exportedNotionUrl
+                  ? "Exported!"
+                  : "Export Notion"}
+              </span>
+            </button>
+
+            {exportedNotionUrl && (
+              <a
+                href={exportedNotionUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity"
+              >
+                <span>Open</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+
             <button
               onClick={handleCopyMarkdown}
               title="Copy content"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground text-xs transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground text-xs transition-colors cursor-pointer"
             >
               {copied ? (
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -116,12 +197,13 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
+
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">

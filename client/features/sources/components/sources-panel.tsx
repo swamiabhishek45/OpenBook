@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 interface SourcesPanelProps {
+  workspaceId?: string;
   sources: Source[];
   selectedSourceIds: string[];
   onToggleSelect: (id: string) => void;
@@ -30,6 +31,7 @@ interface SourcesPanelProps {
 }
 
 export function SourcesPanel({
+  workspaceId,
   sources,
   selectedSourceIds,
   onToggleSelect,
@@ -42,6 +44,7 @@ export function SourcesPanel({
   onDeleteSource,
   isLoading,
 }: SourcesPanelProps) {
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [previewSource, setPreviewSource] = useState<Source | null>(null);
@@ -156,6 +159,7 @@ export function SourcesPanel({
 
       {/* Add Source Dialog Modal */}
       <AddSourceDialog
+        workspaceId={workspaceId}
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onUploadPdf={onUploadPdf}
@@ -163,6 +167,7 @@ export function SourcesPanel({
         onImportYoutube={onImportYoutube}
         onCreateTextSource={onCreateTextSource}
       />
+
 
       {/* Source Preview Dialog Modal */}
       <SourcePreviewDialog

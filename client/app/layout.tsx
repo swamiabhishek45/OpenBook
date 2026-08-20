@@ -31,6 +31,7 @@ export const metadata: Metadata = {
 
 
 import { UpgradeModal } from "@/features/billing";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
@@ -55,6 +56,7 @@ export default function RootLayout({
             <UpgradeModal />
           </QueryProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

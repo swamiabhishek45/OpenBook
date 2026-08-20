@@ -186,6 +186,66 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
         let accumulated = "";
         let buffer = "";
 
+        const parseLine = (rawLine: string): string | null => {
+          const trimmed = rawLine.trim();
+          if (!trimmed || trimmed === "data: [DONE]") return null;
+
+          // 1. Check for SSE "data: ..." format
+          if (trimmed.startsWith("data: ")) {
+            const jsonStr = trimmed.slice(6).trim();
+            try {
+              const data = JSON.parse(jsonStr);
+              if (typeof data === "string") return data;
+              return (
+                data.delta ??
+                data.textDelta ??
+                data.text ??
+                data.content ??
+                data.value ??
+                (data.type === "text-delta" ? (data.delta || data.content || "") : "") ??
+                null
+              );
+            } catch {
+              return null;
+            }
+          }
+
+          // 2. Check for AI SDK "0:..." format
+          if (trimmed.startsWith("0:")) {
+            try {
+              const text = JSON.parse(trimmed.slice(2));
+              if (typeof text === "string") return text;
+            } catch {
+              const raw = trimmed.slice(2);
+              if (raw.startsWith('"') && raw.endsWith('"')) {
+                return raw.slice(1, -1);
+              }
+            }
+            return null;
+          }
+
+          // 3. Check for raw JSON lines {"type":"text-delta", ...}
+          if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            try {
+              const data = JSON.parse(trimmed);
+              if (typeof data === "string") return data;
+              return (
+                data.delta ??
+                data.textDelta ??
+                data.text ??
+                data.content ??
+                data.value ??
+                (data.type === "text-delta" ? (data.delta || data.content || "") : "") ??
+                null
+              );
+            } catch {
+              return null;
+            }
+          }
+
+          return null;
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -197,47 +257,10 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           let updated = false;
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed === "data: [DONE]") continue;
-
-            if (trimmed.startsWith("data: ")) {
-              try {
-                const jsonStr = trimmed.slice(6);
-                const data = JSON.parse(jsonStr);
-                
-                // Extract any text delta variation from AI SDK
-                const deltaText =
-                  typeof data === "string"
-                    ? data
-                    : data.textDelta ??
-                      data.delta ??
-                      data.text ??
-                      data.value ??
-                      (data.type === "text-delta" ? data.content : "") ??
-                      "";
-
-                if (typeof deltaText === "string" && deltaText.length > 0) {
-                  accumulated += deltaText;
-                  updated = true;
-                }
-              } catch {
-                // Incomplete JSON or malformed line, continue
-              }
-            } else if (trimmed.startsWith("0:")) {
-              try {
-                const jsonStr = trimmed.slice(2);
-                const text = JSON.parse(jsonStr);
-                if (typeof text === "string") {
-                  accumulated += text;
-                  updated = true;
-                }
-              } catch {
-                const raw = trimmed.slice(2);
-                if (raw.startsWith('"') && raw.endsWith('"')) {
-                  accumulated += raw.slice(1, -1);
-                  updated = true;
-                }
-              }
+            const delta = parseLine(line);
+            if (delta && typeof delta === "string" && delta.length > 0) {
+              accumulated += delta;
+              updated = true;
             }
           }
 
@@ -253,29 +276,16 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
         }
 
         if (buffer.trim()) {
-          const trimmed = buffer.trim();
-          if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
-            try {
-              const data = JSON.parse(trimmed.slice(6));
-              const deltaText =
-                typeof data === "string"
-                  ? data
-                  : data.textDelta ??
-                    data.delta ??
-                    data.text ??
-                    data.value ??
-                    "";
-              if (typeof deltaText === "string" && deltaText.length > 0) {
-                accumulated += deltaText;
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: accumulated }
-                      : msg
-                  )
-                );
-              }
-            } catch {}
+          const delta = parseLine(buffer);
+          if (delta && typeof delta === "string" && delta.length > 0) {
+            accumulated += delta;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: accumulated }
+                  : msg
+              )
+            );
           }
         }
 

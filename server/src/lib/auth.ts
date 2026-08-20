@@ -37,7 +37,7 @@ export const auth = betterAuth({
         defaultCookieAttributes: {
             sameSite: isProduction ? "none" : "lax",
             secure: isProduction,
-            partitioned: true,
+            partitioned: isProduction,
         },
     },
 });

@@ -20,6 +20,7 @@ COPY server/src ./src
 
 # Generate Prisma client and build TypeScript
 RUN npx prisma generate
+RUN npx prisma db push
 RUN npm run build
 
 # Expose application port

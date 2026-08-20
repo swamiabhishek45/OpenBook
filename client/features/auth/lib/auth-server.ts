@@ -8,6 +8,7 @@ export async function getSession(): Promise<Session | null> {
     const cookie = requestHeaders.get("cookie") ?? "";
 
     const baseUrl =
+        process.env.BACKEND_INTERNAL_URL ||
         process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
         process.env.BETTER_AUTH_URL ||
         process.env.NEXT_PUBLIC_API_URL ||

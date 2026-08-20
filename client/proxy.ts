@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const backendUrl =
+    process.env.BACKEND_INTERNAL_URL ||
     process.env.BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:8081";

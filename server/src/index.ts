@@ -21,6 +21,7 @@ if (!allowedOrigins.includes("http://localhost:3000")) {
 }
 
 const app = express();
+app.set("trust proxy", true);
 const PORT = process.env.PORT || 8081;
 
 app.use(

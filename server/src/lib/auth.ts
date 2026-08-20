@@ -8,6 +8,8 @@ const allowedOrigins = rawClientUrls
     .map((url) => url.trim().replace(/\/$/, ""))
     .filter(Boolean);
 
+const isProduction = process.env.NODE_ENV === "production" || process.env.BETTER_AUTH_URL?.startsWith("https://");
+
 export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:8081",
     secret: process.env.BETTER_AUTH_SECRET,
@@ -27,5 +29,12 @@ export const auth = betterAuth({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
-    }
+    },
+    advanced: {
+        defaultCookieAttributes: {
+            sameSite: isProduction ? "none" : "lax",
+            secure: isProduction,
+            partitioned: true,
+        },
+    },
 });

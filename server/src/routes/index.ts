@@ -7,6 +7,8 @@ import { sourceRoutes } from "./source.routes.js";
 import { userRoutes } from "./user.routes.js";
 import { integrationRoutes } from "./integration.routes.js";
 import { workspaceRoutes } from "./workspace.routes.js";
+import { streamPodcastAudio } from "../controllers/artifact.controller.js";
+import { asyncHandler } from "../utils/async-handler.js";
 
 export function registerRoutes(app: Express): void {
     workspaceRoutes.use("/:workspaceId/sources", sourceRoutes);
@@ -18,5 +20,8 @@ export function registerRoutes(app: Express): void {
     app.use("/api/payment", paymentRoutes);
     app.use("/api/user", userRoutes);
     app.use("/api/integrations", integrationRoutes);
+
+    // Direct audio streaming for HTML5 audio tags and downloads
+    app.get("/api/audio/:workspaceId/:artifactId", asyncHandler(streamPodcastAudio));
 }
 

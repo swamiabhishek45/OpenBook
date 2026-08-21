@@ -44,6 +44,7 @@ export interface InterruptionItem {
     timestamp: number;
     userQuestion: string;
     audioUrl: string | null;
+    audioBase64?: string;
     dialogue: Array<{
         speaker: "Alex" | "Jordan";
         text: string;
@@ -51,6 +52,11 @@ export interface InterruptionItem {
     createdAt: string;
 }
 
+/**
+ * Generates an on-the-fly conversational host response to a user's question,
+ * synthesizes dual-speaker audio via ElevenLabs, and appends the interruption
+ * to the podcast artifact.
+ */
 export async function processPodcastInterruption({
     artifactId,
     workspaceId,
@@ -58,11 +64,11 @@ export async function processPodcastInterruption({
     question,
     timestamp,
 }: InterruptPodcastInput): Promise<InterruptionItem> {
-    if (!question || !question.trim()) {
-        throw new ValidationError("Question cannot be empty.");
+    if (!question || question.trim().length === 0) {
+        throw new ValidationError("Please provide a question to ask the hosts.");
     }
 
-    // 1. Verify user access and Pro plan
+    // 1. Verify workspace access & Pro subscription tier
     await getWorkspaceByIdForUser(workspaceId, userId);
     const { isPro } = await getUserPlan(userId);
     if (!isPro) {
@@ -71,12 +77,11 @@ export async function processPodcastInterruption({
         );
     }
 
-
+    // 2. Fetch artifact and verify ownership & type
     const artifact = await findArtifactByIdAndWorkspaceId(
         artifactId,
         workspaceId,
     );
-
     if (!artifact) {
         throw new NotFoundError("Podcast artifact not found.");
     }
@@ -85,48 +90,50 @@ export async function processPodcastInterruption({
         throw new ValidationError("Only podcast artifacts support interruptions.");
     }
 
-    // 2. Gather source context for grounding
-    const sourceContext = await gatherSourceContext(
-        workspaceId,
-        artifact.sourceIds,
-    );
+    // 3. Generate host dialogue response using Gemini
+    const context = await gatherSourceContext(workspaceId, artifact.sourceIds);
 
-    // 3. Prompt AI co-hosts to answer in character
     const result = await generateText({
         model: openai(CHAT_MODEL),
         system: [
-            "You are Alex and Jordan, the two AI co-hosts of the acclaimed OpenBook Deep Dive audio show.",
-            "A listener just clicked 'Interrupt & Ask' at timestamp " +
-                Math.floor(timestamp) +
-                "s with a question.",
-            "Alex: Analytical, direct, acknowledges the listener question warmly and provides the core factual answer grounded strictly in the source materials.",
-            "Jordan: Dynamic, insightful, provides a concise real-world analogy or implication, and seamlessly wraps up to return to the show.",
-            "CRITICAL: Keep the response natural, spoken, and punchy (1-2 short turns total, max ~40-50 words total) so the interruption is rapid and engaging.",
-            "Do NOT use markdown, bullet points, asterisks, or source citations like [1].",
+            "You are the executive producer and scriptwriter for the live debate podcast hosted by Alex and Jordan.",
+            "A listener just pressed 'Interrupt & Ask' while listening to the episode and asked a question.",
+            "Generate a snappy, natural 2-turn dialogue (~30-40 words total) where Alex and Jordan directly address the listener's question based on the source context.",
+            "- Turn 1 (Alex): Acknowledges the question with analytical insight.",
+            "- Turn 2 (Jordan): Expands with a vivid takeaway or contrasting angle, and smoothly hands back to the show.",
+            "CRITICAL: Keep it extremely short (under 40 words total) so audio generation is instant and does not stall the listener.",
         ].join("\n"),
         output: Output.object({ schema: interruptionSchema }),
-        prompt: `Listener Question: "${question.trim()}"\n\nGround your answer strictly in these source materials:\n${sourceContext.text}`,
+        prompt: `Listener Question: "${question}"\n\nShow Background Context:\n${context.text.slice(0, 4000)}`,
     });
 
     const dialogueData = result.output;
 
     // 4. Generate audio with ElevenLabs
     let audioUrl: string | null = null;
+    let audioBase64: string | null = null;
     try {
         const mp3Buffer = await generateMultiSpeakerPodcastAudio(
             dialogueData.dialogue,
         );
         const filename = `interruption_${Date.now()}.mp3`;
+        audioBase64 = mp3Buffer.toString("base64");
 
-        // Save locally for direct instant streaming
-        audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
-
-        // Upload to Cloudinary if available
+        // Try uploading to Cloudinary
         try {
             const cloudResult = await uploadAudioToCloudinary(mp3Buffer, filename);
             if (cloudResult?.secureUrl) audioUrl = cloudResult.secureUrl;
         } catch (cloudErr) {
             console.warn("Cloudinary upload fallback for interruption:", cloudErr);
+        }
+
+        // Local save fallback
+        if (!audioUrl) {
+            try {
+                audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
+            } catch (e) {
+                console.warn("Local save failed for interruption:", e);
+            }
         }
     } catch (audioErr) {
         console.error("Failed to generate audio for podcast interruption:", audioErr);
@@ -138,6 +145,7 @@ export async function processPodcastInterruption({
         timestamp: Math.max(0, Math.round(timestamp * 10) / 10),
         userQuestion: question.trim(),
         audioUrl,
+        audioBase64: audioBase64 || undefined,
         dialogue: dialogueData.dialogue,
         createdAt: new Date().toISOString(),
     };

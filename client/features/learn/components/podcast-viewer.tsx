@@ -55,6 +55,57 @@ function getTranscriptText(turns: PodcastContent["transcript"] = []) {
   return turns.map((turn) => `${turn.speaker.toUpperCase()}:\n${turn.text}`).join("\n\n");
 }
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+
+export function resolvePodcastAudioUrl(
+  rawUrl?: string | null,
+  workspaceId?: string,
+  artifactId?: string,
+  interruptionId?: string
+): string | undefined {
+  if (interruptionId && workspaceId && artifactId) {
+    if (
+      rawUrl &&
+      (rawUrl.startsWith("https://res.cloudinary.com") ||
+        (rawUrl.startsWith("https://") && !rawUrl.includes("localhost")))
+    ) {
+      return rawUrl;
+    }
+    return `${API_BASE_URL}/api/audio/${workspaceId}/${artifactId}?interruptionId=${interruptionId}`;
+  }
+
+  if (!rawUrl) {
+    if (workspaceId && artifactId) {
+      return `${API_BASE_URL}/api/audio/${workspaceId}/${artifactId}`;
+    }
+    return undefined;
+  }
+
+  // Direct Cloudinary or HTTPS CDN
+  if (
+    rawUrl.startsWith("https://res.cloudinary.com") ||
+    (rawUrl.startsWith("https://") && !rawUrl.includes("localhost"))
+  ) {
+    return rawUrl;
+  }
+
+  // If local URL saved in DB (e.g. http://localhost:8081/...)
+  if (rawUrl.includes("localhost:8081")) {
+    if (workspaceId && artifactId) {
+      return `${API_BASE_URL}/api/audio/${workspaceId}/${artifactId}`;
+    }
+    return rawUrl.replace("http://localhost:8081", API_BASE_URL);
+  }
+
+  // If relative path
+  if (rawUrl.startsWith("/")) {
+    return `${API_BASE_URL}${rawUrl}`;
+  }
+
+  return rawUrl;
+}
+
 export function PodcastViewer({
   content,
   artifactId,
@@ -69,6 +120,7 @@ export function PodcastViewer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   // Interruption State
   const [createdInterruptions, setCreatedInterruptions] = useState<InterruptionItem[]>([]);
@@ -83,7 +135,26 @@ export function PodcastViewer({
   const [savedResumeTime, setSavedResumeTime] = useState<number>(0);
 
   const turns = podcast?.transcript || [];
-  const mainAudioUrl = podcast?.audioUrl;
+  const rawMainAudioUrl = podcast?.audioUrl;
+
+  const resolvedMainAudioUrl = useMemo(
+    () => resolvePodcastAudioUrl(rawMainAudioUrl, workspaceId, artifactId),
+    [rawMainAudioUrl, workspaceId, artifactId]
+  );
+
+  const resolvedActiveInterruptionUrl = useMemo(
+    () =>
+      resolvePodcastAudioUrl(
+        activeInterruption?.audioUrl,
+        workspaceId,
+        artifactId,
+        activeInterruption?.id
+      ),
+    [activeInterruption, workspaceId, artifactId]
+  );
+
+  const currentAudioSrc = resolvedActiveInterruptionUrl || resolvedMainAudioUrl;
+
   const interruptions = useMemo(() => {
     const persisted = podcast?.interruptions ?? [];
     const persistedIds = new Set(persisted.map((item) => item.id));
@@ -96,15 +167,17 @@ export function PodcastViewer({
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => {
-      if (!isNaN(audio.duration)) setDuration(audio.duration);
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration);
+      }
     };
 
     const handleEnded = () => {
       // If an interruption was playing, resume the main podcast seamlessly
       if (activeInterruption) {
         setActiveInterruption(null);
-        if (mainAudioUrl) {
-          audio.src = mainAudioUrl;
+        if (resolvedMainAudioUrl) {
+          audio.src = resolvedMainAudioUrl;
           audio.currentTime = savedResumeTime;
           audio
             .play()
@@ -118,25 +191,47 @@ export function PodcastViewer({
       }
     };
 
+    const handleError = () => {
+      console.warn("Audio element encountered an error loading source:", audio.src);
+      setIsPlaying(false);
+    };
+
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
     };
-  }, [activeInterruption, mainAudioUrl, savedResumeTime]);
+  }, [activeInterruption, resolvedMainAudioUrl, savedResumeTime]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
+    setPlaybackError(null);
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
-      setIsPlaying(true);
+      // Ensure audio src is loaded
+      if (!audioRef.current.src && currentAudioSrc) {
+        audioRef.current.src = currentAudioSrc;
+      }
+      audioRef.current
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.error("Audio playback error:", err);
+          setIsPlaying(false);
+          setPlaybackError(
+            "Unable to play audio stream. Please check network connection or verify audio URL."
+          );
+        });
     }
   };
 
@@ -159,9 +254,9 @@ export function PodcastViewer({
   };
 
   const cyclePlaybackRate = () => {
-    const nextRate = PLAYBACK_RATES[
-      (PLAYBACK_RATES.indexOf(playbackRate) + 1) % PLAYBACK_RATES.length
-    ];
+    const currentIndex = PLAYBACK_RATES.indexOf(playbackRate);
+    const nextRate =
+      PLAYBACK_RATES[(currentIndex + 1) % PLAYBACK_RATES.length];
     setPlaybackRate(nextRate);
     if (audioRef.current) {
       audioRef.current.playbackRate = nextRate;
@@ -175,24 +270,26 @@ export function PodcastViewer({
   };
 
   const copyTranscript = () => {
-    if (!turns.length) return;
-    navigator.clipboard.writeText(getTranscriptText(turns));
+    const text = getTranscriptText(turns);
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Open "Interrupt & Ask" modal
+  // Open "Interrupt & Ask" modal — pauses the audio and saves timestamp
   const handleOpenInterrupt = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
       setSavedResumeTime(audioRef.current.currentTime);
+    } else {
+      setSavedResumeTime(currentTime);
     }
     setInterruptError(null);
     setIsInterruptModalOpen(true);
   };
 
-  // Submit interruption question
+  // Submit interruption question to AI hosts
   const handleSendInterruption = async (questionToSend?: string) => {
     const q = (questionToSend || userQuestion).trim();
     if (!q || !artifactId || !workspaceId) return;
@@ -217,9 +314,16 @@ export function PodcastViewer({
       setIsInterruptModalOpen(false);
 
       // Play the interruption audio immediately
-      if (interruption.audioUrl && audioRef.current) {
+      const intUrl = resolvePodcastAudioUrl(
+        interruption.audioUrl,
+        workspaceId,
+        artifactId,
+        interruption.id
+      );
+
+      if (intUrl && audioRef.current) {
         setActiveInterruption(interruption);
-        audioRef.current.src = interruption.audioUrl;
+        audioRef.current.src = intUrl;
         audioRef.current.currentTime = 0;
         audioRef.current
           .play()
@@ -241,8 +345,8 @@ export function PodcastViewer({
   const handleSkipInterruption = () => {
     if (!audioRef.current) return;
     setActiveInterruption(null);
-    if (mainAudioUrl) {
-      audioRef.current.src = mainAudioUrl;
+    if (resolvedMainAudioUrl) {
+      audioRef.current.src = resolvedMainAudioUrl;
       audioRef.current.currentTime = savedResumeTime;
       audioRef.current
         .play()
@@ -253,11 +357,17 @@ export function PodcastViewer({
 
   // Replay a specific interruption from the transcript
   const handlePlayInterruption = (item: InterruptionItem) => {
-    if (!item.audioUrl || !audioRef.current) return;
+    const itemUrl = resolvePodcastAudioUrl(
+      item.audioUrl,
+      workspaceId,
+      artifactId,
+      item.id
+    );
+    if (!itemUrl || !audioRef.current) return;
     if (audioRef.current) {
       setSavedResumeTime(audioRef.current.currentTime);
       setActiveInterruption(item);
-      audioRef.current.src = item.audioUrl;
+      audioRef.current.src = itemUrl;
       audioRef.current.currentTime = 0;
       audioRef.current
         .play()
@@ -280,8 +390,11 @@ export function PodcastViewer({
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        src={activeInterruption?.audioUrl || mainAudioUrl || undefined}
+        src={currentAudioSrc}
         preload="metadata"
+        crossOrigin="anonymous"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
 
       {/* Podcast Audio Player Hero Card */}
@@ -338,9 +451,9 @@ export function PodcastViewer({
               )}
             </Button>
 
-            {mainAudioUrl && (
+            {resolvedMainAudioUrl && (
               <a
-                href={mainAudioUrl}
+                href={resolvedMainAudioUrl}
                 download="chaibook-debate-podcast.mp3"
                 target="_blank"
                 rel="noreferrer"
@@ -353,6 +466,19 @@ export function PodcastViewer({
             )}
           </div>
         </div>
+
+        {playbackError && (
+          <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center justify-between gap-2">
+            <span>{playbackError}</span>
+            <button
+              type="button"
+              onClick={() => setPlaybackError(null)}
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Active Interruption Live Overlay */}
         {activeInterruption && (
@@ -410,7 +536,7 @@ export function PodcastViewer({
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
-            disabled={!mainAudioUrl && !activeInterruption}
+            disabled={!resolvedMainAudioUrl && !activeInterruption}
             className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary disabled:opacity-50"
           />
           <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
@@ -431,7 +557,7 @@ export function PodcastViewer({
           <button
             type="button"
             onClick={toggleMute}
-            disabled={!mainAudioUrl && !activeInterruption}
+            disabled={!resolvedMainAudioUrl && !activeInterruption}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 cursor-pointer"
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
@@ -442,7 +568,7 @@ export function PodcastViewer({
             <button
               type="button"
               onClick={() => skipTime(-10)}
-              disabled={!mainAudioUrl && !activeInterruption}
+              disabled={!resolvedMainAudioUrl && !activeInterruption}
               className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
               title="Rewind 10 seconds"
             >
@@ -452,7 +578,7 @@ export function PodcastViewer({
             <button
               type="button"
               onClick={togglePlay}
-              disabled={!mainAudioUrl && !activeInterruption}
+              disabled={!resolvedMainAudioUrl && !activeInterruption}
               className="p-3.5 bg-primary text-primary-foreground hover:opacity-90 rounded-full transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
               title={isPlaying ? "Pause" : "Play Podcast"}
             >
@@ -466,7 +592,7 @@ export function PodcastViewer({
             <button
               type="button"
               onClick={() => skipTime(10)}
-              disabled={!mainAudioUrl && !activeInterruption}
+              disabled={!resolvedMainAudioUrl && !activeInterruption}
               className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-full transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
               title="Fast forward 10 seconds"
             >
@@ -478,7 +604,7 @@ export function PodcastViewer({
           <button
             type="button"
             onClick={cyclePlaybackRate}
-            disabled={!mainAudioUrl && !activeInterruption}
+            disabled={!resolvedMainAudioUrl && !activeInterruption}
             className="px-2 py-1 text-xs font-mono font-semibold text-muted-foreground hover:text-foreground bg-secondary hover:bg-secondary/80 rounded-md border border-border transition-colors disabled:opacity-40 cursor-pointer"
           >
             {playbackRate}x
@@ -567,7 +693,7 @@ export function PodcastViewer({
                         <MessageCircleQuestion className="w-3.5 h-3.5" />
                         <span>Listener Interruption ({formatTime(matchingInterruption.timestamp)})</span>
                       </div>
-                      {matchingInterruption.audioUrl && (
+                      {(matchingInterruption.audioUrl || workspaceId) && (
                         <button
                           type="button"
                           onClick={() => handlePlayInterruption(matchingInterruption)}

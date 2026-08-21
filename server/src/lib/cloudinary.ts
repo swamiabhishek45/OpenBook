@@ -104,7 +104,9 @@ export async function uploadPdfToCloudinary(
 }
 
 /**
- * Uploads an MP3 audio buffer to Cloudinary using an unsigned upload preset.
+ * Uploads an MP3 audio buffer to Cloudinary.
+ * Tries signed upload via SDK first (if API credentials configured),
+ * then falls back to unsigned upload preset via REST API.
  *
  * @param buffer - MP3 audio file bytes
  * @param filename - Filename for the audio file (e.g. podcast.mp3)
@@ -118,6 +120,44 @@ export async function uploadAudioToCloudinary(
         throw new ValidationError("Cloudinary is not configured on the server");
     }
 
+    // 1. Try signed upload if API Key and Secret are properly configured
+    if (apiKey && apiSecret && apiKey !== apiSecret) {
+        try {
+            cloudinary.config({
+                cloud_name: cloudName,
+                api_key: apiKey,
+                api_secret: apiSecret,
+                secure: true,
+            });
+
+            const base64Data = `data:audio/mp3;base64,${buffer.toString("base64")}`;
+            const cleanId = filename.replace(/\.[^/.]+$/, "");
+
+            const result = await cloudinary.uploader.upload(base64Data, {
+                resource_type: "video",
+                folder: "chaibook/podcasts",
+                public_id: cleanId,
+                format: "mp3",
+            });
+
+            if (result?.secure_url) {
+                return {
+                    secureUrl: result.secure_url,
+                    publicId: result.public_id,
+                    bytes: result.bytes || buffer.length,
+                    originalFilename: filename,
+                    resourceType: "raw",
+                };
+            }
+        } catch (signedErr) {
+            console.warn(
+                "Cloudinary signed upload failed, attempting unsigned upload:",
+                signedErr,
+            );
+        }
+    }
+
+    // 2. Unsigned upload via fetch with upload preset
     const form = new FormData();
     form.append(
         "file",

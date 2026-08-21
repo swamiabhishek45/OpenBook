@@ -97,21 +97,27 @@ export async function generateMultiSpeakerPodcastAudio(
 }
 
 /**
- * Saves generated podcast MP3 to the local uploads directory and returns the absolute public URL.
+ * Saves generated podcast MP3 to the local uploads directory and returns the public URL.
  */
 export function savePodcastAudioLocally(
     buffer: Buffer,
     filename: string,
 ): string {
-    const uploadsDir = path.join(process.cwd(), "uploads", "podcasts");
-    fs.mkdirSync(uploadsDir, { recursive: true });
+    try {
+        const uploadsDir = path.join(process.cwd(), "uploads", "podcasts");
+        fs.mkdirSync(uploadsDir, { recursive: true });
 
-    const filePath = path.join(uploadsDir, filename);
-    fs.writeFileSync(filePath, buffer);
+        const filePath = path.join(uploadsDir, filename);
+        fs.writeFileSync(filePath, buffer);
+    } catch (err) {
+        console.warn("Could not save podcast to local disk:", err);
+    }
 
-    const serverUrl = process.env.CLIENT_URL
-        ? (process.env.BETTER_AUTH_URL || `http://localhost:${process.env.PORT || 8081}`)
-        : `http://localhost:${process.env.PORT || 8081}`;
+    const serverUrl =
+        process.env.SERVER_URL ||
+        process.env.BACKEND_URL ||
+        process.env.BETTER_AUTH_URL ||
+        (process.env.PORT ? `http://localhost:${process.env.PORT}` : "http://localhost:8081");
 
-    return `${serverUrl}/uploads/podcasts/${filename}`;
+    return `${serverUrl.replace(/\/$/, "")}/uploads/podcasts/${filename}`;
 }

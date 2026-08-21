@@ -242,16 +242,15 @@ Source material:\n\n${sourceText}`,
 
             // Generate multi-speaker audio with ElevenLabs
             let audioUrl: string | null = null;
+            let audioBase64: string | null = null;
             try {
                 const mp3Buffer = await generateMultiSpeakerPodcastAudio(
                     debateData.turns,
                 );
                 const filename = `podcast_${Date.now()}.mp3`;
+                audioBase64 = mp3Buffer.toString("base64");
 
-                // 1. Save locally for 100% reliable direct streaming
-                audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
-
-                // 2. Also try uploading to Cloudinary
+                // 1. Try uploading to Cloudinary
                 try {
                     const uploadResult = await uploadAudioToCloudinary(
                         mp3Buffer,
@@ -260,8 +259,17 @@ Source material:\n\n${sourceText}`,
                     if (uploadResult?.secureUrl) {
                         audioUrl = uploadResult.secureUrl;
                     }
-                } catch {
-                    // Local audioUrl already set as reliable fallback
+                } catch (cloudErr) {
+                    console.warn("Cloudinary upload failed for podcast, using fallback:", cloudErr);
+                }
+
+                // 2. Save locally as secondary fallback
+                if (!audioUrl) {
+                    try {
+                        audioUrl = savePodcastAudioLocally(mp3Buffer, filename);
+                    } catch (localErr) {
+                        console.warn("Local audio saving failed:", localErr);
+                    }
                 }
             } catch (audioErr) {
                 console.error("Audio synthesis failed:", audioErr);
@@ -273,6 +281,7 @@ Source material:\n\n${sourceText}`,
                     summary: debateData.summary,
                     durationEstimate: "1 min",
                     audioUrl,
+                    audioBase64: audioBase64 || undefined,
                     transcript: debateData.turns,
                 },
             };

@@ -48,13 +48,14 @@ export function getSignedCloudinaryDownloadUrl(
 }
 
 /**
- * Uploads a PDF buffer to Cloudinary using an unsigned upload preset.
+ * Uploads a PDF buffer to Cloudinary.
+ * Tries signed upload via SDK first (if API credentials configured),
+ * then falls back to unsigned upload preset via REST API.
  *
  * @param buffer - PDF file bytes from Multer
  * @param filename - Original filename (used in the multipart form)
  * @returns Upload metadata including secure URL and public id
  * @throws {ValidationError} When Cloudinary is not configured or upload is rejected
- *
  */
 export async function uploadPdfToCloudinary(
     buffer: Buffer,
@@ -64,6 +65,43 @@ export async function uploadPdfToCloudinary(
         throw new ValidationError("Cloudinary is not configured on the server");
     }
 
+    // 1. Try signed upload if API Key and Secret are properly configured
+    if (apiKey && apiSecret && apiKey !== apiSecret) {
+        try {
+            cloudinary.config({
+                cloud_name: cloudName,
+                api_key: apiKey,
+                api_secret: apiSecret,
+                secure: true,
+            });
+
+            const base64Data = `data:application/pdf;base64,${buffer.toString("base64")}`;
+            const cleanId = filename.replace(/\.[^/.]+$/, "");
+
+            const result = await cloudinary.uploader.upload(base64Data, {
+                resource_type: "raw",
+                folder: "chaibook/pdfs",
+                public_id: cleanId,
+            });
+
+            if (result?.secure_url) {
+                return {
+                    secureUrl: result.secure_url,
+                    publicId: result.public_id,
+                    bytes: result.bytes || buffer.length,
+                    originalFilename: filename,
+                    resourceType: "raw",
+                };
+            }
+        } catch (signedErr) {
+            console.warn(
+                "Cloudinary signed PDF upload failed, attempting unsigned upload:",
+                signedErr,
+            );
+        }
+    }
+
+    // 2. Unsigned upload via fetch with upload preset
     const form = new FormData();
     form.append(
         "file",

@@ -6,6 +6,14 @@ Unlike static audio overviews, OpenBook introduces a **Live "Interrupt & Ask"** 
 
 ---
 
+### 📺 Watch the Live Demo
+
+[![Watch Demo Video](https://img.shields.io/badge/▶_Watch_Live_Demo-X_(Twitter)-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/swamiabhishek45/status/2090689196923212107?s=20)
+
+> **Demo Video**: [https://x.com/swamiabhishek45/status/2090689196923212107?s=20](https://x.com/swamiabhishek45/status/2090689196923212107?s=20)
+
+---
+
 ## Key Features
 
 - **Multi-Host AI Debate Podcasts**: Transforms source materials into dynamic, intellectual audio debate shows featuring two AI hosts (Alex, the analytical host, and Jordan, the challenger) powered by ElevenLabs voice synthesis.

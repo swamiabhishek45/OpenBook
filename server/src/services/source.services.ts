@@ -15,11 +15,23 @@ import { CreateSourceInput, ImportWebsiteInput, ImportYoutubeInput, ListSourcesQ
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import { assertCanCreateSource } from "./usage.services.js";
 
+/**
+ * Verifies that the given user has read/write access to the specified workspace.
+ *
+ * @param workspaceId - Workspace identifier to verify
+ * @param userId - Authenticated user's identifier
+ * @throws {NotFoundError} When workspace does not exist or user lacks access
+ */
 async function assertWorkspaceAccess(workspaceId: string, userId: string) {
     await getWorkspaceByIdForUser(workspaceId, userId);
 }
 
-
+/**
+ * Persists a source record in the database and enqueues an asynchronous background processing event via Inngest.
+ *
+ * @param data - Source creation payload including workspaceId, title, type, content, and metadata
+ * @returns The newly created source record
+ */
 export async function createAndProcessSource(
     data: Parameters<typeof createSourceRecord>[0],
 ) {
@@ -33,8 +45,14 @@ export async function createAndProcessSource(
     return source;
 }
 
-
-
+/**
+ * Lists all sources belonging to a workspace with optional filters (e.g. status, type).
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param filters - Optional query parameters to filter sources
+ * @returns Array of source records matching the query
+ */
 export async function listSourcesForWorkspace(
     workspaceId: string,
     userId: string,
@@ -44,6 +62,15 @@ export async function listSourcesForWorkspace(
     return findSourcesByWorkspaceId(workspaceId, filters);
 }
 
+/**
+ * Fetches a single source by ID within the scope of a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param sourceId - Source document identifier
+ * @param userId - Authenticated user's identifier
+ * @returns The requested source record
+ * @throws {NotFoundError} If the source does not exist in the specified workspace
+ */
 export async function getSourceForWorkspace(
     workspaceId: string,
     sourceId: string,
@@ -60,6 +87,13 @@ export async function getSourceForWorkspace(
     return source;
 }
 
+/**
+ * Deletes a single source document and its associated chunks from a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param sourceId - Source document identifier to delete
+ * @param userId - Authenticated user's identifier
+ */
 export async function deleteSourceForWorkspace(
     workspaceId: string,
     sourceId: string,
@@ -69,6 +103,13 @@ export async function deleteSourceForWorkspace(
     await deleteSourceRecord(sourceId);
 }
 
+/**
+ * Deletes multiple sources in batch from a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param sourceIds - Array of source document identifiers to delete
+ */
 export async function bulkDeleteSourcesForWorkspace(
     workspaceId: string,
     userId: string,
@@ -81,6 +122,14 @@ export async function bulkDeleteSourcesForWorkspace(
     }
 }
 
+/**
+ * Ingests a raw text or markdown document into a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param input - Payload containing source title, type, and text content
+ * @returns The created and enqueued source record
+ */
 export async function createTextOrMarkdownSource(
     workspaceId: string,
     userId: string,
@@ -98,6 +147,14 @@ export async function createTextOrMarkdownSource(
     });
 }
 
+/**
+ * Scrapes a public website via Firecrawl and ingests its markdown content as a workspace source.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param input - Payload containing target URL and optional custom title
+ * @returns The created and enqueued source record
+ */
 export async function importWebsiteSource(
     workspaceId: string,
     userId: string,
@@ -121,6 +178,15 @@ export async function importWebsiteSource(
     });
 }
 
+/**
+ * Uploads a PDF file to Cloudinary, extracts its textual content and page count, and creates a source record.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param file - Multer uploaded file containing buffer and original name
+ * @param title - Optional custom title for the PDF source
+ * @returns The created and enqueued source record
+ */
 export async function uploadPdfSource(
     workspaceId: string,
     userId: string,
@@ -175,6 +241,14 @@ export async function uploadPdfSource(
     });
 }
 
+/**
+ * Extracts transcripts and video metadata from a YouTube video URL and ingests it as a workspace source.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param input - Payload containing YouTube URL and optional custom title
+ * @returns The created and enqueued source record
+ */
 export async function importYoutubeSource(
     workspaceId: string,
     userId: string,
@@ -199,6 +273,14 @@ export async function importYoutubeSource(
     });
 }
 
+/**
+ * Ingests external web search results as a permanent website source in a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param input - Web source parameters containing title, content, and original URL
+ * @returns The created and enqueued source record
+ */
 export async function importWebSearchSource(
     workspaceId: string,
     userId: string,
@@ -221,7 +303,14 @@ export async function importWebSearchSource(
     });
 }
 
-
+/**
+ * Triggers re-processing (re-extraction, re-chunking, and re-indexing) for a single source.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param sourceId - Source identifier to reprocess
+ * @param userId - Authenticated user's identifier
+ * @returns Status confirmation object `{ reprocessed: true }`
+ */
 export async function reprocessSourceForWorkspace(
     workspaceId: string,
     sourceId: string,
@@ -237,6 +326,14 @@ export async function reprocessSourceForWorkspace(
     return { reprocessed: true };
 }
 
+/**
+ * Triggers re-processing for all or a filtered subset of sources in a workspace.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param userId - Authenticated user's identifier
+ * @param sourceIds - Optional array of source IDs to restrict re-processing
+ * @returns Count of sources submitted for re-processing
+ */
 export async function reprocessSourcesForWorkspace(
     workspaceId: string,
     userId: string,
@@ -259,6 +356,14 @@ export async function reprocessSourcesForWorkspace(
     return { reprocessed: targetSources.length };
 }
 
+/**
+ * Fetches all indexed text chunks and token metadata associated with a specific source.
+ *
+ * @param workspaceId - Target workspace identifier
+ * @param sourceId - Source identifier to retrieve chunks for
+ * @param userId - Authenticated user's identifier
+ * @returns Object containing sourceId, workspaceId, chunks list, and chunk count
+ */
 export async function getSourceChunksForWorkspace(
     workspaceId: string,
     sourceId: string,

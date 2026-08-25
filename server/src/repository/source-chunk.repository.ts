@@ -23,12 +23,24 @@ export type CreateSourceChunkData = {
     metadata?: Prisma.InputJsonValue;
 };
 
+/**
+ * Deletes all chunks associated with a specific source ID.
+ *
+ * @param sourceId - Unique identifier of the parent source
+ * @returns Promise resolving to batch deletion count
+ */
 export function deleteChunksBySourceId(sourceId: string) {
     return prisma.sourceChunk.deleteMany({
         where: { sourceId },
     });
 }
 
+/**
+ * Persists an array of text chunks into PostgreSQL inside a database transaction.
+ *
+ * @param chunks - Array of chunk records to create
+ * @returns Promise resolving to created chunk records
+ */
 export function createSourceChunks(chunks: CreateSourceChunkData[]) {
     if (chunks.length === 0) {
         return Promise.resolve([]);
@@ -50,6 +62,12 @@ export function createSourceChunks(chunks: CreateSourceChunkData[]) {
     );
 }
 
+/**
+ * Queries all text chunks belonging to a source, sorted by their original sequential index.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @returns Promise resolving to list of chunk records
+ */
 export function findChunksBySourceId(sourceId: string) {
     return prisma.sourceChunk.findMany({
         where: { sourceId },
@@ -58,6 +76,13 @@ export function findChunksBySourceId(sourceId: string) {
     });
 }
 
+/**
+ * Fetches recent text chunks across all READY sources in a workspace.
+ *
+ * @param workspaceId - Workspace identifier
+ * @param limit - Maximum number of chunks to return (defaults to 10)
+ * @returns Promise resolving to chunk records with joined source metadata
+ */
 export function findChunksByWorkspaceId(workspaceId: string, limit = 10) {
     return prisma.sourceChunk.findMany({
         where: {
@@ -81,6 +106,15 @@ export function findChunksByWorkspaceId(workspaceId: string, limit = 10) {
     });
 }
 
+/**
+ * Searches chunks across all sources in a workspace by performing case-insensitive term matching in Postgres.
+ * Used as fallback RAG retrieval when Pinecone vector search is unavailable.
+ *
+ * @param workspaceId - Workspace identifier
+ * @param queryTerms - Array of keywords extracted from user prompt
+ * @param limit - Maximum number of chunks to return (defaults to 6)
+ * @returns Promise resolving to matched chunk records with parent source metadata
+ */
 export function searchChunksByWorkspace(workspaceId: string, queryTerms: string[], limit = 6) {
     const filters = queryTerms
         .filter((term) => term.length >= 2)

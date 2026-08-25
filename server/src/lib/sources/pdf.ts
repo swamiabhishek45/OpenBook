@@ -9,6 +9,13 @@ export type PdfExtractResult = {
 };
 
 
+/**
+ * Downloads a binary PDF file from a remote HTTP/HTTPS URL into an ArrayBuffer.
+ *
+ * @param url - Remote PDF asset URL
+ * @returns Promise resolving to ArrayBuffer of PDF bytes
+ * @throws {Error} When network request fails
+ */
 async function downloadPdf(url: string) {
     const response = await fetch(url);
 
@@ -19,6 +26,13 @@ async function downloadPdf(url: string) {
     return response.arrayBuffer();
 }
 
+/**
+ * Parses and extracts text content from an in-memory PDF binary buffer using `unpdf`.
+ *
+ * @param buffer - ArrayBuffer or Node Buffer containing PDF file data
+ * @returns Object with concatenated text, array of page-level strings, and total page count
+ * @throws {Error} When text cannot be extracted or document contains no readable text
+ */
 export async function extractPdfFromBuffer(
     buffer: ArrayBuffer | Buffer,
 ): Promise<PdfExtractResult> {
@@ -50,7 +64,13 @@ export async function extractPdfFromBuffer(
     };
 }
 
-
+/**
+ * Downloads a PDF file from Cloudinary (supporting private signed URL fallbacks) and extracts its textual content.
+ *
+ * @param input - Object containing fileUrl, optional publicId, and resourceType
+ * @returns Promise resolving to parsed PDF text and page arrays
+ * @throws {Error} If download fails or authentication is required but missing
+ */
 export async function extractPdfFromCloudinary(input: {
     fileUrl: string;
     publicId?: string;

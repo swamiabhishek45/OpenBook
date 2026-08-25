@@ -34,6 +34,13 @@ type SourceMetadata = {
     indexedAt?: string;
 };
 
+/**
+ * Extracts raw textual content and pagination structure from a source record or its Cloudinary asset.
+ *
+ * @param source - The source database record to extract text from
+ * @returns Object with full text, page count, and page array (if applicable)
+ * @throws {Error} When source content or Cloudinary fileUrl metadata is missing
+ */
 async function extractSourceText(source: SourceRecord) {
     const text = source.content?.trim();
     if (text) {
@@ -70,10 +77,24 @@ async function extractSourceText(source: SourceRecord) {
     throw new Error(`Source ${source.id} has no extractable content`);
 }
 
+/**
+ * Updates a source status to "PROCESSING" in the database.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @returns Updated source record
+ */
 export function markSourceProcessing(sourceId: string) {
     return updateSourceRecord(sourceId, { status: "PROCESSING" });
 }
 
+/**
+ * Marks a source status as "FAILED" in the database and records the error message in metadata.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @param error - The encountered error or exception
+ * @param existingMetadata - Existing source metadata to preserve
+ * @returns Updated source record with FAILED status and error details
+ */
 export async function markSourceFailed(
     sourceId: string,
     error: unknown,
@@ -98,6 +119,13 @@ export async function markSourceFailed(
     });
 }
 
+/**
+ * Extracts and persists the textual content and page count of a source document.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @returns Extracted content, pages, workspaceId, and updated source record
+ * @throws {Error} If source does not exist
+ */
 export async function extractSourceContent(sourceId: string) {
     const source = await findSourceById(sourceId);
     if (!source) {
@@ -129,6 +157,15 @@ export async function extractSourceContent(sourceId: string) {
     };
 }
 
+/**
+ * Breaks down source text into overlapping chunks, computes token counts, and saves them to Postgres.
+ *
+ * @param sourceId - Unique identifier of the parent source
+ * @param text - Full source text content
+ * @param pages - Optional page-by-page strings for PDF document preserving pagination
+ * @returns Newly created source chunk records in the database
+ * @throws {Error} When no chunks could be generated from the content
+ */
 export async function chunkSourceContent(
     sourceId: string,
     text: string,
@@ -153,6 +190,12 @@ export async function chunkSourceContent(
     );
 }
 
+/**
+ * Removes all vector embeddings from Pinecone and deletes text chunks from Postgres for a given source.
+ *
+ * @param workspaceId - Workspace containing the source vectors
+ * @param sourceId - Unique identifier of the source
+ */
 export async function removeSourceFromIndex(
     workspaceId: string,
     sourceId: string,
@@ -162,9 +205,11 @@ export async function removeSourceFromIndex(
 }
 
 /**
- * Returns all chunks for a source plus the total count.
- * Useful for debugging, admin UI, or verifying processing completed.
+ * Returns all stored chunks for a source along with the total chunk count.
+ * Useful for debugging, verification, and inspecting chunking boundaries.
  *
+ * @param sourceId - Unique identifier of the source
+ * @returns Object containing the chunk list and total count
  */
 export async function listChunksForSource(sourceId: string) {
     const chunks = await findChunksBySourceId(sourceId);

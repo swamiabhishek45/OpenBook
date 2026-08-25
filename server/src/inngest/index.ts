@@ -6,6 +6,10 @@ import { chunkSourceContent, embedAndIndexSource, extractSourceContent, markSour
 import { inngest } from "./client.js";
 
 
+/**
+ * Inngest durable background function triggered by `source/created`.
+ * Coordinates the multi-step ETL pipeline: mark processing -> extract -> chunk -> embed & index in Pinecone.
+ */
 export const processSource = inngest.createFunction(
   {
       id: "process-source",
@@ -60,6 +64,10 @@ export const processSource = inngest.createFunction(
   },
 );
 
+/**
+ * Inngest durable background function triggered by `conversation/summarize`.
+ * Produces rolling summaries of long conversations and syncs user memory to Mem0.
+ */
 export const summarizeConversation = inngest.createFunction(
     {
         id: "summarize-conversation",
@@ -77,6 +85,10 @@ export const summarizeConversation = inngest.createFunction(
     },
 );
 
+/**
+ * Inngest durable background function triggered by `artifact/generate`.
+ * Runs AI synthesis for study artifacts (quizzes, flashcards, mind maps, podcasts).
+ */
 export const generateArtifact = inngest.createFunction(
     {
         id: "generate-artifact",

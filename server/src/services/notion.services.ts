@@ -22,7 +22,11 @@ const NOTION_REDIRECT_URI =
 const NOTION_API_VERSION = "2022-06-28";
 
 /**
- * Returns OAuth authorization URL for Notion.
+ * Generates the Notion OAuth 2.0 authorization URL for connecting a Notion workspace.
+ *
+ * @param userId - Unique identifier of the user (passed in state parameter)
+ * @returns Notion OAuth consent URL
+ * @throws {ValidationError} When Notion Client ID is not configured
  */
 export function getNotionAuthUrl(userId: string): string {
     if (!NOTION_CLIENT_ID) {
@@ -41,7 +45,13 @@ export function getNotionAuthUrl(userId: string): string {
 }
 
 /**
- * Direct connection via Notion Internal Integration Secret Token.
+ * Connects a Notion workspace directly using an internal Notion integration secret token.
+ *
+ * @param params - Configuration object
+ * @param params.userId - Authenticated user's identifier
+ * @param params.token - Notion internal integration token
+ * @returns ConnectedAccount record for the authenticated user
+ * @throws {ValidationError} When token is invalid or lacks access to user profile
  */
 export async function connectNotionWithToken({
     userId,
@@ -88,7 +98,13 @@ export async function connectNotionWithToken({
 }
 
 /**
- * Exchanges Notion OAuth code for access token.
+ * Exchanges a Notion OAuth authorization code for a bot access token and persists the account.
+ *
+ * @param params - Callback payload
+ * @param params.code - Authorization code returned from Notion OAuth redirect
+ * @param params.userId - Authenticated user's identifier
+ * @returns The created or updated ConnectedAccount record
+ * @throws {ValidationError} If code is missing or token exchange fails
  */
 export async function handleNotionOAuthCallback({
     code,
@@ -148,7 +164,11 @@ export async function handleNotionOAuthCallback({
 }
 
 /**
- * Retrieves valid Notion access token for user.
+ * Retrieves the stored Notion integration access token for the given user.
+ *
+ * @param userId - Authenticated user's identifier
+ * @returns Valid Notion access token string
+ * @throws {NotFoundError} If Notion is not connected for the user
  */
 async function getNotionToken(userId: string): Promise<string> {
     const account = await findConnectedAccount(userId, "NOTION");
@@ -161,7 +181,12 @@ async function getNotionToken(userId: string): Promise<string> {
 }
 
 /**
- * Lists accessible Notion pages and databases.
+ * Searches and lists accessible Notion pages and databases in the user's connected workspace.
+ *
+ * @param userId - Authenticated user's identifier
+ * @param search - Optional query string to filter Notion pages
+ * @returns Array of page summary objects with title, icon, and URL
+ * @throws {ValidationError} If searching Notion API fails
  */
 export async function listNotionPages(userId: string, search?: string) {
     const token = await getNotionToken(userId);
@@ -236,7 +261,10 @@ export async function listNotionPages(userId: string, search?: string) {
 }
 
 /**
- * Converts Notion rich text array to plain markdown string.
+ * Converts a Notion rich text array into a formatted Markdown string, preserving bold, italics, and code styles.
+ *
+ * @param richTextArr - Array of Notion rich text segment objects
+ * @returns Formatted markdown string
  */
 function extractRichText(richTextArr: Array<Record<string, unknown>>): string {
     if (!Array.isArray(richTextArr)) return "";
@@ -254,7 +282,12 @@ function extractRichText(richTextArr: Array<Record<string, unknown>>): string {
 }
 
 /**
- * Fetches all blocks of a page recursively and converts to Markdown.
+ * Fetches all block children of a Notion page recursively up to depth 3 and converts them to Markdown syntax.
+ *
+ * @param pageId - Notion block/page identifier
+ * @param token - Valid Notion access token
+ * @param depth - Current recursion depth (capped at 3 to prevent loops)
+ * @returns Markdown string representation of the page content
  */
 async function fetchPageBlocksAsMarkdown(
     pageId: string,
@@ -354,7 +387,15 @@ async function fetchPageBlocksAsMarkdown(
 }
 
 /**
- * Imports a Notion page directly as a Source in the workspace.
+ * Imports a Notion page directly as a workspace Source by converting its block structure into markdown.
+ *
+ * @param params - Ingestion parameters
+ * @param params.workspaceId - Target workspace identifier
+ * @param params.userId - Authenticated user's identifier
+ * @param params.pageId - Notion page identifier
+ * @returns The created and enqueued Source record
+ * @throws {NotFoundError} If the Notion page is not found
+ * @throws {ValidationError} If the page has no readable text content
  */
 export async function importNotionPage({
     workspaceId,
@@ -428,7 +469,10 @@ export async function importNotionPage({
 }
 
 /**
- * Converts markdown / artifact text into Notion block objects.
+ * Parses markdown text into Notion block representations (headings, lists, quotes, paragraphs).
+ *
+ * @param text - Markdown content to convert
+ * @returns Array of Notion block payload objects
  */
 function markdownToNotionBlocks(text: string): Array<Record<string, unknown>> {
     const lines = text.split("\n");
@@ -502,7 +546,16 @@ function markdownToNotionBlocks(text: string): Array<Record<string, unknown>> {
 }
 
 /**
- * 1-Click Export: Creates a rich Notion page from an artifact.
+ * Exports a generated learning artifact (summary, quiz, flashcards, report) to Notion as a formatted page.
+ *
+ * @param params - Export options
+ * @param params.workspaceId - Source workspace identifier
+ * @param params.artifactId - Artifact identifier to export
+ * @param params.userId - Authenticated user's identifier
+ * @param params.parentPageId - Optional target Notion parent page identifier
+ * @returns Result object with created pageId, Notion web URL, and artifact title
+ * @throws {NotFoundError} If artifact is not found
+ * @throws {ValidationError} If export fails or no accessible parent pages exist
  */
 export async function exportArtifactToNotion({
     workspaceId,

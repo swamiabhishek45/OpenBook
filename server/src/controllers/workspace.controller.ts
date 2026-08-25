@@ -14,6 +14,13 @@ import {
     workspaceIdParamSchema,
 } from "../validators/workspace.validator.js";
 
+/**
+ * Validates and extracts the `workspaceId` URL parameter using Zod schema.
+ *
+ * @param params - Express request URL parameters object
+ * @returns Parsed and validated workspaceId object
+ * @throws {ValidationError} When workspaceId is invalid
+ */
 function parseWorkspaceId(params: Request["params"]) {
     const parsed = workspaceIdParamSchema.safeParse(params);
 
@@ -27,6 +34,13 @@ function parseWorkspaceId(params: Request["params"]) {
     return parsed.data;
 }
 
+/**
+ * Validates the request body for creating a new workspace.
+ *
+ * @param body - Raw request body
+ * @returns Validated workspace creation payload
+ * @throws {ValidationError} When payload fails validation constraints
+ */
 function parseCreateBody(body: unknown) {
     const parsed = createWorkspaceSchema.safeParse(body);
 
@@ -40,6 +54,13 @@ function parseCreateBody(body: unknown) {
     return parsed.data;
 }
 
+/**
+ * Validates the request body for updating an existing workspace.
+ *
+ * @param body - Raw request body
+ * @returns Validated workspace update payload
+ * @throws {ValidationError} When payload fails validation constraints
+ */
 function parseUpdateBody(body: unknown) {
     const parsed = updateWorkspaceSchema.safeParse(body);
 
@@ -53,11 +74,23 @@ function parseUpdateBody(body: unknown) {
     return parsed.data;
 }
 
+/**
+ * Handles HTTP GET request to list all workspaces for the authenticated user.
+ *
+ * @param req - Express request with session user
+ * @param res - Express response object
+ */
 export async function listWorkspaces(req: Request, res: Response) {
     const workspaces = await listWorkspacesByUser(req.session.user.id);
     res.json(workspaces);
 }
 
+/**
+ * Handles HTTP GET request to retrieve a single workspace by ID.
+ *
+ * @param req - Express request containing workspaceId parameter
+ * @param res - Express response object
+ */
 export async function getWorkspace(req: Request, res: Response) {
     const { workspaceId } = parseWorkspaceId(req.params);
     const workspace = await getWorkspaceByIdForUser(
@@ -67,6 +100,12 @@ export async function getWorkspace(req: Request, res: Response) {
     res.json(workspace);
 }
 
+/**
+ * Handles HTTP POST request to create a new workspace.
+ *
+ * @param req - Express request with creation payload in body
+ * @param res - Express response object returning 201 Created
+ */
 export async function createWorkspace(req: Request, res: Response) {
     const input = parseCreateBody(req.body);
     const workspace = await createWorkspaceForUser(
@@ -76,6 +115,12 @@ export async function createWorkspace(req: Request, res: Response) {
     res.status(201).json(workspace);
 }
 
+/**
+ * Handles HTTP PATCH/PUT request to update workspace details.
+ *
+ * @param req - Express request with workspaceId param and update payload
+ * @param res - Express response object
+ */
 export async function updateWorkspace(req: Request, res: Response) {
     const { workspaceId } = parseWorkspaceId(req.params);
     const input = parseUpdateBody(req.body);
@@ -87,6 +132,12 @@ export async function updateWorkspace(req: Request, res: Response) {
     res.json(workspace);
 }
 
+/**
+ * Handles HTTP DELETE request to delete a workspace and its assets.
+ *
+ * @param req - Express request with workspaceId parameter
+ * @param res - Express response object returning 204 No Content
+ */
 export async function deleteWorkspace(req: Request, res: Response) {
     const { workspaceId } = parseWorkspaceId(req.params);
     await deleteWorkspaceForUser(workspaceId, req.session.user.id);

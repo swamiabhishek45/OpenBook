@@ -7,6 +7,14 @@ import {
 
 let client: OpenAI | null = null;
 
+/**
+ * Generates vector embeddings for an array of input strings using OpenAI `text-embedding-3-small` (1536 dimensions).
+ * Automatically truncates oversized strings to satisfy model token boundaries.
+ *
+ * @param texts - Array of string inputs to embed
+ * @returns Promise resolving to an array of 1536-dimensional number vectors in original index order
+ * @throws {Error} If OPENAI_API_KEY is not configured
+ */
 export async function embedTexts(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) {
         return [];

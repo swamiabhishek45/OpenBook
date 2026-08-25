@@ -4,6 +4,15 @@ import { ZodError } from "zod";
 import { AppError } from "../types/app-error.js";
 import { getZodFieldErrors } from "../utils/zod-error.js";
 
+/**
+ * Global Express error handling middleware. Formats Application errors, Zod validation failures,
+ * Multer upload errors, and Cloudinary permission errors into standardized JSON responses.
+ *
+ * @param error - Encountered error or exception
+ * @param _req - Express request object
+ * @param res - Express response object
+ * @param _next - Express next function
+ */
 export function errorHandler(
     error: unknown,
     _req: Request,

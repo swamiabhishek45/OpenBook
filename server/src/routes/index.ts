@@ -10,6 +10,11 @@ import { workspaceRoutes } from "./workspace.routes.js";
 import { streamPodcastAudio } from "../controllers/artifact.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
+/**
+ * Registers all application API routes (workspaces, sources, artifacts, chats, memory, payments, integrations, and audio streaming) onto the Express app.
+ *
+ * @param app - Express application instance
+ */
 export function registerRoutes(app: Express): void {
     workspaceRoutes.use("/:workspaceId/sources", sourceRoutes);
     workspaceRoutes.use("/:workspaceId/artifacts", artifactRoutes);

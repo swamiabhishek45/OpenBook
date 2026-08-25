@@ -1,5 +1,11 @@
 import type { UIMessage } from "ai";
 
+/**
+ * Extracts plain text from diverse AI SDK message representations (string, UIMessage.parts, content arrays).
+ *
+ * @param message - Message object or raw string payload from client
+ * @returns Concatenated plain text content of the message
+ */
 export function getTextFromUIMessage(message: any): string {
     if (!message) return "";
 
@@ -27,6 +33,12 @@ export function getTextFromUIMessage(message: any): string {
     return "";
 }
 
+/**
+ * Traverses message history backwards to find and extract the text of the most recent user message.
+ *
+ * @param messages - Array of message objects from client payload
+ * @returns Text of the last user message, or null if not found
+ */
 export function getLastUserMessageText(messages: any[]): string | null {
     if (!Array.isArray(messages) || messages.length === 0) {
         return null;
@@ -45,6 +57,12 @@ export function getLastUserMessageText(messages: any[]): string | null {
     return null;
 }
 
+/**
+ * Creates a clean, human-readable conversation title from the first user prompt (capped at 72 characters).
+ *
+ * @param text - First user message prompt text
+ * @returns Cleaned title string
+ */
 export function buildConversationTitle(text: string): string {
     const normalized = text.replace(/\s+/g, " ").trim();
     if (!normalized) {

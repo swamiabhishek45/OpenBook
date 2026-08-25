@@ -45,6 +45,12 @@ export interface LimitDetails {
     plan: PlanType;
 }
 
+/**
+ * Retrieves the subscription plan details, expiration state, and associated resource limits for a user.
+ *
+ * @param userId - Unique identifier of the user
+ * @returns An object containing the effective plan type, expiration date, pro flags, and plan limits
+ */
 export async function getUserPlan(userId: string) {
     const user = await findUserPlanDetails(userId);
 
@@ -64,6 +70,12 @@ export async function getUserPlan(userId: string) {
     };
 }
 
+/**
+ * Computes a user's current resource consumption against their plan limits across workspaces, sources, artifacts, and messages.
+ *
+ * @param userId - Unique identifier of the user
+ * @returns Comprehensive usage metrics with current counts, maximum limits, and exceeded flags
+ */
 export async function getUserUsage(userId: string) {
     const { plan, isPro, isProPlus, planExpiresAt, limits } =
         await getUserPlan(userId);
@@ -107,6 +119,12 @@ export async function getUserUsage(userId: string) {
     };
 }
 
+/**
+ * Enforces workspace creation quotas based on the user's active subscription plan.
+ *
+ * @param userId - Unique identifier of the user
+ * @throws {ForbiddenError} When the workspace limit for the user's plan is reached
+ */
 export async function assertCanCreateWorkspace(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
@@ -126,6 +144,12 @@ export async function assertCanCreateWorkspace(userId: string): Promise<void> {
     }
 }
 
+/**
+ * Enforces source document upload quotas based on the user's active subscription plan.
+ *
+ * @param userId - Unique identifier of the user
+ * @throws {ForbiddenError} When the source limit for the user's plan is reached
+ */
 export async function assertCanCreateSource(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
@@ -145,6 +169,12 @@ export async function assertCanCreateSource(userId: string): Promise<void> {
     }
 }
 
+/**
+ * Enforces total lifetime/period artifact generation quotas based on the user's subscription plan.
+ *
+ * @param userId - Unique identifier of the user
+ * @throws {ForbiddenError} When the artifact creation limit for the plan is reached
+ */
 export async function assertCanCreateArtifact(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 
@@ -166,6 +196,13 @@ export async function assertCanCreateArtifact(userId: string): Promise<void> {
     }
 }
 
+/**
+ * Checks feature gating permissions for specialized artifact types (e.g. Podcasts requiring Pro/Pro+).
+ *
+ * @param userId - Unique identifier of the user
+ * @param artifactType - Type of artifact being requested (e.g. "PODCAST")
+ * @throws {ForbiddenError} When attempting to create a premium artifact on a restricted plan
+ */
 export async function assertCanCreateArtifactType(
     userId: string,
     artifactType: string,
@@ -186,10 +223,21 @@ export async function assertCanCreateArtifactType(
     }
 }
 
+/**
+ * Increments the total artifact creation counter for a user in the database.
+ *
+ * @param userId - Unique identifier of the user
+ */
 export async function incrementArtifactCount(userId: string): Promise<void> {
     await incrementUserArtifactCountRepo(userId);
 }
 
+/**
+ * Enforces chat message quotas based on the user's active subscription plan.
+ *
+ * @param userId - Unique identifier of the user
+ * @throws {ForbiddenError} When the free chat message quota is exhausted
+ */
 export async function assertCanSendMessage(userId: string): Promise<void> {
     const { plan, limits } = await getUserPlan(userId);
 

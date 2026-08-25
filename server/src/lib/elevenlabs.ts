@@ -14,7 +14,12 @@ export interface SpeechTurn {
 }
 
 /**
- * Synthesizes a single turn text into an MP3 buffer using ElevenLabs REST API.
+ * Synthesizes a single dialogue turn into an MP3 audio buffer using the ElevenLabs Turbo v2.5 TTS model.
+ *
+ * @param text - Spoken dialogue text to synthesize
+ * @param voiceId - ElevenLabs voice ID to use
+ * @returns Promise resolving to the MP3 audio binary buffer
+ * @throws {AppError} When ELEVENLABS_API_KEY is not configured or ElevenLabs API rejects the request
  */
 export async function synthesizeElevenLabsSpeech(
     text: string,
@@ -64,7 +69,11 @@ export async function synthesizeElevenLabsSpeech(
 }
 
 /**
- * Generates audio for a multi-speaker debate podcast and returns concatenated MP3 buffer.
+ * Iterates through dialogue turns, synthesizes audio for Alex and Jordan, and concatenates the resulting MP3 buffers.
+ *
+ * @param turns - Array of speech turn objects with speaker and text
+ * @returns Promise resolving to concatenated MP3 audio Buffer
+ * @throws {AppError} If audio synthesis fails for all turns
  */
 export async function generateMultiSpeakerPodcastAudio(
     turns: SpeechTurn[],
@@ -97,7 +106,11 @@ export async function generateMultiSpeakerPodcastAudio(
 }
 
 /**
- * Saves generated podcast MP3 to the local uploads directory and returns the public URL.
+ * Saves a generated podcast MP3 buffer to the local disk fallback directory (`uploads/podcasts/`) and returns its public HTTP URL.
+ *
+ * @param buffer - MP3 audio binary buffer
+ * @param filename - Target filename (e.g. podcast_123.mp3)
+ * @returns Fully qualified public HTTP URL to access the audio file
  */
 export function savePodcastAudioLocally(
     buffer: Buffer,

@@ -24,6 +24,12 @@ export type WorkspaceRecord = {
     updatedAt: Date;
 };
 
+/**
+ * Queries all workspaces owned by a user, sorted by most recently updated.
+ *
+ * @param userId - Unique identifier of the user
+ * @returns Promise resolving to a list of workspace records
+ */
 export function findWorkspacesByUserId(userId: string) {
     return prisma.workspace.findMany({
         where: { userId },
@@ -32,6 +38,13 @@ export function findWorkspacesByUserId(userId: string) {
     });
 }
 
+/**
+ * Queries a single workspace record by ID and user ID.
+ *
+ * @param workspaceId - Unique identifier of the workspace
+ * @param userId - Unique identifier of the user
+ * @returns Promise resolving to matching workspace record or null
+ */
 export function findWorkspaceByIdAndUserId(
     workspaceId: string,
     userId: string,
@@ -42,6 +55,13 @@ export function findWorkspaceByIdAndUserId(
     });
 }
 
+/**
+ * Inserts a new workspace record for a user in PostgreSQL.
+ *
+ * @param userId - Owner's user identifier
+ * @param data - Workspace parameters (title, description, icon, defaultModel)
+ * @returns Promise resolving to the newly created workspace record
+ */
 export function createWorkspaceRecord(
     userId: string,
     data: CreateWorkspaceInput,
@@ -55,6 +75,13 @@ export function createWorkspaceRecord(
     });
 }
 
+/**
+ * Updates properties of an existing workspace in PostgreSQL.
+ *
+ * @param workspaceId - Unique identifier of the workspace to update
+ * @param data - Partial workspace update payload
+ * @returns Promise resolving to the updated workspace record
+ */
 export function updateWorkspaceRecord(
     workspaceId: string,
     data: UpdateWorkspaceInput,
@@ -66,6 +93,11 @@ export function updateWorkspaceRecord(
     });
 }
 
+/**
+ * Deletes a workspace record by ID from PostgreSQL.
+ *
+ * @param workspaceId - Unique identifier of the workspace to delete
+ */
 export async function deleteWorkspaceRecord(workspaceId: string) {
     await prisma.workspace.delete({
         where: { id: workspaceId },

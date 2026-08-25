@@ -16,6 +16,12 @@ import {
 } from "../validators/artifact.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 
+/**
+ * Handles HTTP GET request to list all learning artifacts in a workspace.
+ *
+ * @param req - Express request with workspaceId URL param
+ * @param res - Express response returning array of artifact records
+ */
 export async function listArtifacts(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
     const artifacts = await listArtifactsForWorkspace(
@@ -25,6 +31,12 @@ export async function listArtifacts(req: Request, res: Response) {
     res.json(artifacts);
 }
 
+/**
+ * Handles HTTP GET request to retrieve a single artifact by ID.
+ *
+ * @param req - Express request with workspaceId and artifactId params
+ * @param res - Express response returning artifact record
+ */
 export async function getArtifact(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
     const artifact = await getArtifactForWorkspace(
@@ -35,6 +47,12 @@ export async function getArtifact(req: Request, res: Response) {
     res.json(artifact);
 }
 
+/**
+ * Handles HTTP POST request to initiate background generation of a learning artifact (summary, quiz, podcast, etc.).
+ *
+ * @param req - Express request with creation payload
+ * @param res - Express response returning 201 Created with PENDING artifact record
+ */
 export async function createArtifact(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
     const input = createArtifactSchema.parse(req.body);
@@ -46,6 +64,12 @@ export async function createArtifact(req: Request, res: Response) {
     res.status(201).json(artifact);
 }
 
+/**
+ * Handles HTTP DELETE request to remove an artifact from a workspace.
+ *
+ * @param req - Express request with workspaceId and artifactId params
+ * @param res - Express response returning 204 No Content
+ */
 export async function deleteArtifact(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
     await deleteArtifactForWorkspace(
@@ -56,6 +80,12 @@ export async function deleteArtifact(req: Request, res: Response) {
     res.status(204).send();
 }
 
+/**
+ * Handles HTTP POST request for live "Interrupt & Ask" interactions during podcast audio playback.
+ *
+ * @param req - Express request containing listener question and current playback timestamp
+ * @param res - Express response returning synthesized interruption dialogue and audio URL
+ */
 export async function interruptPodcast(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
     const { question, timestamp } = req.body;
@@ -71,6 +101,14 @@ export async function interruptPodcast(req: Request, res: Response) {
     res.json(interruption);
 }
 
+/**
+ * Handles HTTP GET request for direct byte-range audio streaming of generated podcasts and interruptions.
+ * Supports HTTP 206 Partial Content for instant seeking and audio scrubbing.
+ *
+ * @param req - Express request with workspaceId, artifactId, and optional interruptionId query param
+ * @param res - Express binary audio stream response
+ * @throws {NotFoundError} When podcast or interruption audio cannot be located
+ */
 export async function streamPodcastAudio(req: Request, res: Response) {
     const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
     const interruptionId = req.query.interruptionId as string | undefined;

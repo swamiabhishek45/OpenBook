@@ -10,6 +10,12 @@ export interface CreatePaymentRecordData {
     status?: PaymentStatus;
 }
 
+/**
+ * Inserts a new Razorpay payment record into PostgreSQL (status: PENDING by default).
+ *
+ * @param data - Payment record attributes
+ * @returns Promise resolving to created PaymentRecord
+ */
 export function createPaymentRecord(data: CreatePaymentRecordData) {
     return prisma.paymentRecord.create({
         data: {
@@ -23,12 +29,24 @@ export function createPaymentRecord(data: CreatePaymentRecordData) {
     });
 }
 
+/**
+ * Queries a payment record by its unique Razorpay order ID.
+ *
+ * @param orderId - Razorpay order identifier
+ * @returns Promise resolving to matching PaymentRecord or null
+ */
 export function findPaymentRecordByOrderId(orderId: string) {
     return prisma.paymentRecord.findUnique({
         where: { razorpayOrderId: orderId },
     });
 }
 
+/**
+ * Updates a payment record status to SUCCESS upon valid signature verification.
+ *
+ * @param params - Object containing orderId, paymentId, and signature
+ * @returns Promise resolving to update batch payload
+ */
 export function updatePaymentRecordSuccess({
     orderId,
     paymentId,
@@ -48,6 +66,12 @@ export function updatePaymentRecordSuccess({
     });
 }
 
+/**
+ * Marks a payment record as FAILED when signature verification or checkout fails.
+ *
+ * @param orderId - Razorpay order identifier
+ * @returns Promise resolving to update batch payload
+ */
 export function markPaymentRecordFailed(orderId: string) {
     return prisma.paymentRecord.updateMany({
         where: { razorpayOrderId: orderId },

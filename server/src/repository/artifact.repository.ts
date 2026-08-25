@@ -27,6 +27,12 @@ export type CreateArtifactData = {
     metadata?: Prisma.InputJsonValue;
 };
 
+/**
+ * Queries all learning artifacts in a workspace, ordered by newest first.
+ *
+ * @param workspaceId - Workspace identifier
+ * @returns Promise resolving to list of artifact records
+ */
 export function findArtifactsByWorkspaceId(workspaceId: string) {
     return prisma.learningArtifact.findMany({
         where: { workspaceId },
@@ -35,6 +41,13 @@ export function findArtifactsByWorkspaceId(workspaceId: string) {
     });
 }
 
+/**
+ * Queries an artifact scoped by artifactId and workspaceId.
+ *
+ * @param artifactId - Unique identifier of the artifact
+ * @param workspaceId - Workspace identifier
+ * @returns Promise resolving to matching artifact record or null
+ */
 export function findArtifactByIdAndWorkspaceId(
     artifactId: string,
     workspaceId: string,
@@ -45,6 +58,12 @@ export function findArtifactByIdAndWorkspaceId(
     });
 }
 
+/**
+ * Inserts a new learning artifact record (in PENDING status) into PostgreSQL.
+ *
+ * @param data - Artifact parameters (workspaceId, type, title, sourceIds, status, metadata)
+ * @returns Promise resolving to created artifact record
+ */
 export function createArtifactRecord(data: CreateArtifactData) {
     return prisma.learningArtifact.create({
         data: {
@@ -59,6 +78,13 @@ export function createArtifactRecord(data: CreateArtifactData) {
     });
 }
 
+/**
+ * Updates properties (title, generated JSON content, status, metadata) of an artifact record.
+ *
+ * @param artifactId - Unique identifier of the artifact
+ * @param data - Update payload
+ * @returns Promise resolving to updated artifact record
+ */
 export function updateArtifactRecord(
     artifactId: string,
     data: {
@@ -75,12 +101,23 @@ export function updateArtifactRecord(
     });
 }
 
+/**
+ * Deletes an artifact record by ID from PostgreSQL.
+ *
+ * @param artifactId - Unique identifier of the artifact to delete
+ */
 export async function deleteArtifactRecord(artifactId: string) {
     await prisma.learningArtifact.delete({
         where: { id: artifactId },
     });
 }
 
+/**
+ * Queries an artifact by its unique ID.
+ *
+ * @param artifactId - Unique identifier of the artifact
+ * @returns Promise resolving to matching artifact record or null
+ */
 export function findArtifactById(artifactId: string) {
     return prisma.learningArtifact.findUnique({
         where: { id: artifactId },

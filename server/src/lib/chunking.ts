@@ -13,7 +13,12 @@ const DEFAULT_CHUNK_OVERLAP = 100;
 const SEPARATORS = ["\n\n", "\n", ". ", " ", ""];
 
 /**
- * Splits raw text into clean chunk strings using recursive hierarchical splitting.
+ * Splits raw text into clean chunk strings using recursive hierarchical separators (\n\n, \n, sentence, word).
+ *
+ * @param text - Raw source text to split
+ * @param chunkSize - Maximum character length per chunk
+ * @param chunkOverlap - Character overlap between consecutive chunks
+ * @returns Array of chunk text strings
  */
 function splitText(text: string, chunkSize: number, chunkOverlap: number): string[] {
     const trimmed = text.trim();
@@ -81,7 +86,11 @@ function splitText(text: string, chunkSize: number, chunkOverlap: number): strin
 }
 
 /**
- * Public API: split any plain string into numbered `TextChunk` objects.
+ * Splits plain text into indexed and token-aware `TextChunk` records with metadata.
+ *
+ * @param text - Text content to chunk
+ * @param options - Configurable chunkSize (default 1000), chunkOverlap (default 100), and custom metadata
+ * @returns Array of sequential TextChunk objects
  */
 export function chunkText(
     text: string,
@@ -103,7 +112,11 @@ export function chunkText(
 }
 
 /**
- * Chunk a multi-page document while preserving page numbers.
+ * Splits a multi-page document (e.g. PDF) into chunks while preserving 1-based page numbers in metadata.
+ *
+ * @param pages - Array of extracted page text strings
+ * @param options - Configurable chunkSize and chunkOverlap
+ * @returns Array of sequential TextChunk objects tagged with page numbers
  */
 export function chunkPages(
     pages: string[],

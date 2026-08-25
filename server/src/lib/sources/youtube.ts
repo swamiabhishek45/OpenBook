@@ -9,10 +9,21 @@ const USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
 ];
 
+/**
+ * Selects a random modern browser User-Agent string from the pool.
+ *
+ * @returns Random user agent string
+ */
 function getRandomUserAgent(): string {
     return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
+/**
+ * Decodes HTML entities commonly found in raw YouTube caption XML responses.
+ *
+ * @param str - Raw string containing HTML entities
+ * @returns Decoded plain text string
+ */
 function decodeHtmlEntities(str: string): string {
     return str
         .replace(/&amp;/g, "&")
@@ -27,6 +38,12 @@ function decodeHtmlEntities(str: string): string {
         .trim();
 }
 
+/**
+ * Extracts the 11-character YouTube video identifier from standard URLs, short links, or embed paths.
+ *
+ * @param url - YouTube URL or raw video ID
+ * @returns 11-character video ID string, or null if invalid
+ */
 function extractYouTubeVideoId(url: string): string | null {
     if (!url || typeof url !== "string") return null;
 
@@ -66,6 +83,12 @@ function extractYouTubeVideoId(url: string): string | null {
     return regexMatch?.[1] ?? null;
 }
 
+/**
+ * Fetches the video title via YouTube's public oEmbed endpoint.
+ *
+ * @param videoId - 11-character YouTube video ID
+ * @returns Video title string or null if unavailable
+ */
 async function fetchYoutubeTitle(videoId: string): Promise<string | null> {
     try {
         const response = await fetch(
@@ -84,6 +107,13 @@ async function fetchYoutubeTitle(videoId: string): Promise<string | null> {
     }
 }
 
+/**
+ * Strategy 1: Attempts transcript extraction via youtube-transcript-plus.
+ *
+ * @param videoId - 11-character YouTube video ID
+ * @param lang - Optional language code
+ * @returns Object with transcript content and title, or null
+ */
 async function tryFetchTranscriptPlus(videoId: string, lang?: string): Promise<{ content: string; title?: string } | null> {
     try {
         const result = await fetchTranscriptPlus(videoId, {
@@ -109,6 +139,12 @@ async function tryFetchTranscriptPlus(videoId: string, lang?: string): Promise<{
     return null;
 }
 
+/**
+ * Strategy 2: Attempts transcript extraction via legacy youtube-transcript package.
+ *
+ * @param videoId - 11-character YouTube video ID
+ * @returns Decoded transcript text string or null
+ */
 async function tryFetchYoutubeTranscript(videoId: string): Promise<string | null> {
     try {
         const segments = await YoutubeTranscript.fetchTranscript(videoId);
@@ -122,6 +158,12 @@ async function tryFetchYoutubeTranscript(videoId: string): Promise<string | null
     return null;
 }
 
+/**
+ * Strategy 3: Attempts scraping YouTube page captions via Firecrawl residential proxies.
+ *
+ * @param videoId - 11-character YouTube video ID
+ * @returns Object with scraped text and title, or null
+ */
 async function tryFetchViaFirecrawl(videoId: string): Promise<{ content: string; title?: string } | null> {
     const apiKey = process.env.FIRECRAWL_API_KEY;
     if (!apiKey) return null;
@@ -145,6 +187,13 @@ async function tryFetchViaFirecrawl(videoId: string): Promise<{ content: string;
     return null;
 }
 
+/**
+ * Fetches closed captions and title from a YouTube video URL using multi-strategy fallback.
+ *
+ * @param url - YouTube video link
+ * @returns Object containing videoId, transcript content, and video title
+ * @throws {ValidationError} When URL is invalid or all transcript fetch strategies fail
+ */
 export async function fetchYoutubeTranscript(url: string) {
     const videoId = extractYouTubeVideoId(url);
 

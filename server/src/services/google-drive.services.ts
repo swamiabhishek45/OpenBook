@@ -21,7 +21,11 @@ const GOOGLE_REDIRECT_URI =
     `${serverBaseUrl}/api/integrations/google-drive/callback`;
 
 /**
- * Returns OAuth authorization URL for Google Drive readonly scope.
+ * Generates the Google OAuth 2.0 authorization URL for read-only Google Drive access.
+ *
+ * @param userId - Unique identifier of the user (passed in OAuth state parameter)
+ * @returns Complete Google OAuth consent screen URL
+ * @throws {ValidationError} When Google Client ID is not configured on the server
  */
 export function getGoogleDriveAuthUrl(userId: string): string {
     if (!GOOGLE_CLIENT_ID) {
@@ -42,7 +46,13 @@ export function getGoogleDriveAuthUrl(userId: string): string {
 }
 
 /**
- * Exchanges authorization code for tokens and saves to ConnectedAccount.
+ * Exchanges the Google OAuth authorization code for access/refresh tokens and persists the connected account.
+ *
+ * @param params - Object containing authorization code and userId
+ * @param params.code - Authorization code returned from Google OAuth redirect
+ * @param params.userId - Authenticated user's identifier
+ * @returns The persisted connected account record
+ * @throws {ValidationError} If code is missing or token exchange with Google fails
  */
 export async function handleGoogleDriveCallback({
     code,
@@ -114,7 +124,12 @@ export async function handleGoogleDriveCallback({
 }
 
 /**
- * Ensures valid access token, automatically refreshing if expired.
+ * Ensures a valid Google Drive access token, automatically refreshing it if expired.
+ *
+ * @param userId - Unique identifier of the user
+ * @returns Valid active access token string
+ * @throws {NotFoundError} If Google Drive is not connected for the user
+ * @throws {ValidationError} If token expired and refresh fails
  */
 async function getValidAccessToken(userId: string): Promise<string> {
     const account = await findConnectedAccount(userId, "GOOGLE_DRIVE");
@@ -167,7 +182,12 @@ async function getValidAccessToken(userId: string): Promise<string> {
 }
 
 /**
- * Lists readable Google Docs and PDFs in the user's Drive.
+ * Lists readable Google Docs and PDFs in the connected user's Google Drive.
+ *
+ * @param userId - Authenticated user's identifier
+ * @param search - Optional keyword search filter for document filenames
+ * @returns List of normalized file metadata objects
+ * @throws {ValidationError} If fetching files from Google Drive API fails
  */
 export async function listGoogleDriveFiles(userId: string, search?: string) {
     const token = await getValidAccessToken(userId);
@@ -218,7 +238,15 @@ export async function listGoogleDriveFiles(userId: string, search?: string) {
 }
 
 /**
- * Imports a Google Doc or Drive PDF directly as a Source in the workspace.
+ * Downloads and imports a Google Doc or Google Drive PDF directly as a workspace Source.
+ *
+ * @param params - Import payload
+ * @param params.workspaceId - Target workspace identifier
+ * @param params.userId - Authenticated user's identifier
+ * @param params.fileId - Google Drive file identifier
+ * @returns The created and enqueued Source record
+ * @throws {NotFoundError} If the Drive file is not found
+ * @throws {ValidationError} If file format is unsupported or text extraction fails
  */
 export async function importGoogleDriveFile({
     workspaceId,

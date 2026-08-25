@@ -1,6 +1,13 @@
 import { Firecrawl } from 'firecrawl';
 import { ValidationError } from "../../types/app-error.js";
 
+/**
+ * Scrapes a public website URL using Firecrawl and extracts clean markdown text and page title.
+ *
+ * @param url - Web URL to crawl and scrape
+ * @returns Scraped markdown content, page title, and canonical source URL
+ * @throws {ValidationError} When FIRECRAWL_API_KEY is not configured or content cannot be extracted
+ */
 export async function scrapeWebsite(url: string) {
     const apiKey = process.env.FIRECRAWL_API_KEY;
 

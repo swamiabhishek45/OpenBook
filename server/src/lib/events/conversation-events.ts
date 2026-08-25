@@ -1,6 +1,12 @@
 import { inngest } from "../../inngest/client.js";
 
 
+/**
+ * Enqueues an asynchronous rolling conversation summary job via Inngest.
+ *
+ * @param input - Object containing conversationId and userId
+ * @returns Resolves when event is sent to Inngest
+ */
 export async function enqueueConversationSummarize(input: {
     conversationId: string;
     userId: string;

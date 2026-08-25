@@ -2,6 +2,14 @@
  * Gemini API Integration for Fast, Free-Tier AI Operations (Titles, Summaries, Quick Labels)
  */
 
+/**
+ * Generates a descriptive, context-aware title (3-7 words) for a learning artifact using Google Gemini 2.5 Flash API.
+ *
+ * @param artifactType - Type of artifact (e.g. SUMMARY, QUIZ, MINDMAP, PODCAST)
+ * @param sourceText - Excerpt of source text content
+ * @param fallbackTitle - Optional default title if Gemini is unavailable
+ * @returns Cleaned title string
+ */
 export async function generateArtifactTitleWithGemini(
     artifactType: string,
     sourceText: string,

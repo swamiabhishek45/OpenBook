@@ -24,6 +24,13 @@ type CloudinaryUploadResponse = {
     error?: { message: string };
 };
 
+/**
+ * Generates a signed, time-restricted Cloudinary download URL for a private asset.
+ *
+ * @param publicId - Cloudinary asset public identifier
+ * @param resourceType - Resource type ("raw" or "image", defaults to "raw")
+ * @returns Signed HTTPS asset URL string, or null if API keys are not configured
+ */
 export function getSignedCloudinaryDownloadUrl(
     publicId: string,
     resourceType: "raw" | "image" = "raw",

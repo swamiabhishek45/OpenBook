@@ -30,6 +30,12 @@ export type SourceRecord = Prisma.SourceGetPayload<{
 }>;
 
 
+/**
+ * Inserts a new Source record in PostgreSQL.
+ *
+ * @param data - Source creation attributes (workspaceId, type, title, content, url, status, metadata)
+ * @returns Promise resolving to the newly created source record
+ */
 export function createSourceRecord(data: CreateSourceData) {
     return prisma.source.create({
         data: {
@@ -45,7 +51,13 @@ export function createSourceRecord(data: CreateSourceData) {
     });
 }
 
-
+/**
+ * Queries all sources belonging to a workspace with optional type, status, and keyword search filters.
+ *
+ * @param workspaceId - Workspace identifier
+ * @param filters - Optional filters for type, status, or search query `q`
+ * @returns Promise resolving to a list of matching source records
+ */
 export function findSourcesByWorkspaceId(
     workspaceId: string,
     filters: ListSourcesQuery = {},
@@ -74,6 +86,13 @@ export function findSourcesByWorkspaceId(
     });
 }
 
+/**
+ * Queries a single source record scoped by sourceId and workspaceId.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @param workspaceId - Workspace identifier
+ * @returns Promise resolving to matching source record or null
+ */
 export function findSourceByIdAndWorkspaceId(
     sourceId: string,
     workspaceId: string,
@@ -84,13 +103,23 @@ export function findSourceByIdAndWorkspaceId(
     });
 }
 
+/**
+ * Deletes a source document from PostgreSQL by its unique ID.
+ *
+ * @param sourceId - Unique identifier of the source to delete
+ */
 export async function deleteSourceRecord(sourceId: string) {
     await prisma.source.delete({
         where: { id: sourceId },
     });
 }
 
-
+/**
+ * Queries a single source record by its unique ID.
+ *
+ * @param sourceId - Unique identifier of the source
+ * @returns Promise resolving to matching source record or null
+ */
 export function findSourceById(sourceId: string) {
     return prisma.source.findUnique({
         where: { id: sourceId },
@@ -98,6 +127,13 @@ export function findSourceById(sourceId: string) {
     });
 }
 
+/**
+ * Updates properties (content, status, metadata) of an existing source in PostgreSQL.
+ *
+ * @param sourceId - Unique identifier of the source to update
+ * @param data - Partial update payload
+ * @returns Promise resolving to the updated source record
+ */
 export function updateSourceRecord(
     sourceId: string,
     data: {

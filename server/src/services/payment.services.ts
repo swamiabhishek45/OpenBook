@@ -27,6 +27,12 @@ export const PLAN_PRICES: Record<
     },
 };
 
+/**
+ * Initializes and returns the Razorpay SDK instance along with configured API credentials.
+ *
+ * @returns Object containing Razorpay client, keyId, and keySecret
+ * @throws {AppError} If RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is missing from environment variables
+ */
 function getRazorpayInstance() {
     const key_id = process.env.RAZORPAY_KEY_ID;
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
@@ -45,6 +51,14 @@ function getRazorpayInstance() {
     };
 }
 
+/**
+ * Creates a Razorpay order for upgrading a user to PRO or PRO_PLUS and saves a pending payment record.
+ *
+ * @param userId - Unique identifier of the user
+ * @param requestedPlan - Target subscription tier ("PRO" or "PRO_PLUS")
+ * @returns Order details including orderId, amount, currency, plan info, and user contact details
+ * @throws {AppError} When user is not found or order creation with Razorpay fails
+ */
 export async function createRazorpayOrder(
     userId: string,
     requestedPlan: "PRO" | "PRO_PLUS" = "PRO",
@@ -112,6 +126,14 @@ export async function createRazorpayOrder(
     }
 }
 
+/**
+ * Validates the HMAC SHA256 signature of a completed Razorpay payment and upgrades the user's plan.
+ *
+ * @param userId - Unique identifier of the user
+ * @param input - Razorpay payment verification parameters (orderId, paymentId, signature)
+ * @returns Success response with updated plan details
+ * @throws {ValidationError} When payment signature is invalid or required parameters are missing
+ */
 export async function verifyRazorpayPayment(
     userId: string,
     input: VerifyPaymentInput,

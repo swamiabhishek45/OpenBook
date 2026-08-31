@@ -58,13 +58,12 @@ export function Hero({ isAuthenticated = false }: HeroProps) {
       </div>
 
       <div className="mt-14 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xl shadow-black/5 dark:shadow-black/30 sm:mt-20">
-        <video
-          src="/landing/openbook.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-auto object-cover block"
+        <iframe
+          src="https://drive.google.com/file/d/1uBYu3w5JoM4Cp7ADeU_nP4-43OFe1qAZ/preview"
+          title="OpenBook Demo"
+          className="w-full aspect-video border-0 block"
+          allow="autoplay"
+          allowFullScreen
         />
       </div>
     </section>

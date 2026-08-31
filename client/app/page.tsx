@@ -1,19 +1,18 @@
 import { getSession } from "@/features/auth/lib/auth-server";
 import {
-  LandingNavbar,
-  HeroSection,
-  SourcesShowcase,
-  StudioShowcase,
-  MemoryShowcase,
-  HowItWorks,
-  CtaSection,
-  LandingFooter,
+  SiteNav,
+  Hero,
+  IntegrationsStrip,
+  GroundingIntro,
+  FeatureRows,
+  Faq,
+  SiteFooter,
 } from "@/components/home";
 
 export const metadata = {
-  title: "OpenBook - Grounded AI Workspace & Research Workbench",
+  title: "OpenBook - The research notebook that talks back",
   description:
-    "Turn your PDFs, web articles, and YouTube videos into grounded intelligence. Chat with citations, study with flashcards and mindmaps, and personalize learning with memory.",
+    "Bring your PDFs, articles, and videos. OpenBook answers with citations, builds your flashcards, quizzes, and mind maps, and turns your library into a podcast you can interrupt.",
 };
 
 export default async function HomePage() {
@@ -21,33 +20,18 @@ export default async function HomePage() {
   const isAuthenticated = !!session;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-foreground selection:text-background">
-      {/* Navigation Header */}
-      <LandingNavbar isAuthenticated={isAuthenticated} />
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <SiteNav isAuthenticated={isAuthenticated} />
 
-      {/* Main Content Sections */}
-      <main className="flex-1 flex flex-col">
-        {/* 1. Hero Section */}
-        <HeroSection isAuthenticated={isAuthenticated} />
-
-        {/* 2. Sources & Ingestion Showcase */}
-        <SourcesShowcase />
-
-        {/* 3. Studio Learning Tools Showcase */}
-        <StudioShowcase />
-
-        {/* 4. Personalized Long-Term Memory */}
-        <MemoryShowcase />
-
-        {/* 5. How It Works (3 Steps) */}
-        <HowItWorks />
-
-        {/* 6. Call To Action Banner */}
-        <CtaSection isAuthenticated={isAuthenticated} />
+      <main className="flex-1">
+        <Hero isAuthenticated={isAuthenticated} />
+        <IntegrationsStrip />
+        <GroundingIntro />
+        <FeatureRows />
+        <Faq />
       </main>
 
-      {/* Footer */}
-      <LandingFooter />
+      <SiteFooter />
     </div>
   );
 }

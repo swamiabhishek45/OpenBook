@@ -154,7 +154,7 @@ export function CodeBlock({ language = "code", code }: CodeBlockProps) {
       </div>
 
       {/* Code Body */}
-      <div className="px-5 py-4.5 overflow-x-auto font-mono text-[13px] leading-6 bg-zinc-100 dark:bg-zinc-950 selection:bg-[#dfcfbc] dark:selection:bg-[#3f3f46]">
+      <div className="px-5 py-4.5 overflow-x-auto font-mono text-[13px] leading-6 bg-zinc-100 dark:bg-zinc-950">
         <pre className="m-0 p-0 font-mono">
           <code>{highlightCode(code, displayLanguage)}</code>
         </pre>

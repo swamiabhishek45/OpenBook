@@ -7,6 +7,7 @@ interface LogoProps {
   textSize?: string;
   textColor?: string;
   textClassName?: string;
+  iconClassName?: string;
 }
 
 export function OpenBookLogo({
@@ -16,34 +17,43 @@ export function OpenBookLogo({
   textSize = "text-2xl",
   textColor = "text-foreground",
   textClassName = "",
+  iconClassName = "",
 }: LogoProps) {
-  // SVG aspect ratio is 200x120
-  const width = Math.round(size * (200 / 120));
-  const height = size;
-
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       <svg
-        width={width}
-        height={height}
-        viewBox="0 0 200 120"
+        width={size}
+        height={size}
+        viewBox="0 0 200 200"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         xmlns="http://www.w3.org/2000/svg"
-        className="text-foreground shrink-0"
+        className={`shrink-0 ${iconClassName}`}
       >
-        {/* Horizontal Base Line */}
-        <line x1="20" y1="100" x2="180" y2="100" />
+        {/* Solid rounded square background */}
+        <rect
+          width="200"
+          height="200"
+          rx="44"
+          className="fill-foreground"
+        />
 
-        {/* Radiating Rays from Center (100, 100) */}
-        <line x1="100" y1="100" x2="25" y2="57" />
-        <line x1="100" y1="100" x2="60" y2="31" />
-        <line x1="100" y1="100" x2="100" y2="20" />
-        <line x1="100" y1="100" x2="140" y2="31" />
-        <line x1="100" y1="100" x2="175" y2="57" />
+        {/* Radiating Rays from Center (100, 134) */}
+        <g
+          className="stroke-background"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {/* Horizontal Base Line */}
+          <line x1="36" y1="134" x2="164" y2="134" />
+
+          {/* Radiating Rays */}
+          <line x1="100" y1="134" x2="40" y2="100" />
+          <line x1="100" y1="134" x2="68" y2="76" />
+          <line x1="100" y1="134" x2="100" y2="66" />
+          <line x1="100" y1="134" x2="132" y2="76" />
+          <line x1="100" y1="134" x2="160" y2="100" />
+        </g>
       </svg>
 
       {showText && (

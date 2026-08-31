@@ -27,9 +27,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-selection: var(--selection);
+  --color-selection-foreground: var(--selection-foreground);
 }
 
 :root {
+  /* Geist is loaded in the root layout as --font-geist-sans; without this the
+     `font-sans` utility resolves to an empty var and falls back to Times. */
+  --font-sans: var(--font-geist-sans);
   --background: #f6efe7;
   --foreground: #09090b;
   --card: #fcf9f5;
@@ -49,6 +54,8 @@
   --input: #e3d7c8;
   --ring: #18181b;
   --radius: 0.625rem;
+  --selection: #dfcfbc;
+  --selection-foreground: #18181b;
 }
 
 .dark {
@@ -70,6 +77,8 @@
   --border: #27272a;
   --input: #27272a;
   --ring: #d4d4d8;
+  --selection: #3f3f46;
+  --selection-foreground: #fafafa;
 }
 
 @layer base {
@@ -85,18 +94,16 @@
   html {
     @apply font-sans;
   }
+}
 
-  /* Theme-matching text selection (replaces default system blue) */
-  ::selection {
-    background-color: #dfcfbc;
-    color: #18181b;
-  }
-
-  .dark ::selection,
-  .dark *::selection {
-    background-color: #3f3f46;
-    color: #fafafa;
-  }
+/* One text selection colour for the whole app, driven by --selection so it
+   follows the light and dark themes. Deliberately left outside @layer so a
+   stray `selection:bg-*` utility can't reintroduce per-page colours; change
+   the tokens above instead of overriding this locally. */
+::selection,
+*::selection {
+  background-color: var(--selection);
+  color: var(--selection-foreground);
 }
 
 
@@ -139,6 +146,26 @@
   scrollbar-color: #27272a transparent;
 }
 
+/* Continuous logo strip on the landing page */
+@keyframes openbook-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-track {
+  animation: openbook-marquee 45s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
 /* Gold Glitter & Shimmer Effects for PRO+ Tier */
 @keyframes gold-shimmer {
   0% {
@@ -176,4 +203,4 @@
   );
   background-size: 200% 200%;
   animation: gold-shimmer 4s ease infinite;
-}
+}

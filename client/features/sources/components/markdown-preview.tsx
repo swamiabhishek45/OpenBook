@@ -20,7 +20,7 @@ export function MarkdownPreview({ content, className }: MarkdownPreviewProps) {
   return (
     <div
       className={cn(
-        "max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-card/50 p-4 text-xs sm:text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap selection:bg-muted select-text",
+        "max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-card/50 p-4 text-xs sm:text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap select-text",
         className
       )}
     >

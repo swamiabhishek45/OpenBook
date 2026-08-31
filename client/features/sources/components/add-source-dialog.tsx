@@ -285,7 +285,7 @@ export function AddSourceDialog({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fadeIn text-foreground">
+      <div className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fadeIn text-foreground">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ export function AddSourceDialog({
         </div>
 
         {/* Tab Bar */}
-        <div className="flex border-b border-border bg-muted/40 px-6 pt-2 gap-1 overflow-x-auto select-none">
+        <div className="flex items-center justify-center border-b border-border bg-muted/40 px-4 pt-2 gap-1 overflow-x-auto select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {SOURCE_TABS.map((tab) => (
             <button
               key={tab.id}

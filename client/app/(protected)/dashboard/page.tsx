@@ -168,7 +168,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-muted">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       {/* 1. Header Bar */}
       <DashboardHeader
         user={session.user}

@@ -152,6 +152,34 @@ export function useAuth() {
     }
   };
 
+  const signInWithGithub = async (customCallbackUrl?: string) => {
+    setAuthError(null);
+    try {
+      const targetPath = customCallbackUrl || getCallbackPath();
+      const absoluteCallbackUrl = toAbsoluteUrl(targetPath);
+
+      const { data, error } = await signIn.social({
+        provider: "github",
+        callbackURL: absoluteCallbackUrl,
+      });
+
+      if (error) {
+        setAuthError(error.message ?? "Something went wrong with GitHub sign in.");
+        return;
+      }
+
+      if (data?.url && data.redirect) {
+        window.location.href = data.url;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setAuthError(err.message);
+      } else {
+        setAuthError("Failed to sign in with GitHub");
+      }
+    }
+  };
+
   return {
     session: session.data,
     isPending: session.isPending,
@@ -162,5 +190,6 @@ export function useAuth() {
     signupMutation,
     logoutMutation,
     signInWithGoogle,
+    signInWithGithub,
   };
 }

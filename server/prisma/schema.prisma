@@ -135,11 +135,13 @@ enum SourceType {
   MARKDOWN
   GOOGLE_DOC
   NOTION_PAGE
+  GITHUB_REPO
 }
 
 enum IntegrationProvider {
   GOOGLE_DRIVE
   NOTION
+  GITHUB
 }
 
 model ConnectedAccount {

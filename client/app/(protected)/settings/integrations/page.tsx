@@ -16,6 +16,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { GithubIcon } from "@/components/ui/github-icon";
 import { cn } from "@/lib/utils";
 
 interface IntegrationsStatus {
@@ -39,6 +40,17 @@ interface IntegrationsStatus {
       createdAt?: string;
     } | null;
   };
+  github: {
+    connected: boolean;
+    account?: {
+      metadata?: {
+        login?: string;
+        name?: string;
+        avatarUrl?: string;
+      };
+      createdAt?: string;
+    } | null;
+  };
 }
 
 export default function IntegrationsSettingsPage() {
@@ -46,6 +58,7 @@ export default function IntegrationsSettingsPage() {
   const [notionToken, setNotionToken] = useState("");
   const [notionError, setNotionError] = useState<string | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [githubError, setGithubError] = useState<string | null>(null);
 
   const { data: integrations, isLoading, refetch } = useQuery<IntegrationsStatus>({
     queryKey: ["connected-integrations"],
@@ -70,7 +83,7 @@ export default function IntegrationsSettingsPage() {
   });
 
   const disconnectMutation = useMutation({
-    mutationFn: async (provider: "google-drive" | "notion") => {
+    mutationFn: async (provider: "google-drive" | "notion" | "github") => {
       return await apiClient(`/api/integrations/${provider}`, {
         method: "DELETE",
       });
@@ -89,6 +102,18 @@ export default function IntegrationsSettingsPage() {
       }
     } catch (err: unknown) {
       setGoogleError(err instanceof Error ? err.message : "Failed to get Google Drive auth URL.");
+    }
+  };
+
+  const handleConnectGithub = async () => {
+    setGithubError(null);
+    try {
+      const res = await apiClient<{ url: string }>("/api/integrations/github/auth-url");
+      if (res.url) {
+        window.location.href = res.url;
+      }
+    } catch (err: unknown) {
+      setGithubError(err instanceof Error ? err.message : "Failed to get GitHub auth URL.");
     }
   };
 
@@ -284,6 +309,73 @@ export default function IntegrationsSettingsPage() {
                     ) : (
                       <span>Connect Notion Token</span>
                     )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 3. GitHub Card */}
+            <div className="p-6 rounded-2xl border border-border bg-card shadow-xs flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center text-foreground">
+                    <GithubIcon size={20} />
+                  </div>
+                  {integrations?.github?.connected ? (
+                    <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Connected
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-mono text-muted-foreground px-2 py-0.5 rounded-full bg-muted border border-border">
+                      Not Connected
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <h3 className="text-sm font-bold text-foreground">GitHub</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Import public or private GitHub repositories as sources. Code, docs, and configs are indexed for chat.
+                  </p>
+                </div>
+
+                {githubError && (
+                  <div className="p-2.5 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-xl">
+                    {githubError}
+                  </div>
+                )}
+
+                {integrations?.github?.connected && (
+                  <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-1 text-xs">
+                    <div className="font-medium text-foreground">
+                      {integrations.github.account?.metadata?.name || "GitHub Account"}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground font-mono">
+                      @{integrations.github.account?.metadata?.login}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                {integrations?.github?.connected ? (
+                  <button
+                    type="button"
+                    onClick={() => disconnectMutation.mutate("github")}
+                    disabled={disconnectMutation.isPending}
+                    className="w-full py-2 rounded-xl text-xs font-medium text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Disconnect GitHub</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleConnectGithub}
+                    className="w-full py-2 bg-foreground text-background text-xs font-semibold rounded-xl transition-opacity hover:opacity-90 cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span>Connect GitHub</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>

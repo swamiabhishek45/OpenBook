@@ -14,6 +14,8 @@ import {
   HelpCircle,
 } from "lucide-react";
 
+import { GithubIcon } from "@/components/ui/github-icon";
+
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,7 @@ import {
   useUploadPdfSource,
   useImportGoogleDriveSource,
   useImportNotionSource,
+  useImportGithubSource,
 } from "../hooks/use-sources";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
@@ -48,7 +51,8 @@ type TabType =
   | "youtube"
   | "text"
   | "google-drive"
-  | "notion";
+  | "notion"
+  | "github";
 
 const FORM_CONTROL_CLASSNAME =
   "w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring";
@@ -62,6 +66,7 @@ const SOURCE_TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> 
   { id: "website", label: "Web URL", icon: <Globe className="size-3.5" /> },
   { id: "youtube", label: "YouTube", icon: <YoutubeIcon size={14} /> },
   { id: "text", label: "Text", icon: <FileText className="size-3.5" /> },
+  { id: "github", label: "GitHub", icon: <GithubIcon size={14} /> },
 ];
 
 interface IntegrationsStatus {
@@ -72,6 +77,10 @@ interface IntegrationsStatus {
   notion: {
     connected: boolean;
     account?: { metadata?: { workspaceName?: string } } | null;
+  };
+  github: {
+    connected: boolean;
+    account?: { metadata?: { login?: string; name?: string } } | null;
   };
 }
 
@@ -103,6 +112,7 @@ export function AddSourceDialog({
   const createSourceMutation = useCreateSource(workspaceId || "");
   const importGoogleDriveMutation = useImportGoogleDriveSource(workspaceId || "");
   const importNotionMutation = useImportNotionSource(workspaceId || "");
+  const importGithubMutation = useImportGithubSource(workspaceId || "");
 
   // Form states
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -122,6 +132,8 @@ export function AddSourceDialog({
   const [notionTokenInput, setNotionTokenInput] = useState("");
   const [isConnectingNotion, setIsConnectingNotion] = useState(false);
   const [showNotionHelp, setShowNotionHelp] = useState(false);
+  const [githubUrl, setGithubUrl] = useState("");
+  const [githubTitle, setGithubTitle] = useState("");
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +197,8 @@ export function AddSourceDialog({
     setTextContent("");
     setSelectedDriveFileId(null);
     setSelectedNotionPageId(null);
+    setGithubUrl("");
+    setGithubTitle("");
     setError(null);
   };
 
@@ -202,6 +216,17 @@ export function AddSourceDialog({
       }
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Failed to get Google Drive auth URL."));
+    }
+  };
+
+  const handleConnectGithub = async () => {
+    try {
+      const res = await apiClient<{ url: string }>("/api/integrations/github/auth-url");
+      if (res.url) {
+        window.location.href = res.url;
+      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to get GitHub auth URL."));
     }
   };
 
@@ -244,6 +269,9 @@ export function AddSourceDialog({
     if (activeTab === "notion" && !selectedNotionPageId) {
       return setError("Please select a Notion page from the list.");
     }
+    if (activeTab === "github" && !githubUrl.trim()) {
+      return setError("Please enter a valid GitHub repository URL.");
+    }
 
     setIsLoading(true);
     try {
@@ -273,6 +301,12 @@ export function AddSourceDialog({
           break;
         case "notion":
           await importNotionMutation.mutateAsync(selectedNotionPageId!);
+          break;
+        case "github":
+          await importGithubMutation.mutateAsync({
+            url: githubUrl.trim(),
+            title: title(githubTitle),
+          });
           break;
       }
       handleClose();
@@ -653,6 +687,74 @@ export function AddSourceDialog({
             </div>
           )}
 
+          {/* 7. GitHub Repository */}
+          {activeTab === "github" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  GitHub Repository URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://github.com/owner/repo"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  className={FORM_CONTROL_CLASSNAME}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. My Project Docs"
+                  value={githubTitle}
+                  onChange={(e) => setGithubTitle(e.target.value)}
+                  className={FORM_CONTROL_CLASSNAME}
+                />
+              </div>
+
+              {!integrations?.github?.connected ? (
+                <div className="p-4 border border-border rounded-xl bg-muted/20 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <GithubIcon size={20} className="shrink-0 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-foreground">
+                        Connect GitHub for private repos
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Public repositories work without authentication. Connect your GitHub account to import private repositories and avoid rate limits.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleConnectGithub}
+                    className="px-4 py-2 bg-foreground text-background text-xs font-semibold rounded-xl transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
+                  >
+                    Connect GitHub
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground">
+                  <Check className="w-3.5 h-3.5 text-green-500" />
+                  <span>
+                    Connected as{" "}
+                    <span className="font-medium text-foreground">
+                      {integrations.github.account?.metadata?.login || "GitHub User"}
+                    </span>
+                  </span>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
+                We&apos;ll index up to 150 text files (code, docs, configs) from the repository and make them searchable in chat.
+              </p>
+            </div>
+          )}
+
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
             <button
@@ -667,7 +769,8 @@ export function AddSourceDialog({
               disabled={
                 isLoading ||
                 (activeTab === "google-drive" && !selectedDriveFileId) ||
-                (activeTab === "notion" && !selectedNotionPageId)
+                (activeTab === "notion" && !selectedNotionPageId) ||
+                (activeTab === "github" && !githubUrl.trim())
               }
               className="px-5 py-2 rounded-xl text-xs font-semibold bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer shadow-xs flex items-center gap-1.5"
             >

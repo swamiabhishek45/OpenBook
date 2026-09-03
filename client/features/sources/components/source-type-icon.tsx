@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
+import { GithubIcon } from "@/components/ui/github-icon";
 import { cn } from "@/lib/utils";
 import type { SourceType } from "../lib/types";
 
@@ -18,6 +19,7 @@ const iconMap = {
   MARKDOWN: FileCode,
   GOOGLE_DOC: FileText,
   NOTION_PAGE: BookOpen,
+  GITHUB_REPO: GithubIcon,
 } as const;
 
 

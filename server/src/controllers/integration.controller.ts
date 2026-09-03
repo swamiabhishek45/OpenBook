@@ -18,10 +18,16 @@ import {
     exportArtifactToNotion,
 } from "../services/notion.services.js";
 import {
+    getGithubAuthUrl,
+    handleGithubCallback,
+    importGithubRepo,
+} from "../services/github.services.js";
+import {
     connectNotionSchema,
     exportNotionSchema,
     importDriveFileSchema,
     importNotionPageSchema,
+    importGithubRepoSchema,
 } from "../validators/integration.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 import { artifactIdParamSchema } from "../validators/artifact.validator.js";
@@ -45,6 +51,10 @@ export async function getConnectedIntegrations(req: Request, res: Response) {
         notion: {
             connected: accounts.some((a) => a.provider === "NOTION"),
             account: accounts.find((a) => a.provider === "NOTION") || null,
+        },
+        github: {
+            connected: accounts.some((a) => a.provider === "GITHUB"),
+            account: accounts.find((a) => a.provider === "GITHUB") || null,
         },
     };
 
@@ -241,4 +251,51 @@ export async function exportToNotion(req: Request, res: Response) {
     });
 
     res.json(result);
+}
+
+// ---------------- GitHub Handlers ----------------
+
+/**
+ * Handles HTTP GET request to retrieve the GitHub OAuth authorization URL.
+ */
+export async function getGithubAuth(req: Request, res: Response) {
+    const url = getGithubAuthUrl(req.session.user.id);
+    res.json({ url });
+}
+
+/**
+ * Handles HTTP GET callback from GitHub OAuth redirect, stores tokens, and redirects user back to UI.
+ */
+export async function githubCallback(req: Request, res: Response) {
+    const { code, state } = req.query;
+    const userId = (state as string) || req.session?.user?.id;
+
+    if (!userId) {
+        throw new ValidationError("User session or state is missing.");
+    }
+
+    await handleGithubCallback({
+        code: String(code),
+        userId,
+    });
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+    res.redirect(`${clientUrl}/settings/integrations?connected=github`);
+}
+
+/**
+ * Handles HTTP POST request to import a GitHub repository as a workspace Source.
+ */
+export async function importGithub(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+    const { url, title } = importGithubRepoSchema.parse(req.body);
+
+    const source = await importGithubRepo({
+        workspaceId,
+        userId: req.session.user.id,
+        url,
+        title,
+    });
+
+    res.status(201).json(source);
 }

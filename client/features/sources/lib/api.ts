@@ -191,3 +191,16 @@ export function importNotionSource(
     );
 }
 
+export function importGithubSource(
+    workspaceId: string,
+    input: { url: string; title?: string },
+) {
+    return apiFetch<Source>(
+        `/api/workspaces/${workspaceId}/sources/import/github`,
+        {
+            method: "POST",
+            body: JSON.stringify(input),
+        },
+    );
+}
+

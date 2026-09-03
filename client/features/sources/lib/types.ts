@@ -5,7 +5,8 @@ export type SourceType =
   | "TEXT"
   | "MARKDOWN"
   | "GOOGLE_DOC"
-  | "NOTION_PAGE";
+  | "NOTION_PAGE"
+  | "GITHUB_REPO";
 
 
 export type SourceStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
@@ -51,6 +52,11 @@ export type ImportWebsiteInput = {
 };
 
 export type ImportYoutubeInput = {
+    url: string;
+    title?: string;
+};
+
+export type ImportGithubInput = {
     url: string;
     title?: string;
 };

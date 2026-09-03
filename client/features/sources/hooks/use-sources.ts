@@ -13,6 +13,7 @@ import {
     importYoutubeSource,
     importGoogleDriveSource,
     importNotionSource,
+    importGithubSource,
     listSources,
     reprocessSource,
     reprocessSources,
@@ -23,6 +24,7 @@ import type {
     CreateSourceInput,
     ImportWebsiteInput,
     ImportYoutubeInput,
+    ImportGithubInput,
     SourceFilters,
 } from "../lib/types";
 import { useUpgradeModal } from "@/features/billing";
@@ -273,6 +275,24 @@ export function useImportNotionSource(workspaceId: string) {
     return useMutation({
         mutationFn: (pageId: string) =>
             importNotionSource(workspaceId, pageId),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
+        },
+        onError: handleSourceLimitError,
+    });
+}
+
+export function useImportGithubSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (input: ImportGithubInput) =>
+            importGithubSource(workspaceId, input),
         onSuccess: () => {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,

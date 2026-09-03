@@ -7,6 +7,7 @@ import { OpenBookLogo } from "./openbook-logo";
 import { useAuth } from "../hooks/use-auth";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { GithubIcon } from "@/components/ui/github-icon";
 
 interface AuthFormProps {
   initialMode?: "login" | "signup";
@@ -24,6 +25,7 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
     loginMutation,
     signupMutation,
     signInWithGoogle,
+    signInWithGithub,
     authError,
     setAuthError,
   } = useAuth();
@@ -214,7 +216,7 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
         </div>
 
         {/* Social Logins */}
-        <div className="pt-1">
+        <div className="pt-1 space-y-2.5">
           {/* Google */}
           <button
             type="button"
@@ -241,6 +243,17 @@ export function AuthForm({ initialMode = "login" }: AuthFormProps) {
               />
             </svg>
             <span>Continue with Google</span>
+          </button>
+
+          {/* GitHub */}
+          <button
+            type="button"
+            onClick={() => void signInWithGithub()}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors shadow-xs"
+          >
+            <GithubIcon size={16} />
+            <span>Continue with GitHub</span>
           </button>
         </div>
       </form>

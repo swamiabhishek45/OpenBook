@@ -15,18 +15,49 @@ import type { Prisma } from "../generated/prisma/client.js";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || "";
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || "";
-const serverBaseUrl =
-    process.env.SERVER_URL ||
-    process.env.BETTER_AUTH_URL ||
-    "http://localhost:8081";
-const GITHUB_REDIRECT_URI =
-    process.env.GITHUB_REDIRECT_URI ||
-    `${serverBaseUrl}/api/integrations/github/callback`;
+
+function normalizeBaseUrl(url: string): string {
+    return url.trim().replace(/\/$/, "");
+}
+
+export function getGithubRedirectUri(): string {
+    if (process.env.GITHUB_REDIRECT_URI?.trim()) {
+        return process.env.GITHUB_REDIRECT_URI.trim();
+    }
+
+    const serverBaseUrl = normalizeBaseUrl(
+        process.env.SERVER_URL ||
+            process.env.BETTER_AUTH_URL ||
+            "http://localhost:8081",
+    );
+
+    return `${serverBaseUrl}/api/integrations/github/callback`;
+}
+
+const GITHUB_REDIRECT_URI = getGithubRedirectUri();
+
+export function encodeGithubOAuthState(userId: string, returnTo?: string): string {
+    if (!returnTo) {
+        return userId;
+    }
+    return `${userId}::${encodeURIComponent(returnTo)}`;
+}
+
+export function decodeGithubOAuthState(state: string): {
+    userId: string;
+    returnTo?: string;
+} {
+    const [userId, encodedReturnTo] = state.split("::");
+    return {
+        userId,
+        returnTo: encodedReturnTo ? decodeURIComponent(encodedReturnTo) : undefined,
+    };
+}
 
 /**
  * Generates the GitHub OAuth authorization URL for repository read access.
  */
-export function getGithubAuthUrl(userId: string): string {
+export function getGithubAuthUrl(userId: string, returnTo?: string): string {
     if (!GITHUB_CLIENT_ID) {
         throw new ValidationError("GitHub Client ID is not configured on the server.");
     }
@@ -35,7 +66,7 @@ export function getGithubAuthUrl(userId: string): string {
         client_id: GITHUB_CLIENT_ID,
         redirect_uri: GITHUB_REDIRECT_URI,
         scope: "repo read:user",
-        state: userId,
+        state: encodeGithubOAuthState(userId, returnTo),
     });
 
     return `https://github.com/login/oauth/authorize?${params.toString()}`;
@@ -69,21 +100,32 @@ export async function handleGithubCallback({
         }),
     });
 
+    const tokenBody = await tokenRes.text();
+
     if (!tokenRes.ok) {
-        const errText = await tokenRes.text();
-        console.error("GitHub token exchange error:", errText);
+        console.error("GitHub token exchange HTTP error:", tokenRes.status, tokenBody);
         throw new ValidationError("Failed to exchange GitHub authorization code.");
     }
 
-    const tokenData = (await tokenRes.json()) as {
+    let tokenData: {
         access_token?: string;
         error?: string;
         error_description?: string;
     };
 
+    try {
+        tokenData = JSON.parse(tokenBody) as typeof tokenData;
+    } catch {
+        console.error("GitHub token exchange invalid JSON:", tokenBody);
+        throw new ValidationError("Failed to exchange GitHub authorization code.");
+    }
+
     if (!tokenData.access_token) {
+        console.error("GitHub token exchange error:", tokenData);
         throw new ValidationError(
-            tokenData.error_description || "Failed to obtain GitHub access token.",
+            tokenData.error_description ||
+                tokenData.error ||
+                "Failed to obtain GitHub access token. Check that the GitHub callback URL matches your OAuth app settings.",
         );
     }
 
@@ -110,16 +152,29 @@ export async function handleGithubCallback({
         }
     } catch {}
 
-    const account = await upsertConnectedAccountRecord({
-        userId,
-        provider: "GITHUB",
-        accessToken: tokenData.access_token,
-        refreshToken: null,
-        expiresAt: null,
-        metadata: { login, name, avatarUrl },
-    });
+    try {
+        const account = await upsertConnectedAccountRecord({
+            userId,
+            provider: "GITHUB",
+            accessToken: tokenData.access_token,
+            refreshToken: null,
+            expiresAt: null,
+            metadata: { login, name, avatarUrl },
+        });
 
-    return account;
+        return account;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Failed to save GitHub connected account:", error);
+
+        if (message.includes("IntegrationProvider") || message.includes("GITHUB")) {
+            throw new ValidationError(
+                "GitHub integration is not enabled in the database yet. Run: ALTER TYPE \"IntegrationProvider\" ADD VALUE IF NOT EXISTS 'GITHUB';",
+            );
+        }
+
+        throw error;
+    }
 }
 
 /**

@@ -57,6 +57,21 @@ export function errorHandler(
         return;
     }
 
+    if (error instanceof Error) {
+        const message = error.message;
+
+        if (
+            message.includes("IntegrationProvider") ||
+            message.includes("invalid input value for enum")
+        ) {
+            res.status(500).json({
+                error:
+                    "Database is missing GitHub integration support. Run: ALTER TYPE \"IntegrationProvider\" ADD VALUE IF NOT EXISTS 'GITHUB';",
+            });
+            return;
+        }
+    }
+
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
 }

@@ -221,7 +221,13 @@ export function AddSourceDialog({
 
   const handleConnectGithub = async () => {
     try {
-      const res = await apiClient<{ url: string }>("/api/integrations/github/auth-url");
+      const returnTo =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/dashboard";
+      const res = await apiClient<{ url: string }>(
+        `/api/integrations/github/auth-url?returnTo=${encodeURIComponent(returnTo)}`,
+      );
       if (res.url) {
         window.location.href = res.url;
       }

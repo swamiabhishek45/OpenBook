@@ -18,6 +18,7 @@ import {
     exportArtifactToNotion,
 } from "../services/notion.services.js";
 import {
+    decodeGithubOAuthState,
     getGithubAuthUrl,
     handleGithubCallback,
     importGithubRepo,
@@ -259,28 +260,90 @@ export async function exportToNotion(req: Request, res: Response) {
  * Handles HTTP GET request to retrieve the GitHub OAuth authorization URL.
  */
 export async function getGithubAuth(req: Request, res: Response) {
-    const url = getGithubAuthUrl(req.session.user.id);
+    const returnTo =
+        typeof req.query.returnTo === "string" ? req.query.returnTo : undefined;
+    const url = getGithubAuthUrl(req.session.user.id, returnTo);
     res.json({ url });
+}
+
+function getGithubCallbackRedirect(
+    returnTo: string | undefined,
+    params: Record<string, string>,
+): string {
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+    const target = new URL(returnTo || "/settings/integrations", clientUrl);
+
+    for (const [key, value] of Object.entries(params)) {
+        target.searchParams.set(key, value);
+    }
+
+    return target.toString();
 }
 
 /**
  * Handles HTTP GET callback from GitHub OAuth redirect, stores tokens, and redirects user back to UI.
  */
 export async function githubCallback(req: Request, res: Response) {
-    const { code, state } = req.query;
-    const userId = (state as string) || req.session?.user?.id;
+    const { code, state, error, error_description } = req.query;
+    const parsedState =
+        typeof state === "string"
+            ? decodeGithubOAuthState(state)
+            : { userId: req.session?.user?.id, returnTo: undefined };
+    const userId = parsedState.userId;
 
     if (!userId) {
         throw new ValidationError("User session or state is missing.");
     }
 
-    await handleGithubCallback({
-        code: String(code),
-        userId,
-    });
+    if (typeof error === "string") {
+        const message =
+            typeof error_description === "string"
+                ? error_description
+                : "GitHub authorization was cancelled or denied.";
+        res.redirect(
+            getGithubCallbackRedirect(parsedState.returnTo, {
+                github_error: message,
+            }),
+        );
+        return;
+    }
 
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
-    res.redirect(`${clientUrl}/settings/integrations?connected=github`);
+    if (typeof code !== "string" || !code.trim()) {
+        res.redirect(
+            getGithubCallbackRedirect(parsedState.returnTo, {
+                github_error: "Missing GitHub authorization code.",
+            }),
+        );
+        return;
+    }
+
+    try {
+        await handleGithubCallback({
+            code: code.trim(),
+            userId,
+        });
+    } catch (callbackError) {
+        const message =
+            callbackError instanceof ValidationError
+                ? callbackError.message
+                : callbackError instanceof Error
+                  ? callbackError.message
+                  : "Failed to connect GitHub.";
+
+        console.error("GitHub integration callback failed:", callbackError);
+        res.redirect(
+            getGithubCallbackRedirect(parsedState.returnTo, {
+                github_error: message,
+            }),
+        );
+        return;
+    }
+
+    res.redirect(
+        getGithubCallbackRedirect(parsedState.returnTo, {
+            connected: "github",
+        }),
+    );
 }
 
 /**

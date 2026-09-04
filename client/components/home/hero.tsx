@@ -1,8 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { GithubIcon } from "./brand-icons";
-import { GITHUB_URL } from "./links";
+import { GithubStarButton } from "./github-star-button";
 
 interface HeroProps {
   isAuthenticated?: boolean;
@@ -46,15 +45,7 @@ export function Hero({ isAuthenticated = false }: HeroProps) {
           <ArrowRight className="size-3.5" />
         </Link>
 
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-        >
-          <GithubIcon />
-          Star on GitHub
-        </a>
+        <GithubStarButton />
       </div>
 
       <div className="mt-14 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-2xl shadow-black/5 dark:shadow-black/30 sm:mt-20">

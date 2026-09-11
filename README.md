@@ -1,5 +1,7 @@
 # OpenBook
 
+[![Watch Demo Video](https://img.shields.io/badge/▶_Watch_OpenBook_Demo-X_(Twitter)-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/swamiabhishek45/status/2090689196923212107?s=20)
+
 **OpenBook** is an interactive AI-powered research and study studio (inspired by NotebookLM) that turns your documents, PDFs, and web links into dynamic knowledge artifacts and interactive multi-speaker debate podcasts.
 
 Unlike static audio overviews, OpenBook introduces a **Live "Interrupt & Ask"** capability: listeners can pause the podcast mid-episode to ask the AI co-hosts questions, receive an in-character audio response grounded in their source notes, and seamlessly resume the show.
@@ -224,7 +226,7 @@ openbook/
     ├── src/
     │   ├── controllers/        # Express route controllers
     │   ├── routes/             # API routing definitions
-    │   ├── services/           # Business logic & AI generation pipelines
+    │   ├── services/            # Business logic & AI generation pipelines
     │   ├── inngest/            # Event-driven background workers
     │   └── lib/                # Cloudinary, ElevenLabs, Pinecone & Gemini clients
     └── uploads/                # Local file storage fallback

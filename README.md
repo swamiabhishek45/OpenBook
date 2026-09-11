@@ -1,6 +1,8 @@
 # OpenBook
 
-[![Watch Demo Video](https://img.shields.io/badge/▶_Watch_OpenBook_Demo-X_(Twitter)-1DA1F2?style=for-the-badge&logo=x&logoColor=white)](https://x.com/swamiabhishek45/status/2090689196923212107?s=20)
+<video controls width="100%" src="https://drive.google.com/uc?export=download&id=19adu2Xg9RxNBiaCceqKLcQo8PyOK44Wl">
+  Your browser does not support the video tag.
+</video>
 
 **OpenBook** is an interactive AI-powered research and study studio (inspired by NotebookLM) that turns your documents, PDFs, and web links into dynamic knowledge artifacts and interactive multi-speaker debate podcasts.
 
@@ -160,13 +162,13 @@ cd openbook
    cp .env.example .env.local
    ```
 
-4. Start the Next.js development server:
+4. Start the frontend development server:
    ```bash
    npm run dev
    ```
 
 5. Open your browser and navigate to:
-   ```
+   ```bash
    http://localhost:3000
    ```
 

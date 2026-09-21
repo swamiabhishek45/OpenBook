@@ -1,5 +1,9 @@
 # OpenBook
 
+<video controls width="100%" src="https://drive.google.com/uc?export=download&id=19adu2Xg9RxNBiaCceqKLcQo8PyOK44Wl">
+  Your browser does not support the video tag.
+</video>
+
 **OpenBook** is an interactive AI-powered research and study studio (inspired by NotebookLM) that turns your documents, PDFs, and web links into dynamic knowledge artifacts and interactive multi-speaker debate podcasts.
 
 Unlike static audio overviews, OpenBook introduces a **Live "Interrupt & Ask"** capability: listeners can pause the podcast mid-episode to ask the AI co-hosts questions, receive an in-character audio response grounded in their source notes, and seamlessly resume the show.
@@ -158,13 +162,13 @@ cd openbook
    cp .env.example .env.local
    ```
 
-4. Start the Next.js development server:
+4. Start the frontend development server:
    ```bash
    npm run dev
    ```
 
 5. Open your browser and navigate to:
-   ```
+   ```bash
    http://localhost:3000
    ```
 
@@ -224,7 +228,7 @@ openbook/
     ├── src/
     │   ├── controllers/        # Express route controllers
     │   ├── routes/             # API routing definitions
-    │   ├── services/           # Business logic & AI generation pipelines
+    │   ├── services/            # Business logic & AI generation pipelines
     │   ├── inngest/            # Event-driven background workers
     │   └── lib/                # Cloudinary, ElevenLabs, Pinecone & Gemini clients
     └── uploads/                # Local file storage fallback

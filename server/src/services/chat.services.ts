@@ -22,6 +22,7 @@ import {
     buildChatSystemPrompt,
     retrieveWorkspaceContext,
 } from "../lib/rag/retrieve.js";
+import { reconcileWorkspaceCitations } from "../lib/rag/reconcile.js";
 import {
     createConversationRecord,
     findConversationByIdAndWorkspaceId,
@@ -115,7 +116,29 @@ export async function getConversationMessagesForWorkspace(
         throw new NotFoundError("Conversation not found");
     }
 
-    return findMessagesByConversationId(conversationId);
+    const messages = await findMessagesByConversationId(conversationId);
+
+    return Promise.all(
+        messages.map(async (message) => {
+            if (!message.citations || !Array.isArray(message.citations)) {
+                return message;
+            }
+
+            const citations = await reconcileWorkspaceCitations(
+                workspaceId,
+                message.citations as {
+                    sourceId?: string;
+                    sourceTitle: string;
+                    sourceType: string;
+                }[],
+            );
+
+            return {
+                ...message,
+                citations,
+            };
+        }),
+    );
 }
 
 /**
@@ -322,7 +345,10 @@ export async function streamWorkspaceChat(
                     excerpt: result.content.slice(0, 280),
                 }))
                 : [];
-            const allCitations = [...citations, ...webCitations];
+            const allCitations = await reconcileWorkspaceCitations(
+                workspaceId,
+                [...citations, ...webCitations],
+            );
 
             await createMessageRecord({
                 conversationId: conversation.id,

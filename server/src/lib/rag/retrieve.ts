@@ -3,17 +3,12 @@ import { embedTexts } from "../openai.js";
 import { queryWorkspaceVectors } from "../pinecone.js";
 import { searchChunksByWorkspace, findChunksByWorkspaceId } from "../../repository/source-chunk.repository.js";
 import { findSourcesByWorkspaceId } from "../../repository/source.repository.js";
+import {
+    reconcileRetrievedChunksWithSources,
+    type RetrievedChunk,
+} from "./reconcile.js";
 
-export type RetrievedChunk = {
-    sourceId: string;
-    sourceTitle: string;
-    sourceType: string;
-    chunkId: string;
-    chunkIndex: number;
-    page?: number;
-    text: string;
-    score: number;
-};
+export type { RetrievedChunk };
 
 export async function retrieveWorkspaceContext(
     workspaceId: string,
@@ -69,9 +64,9 @@ export async function retrieveWorkspaceContext(
         console.warn("Vector retrieval notice (falling back to database source search):", err);
     }
 
-    // 2. If vector retrieval found matches, return them
+    // 2. If vector retrieval found matches, return them (after DB reconcile)
     if (chunks.length > 0) {
-        return chunks;
+        return reconcileRetrievedChunksWithSources(workspaceId, chunks);
     }
 
     // 3. Fallback: Search PostgreSQL source chunks directly
@@ -89,7 +84,7 @@ export async function retrieveWorkspaceContext(
         );
 
         if (dbChunks.length > 0) {
-            return dbChunks.map((chunk) => {
+            const fromDb = dbChunks.map((chunk) => {
                 const meta =
                     chunk.metadata &&
                     typeof chunk.metadata === "object" &&
@@ -108,12 +103,13 @@ export async function retrieveWorkspaceContext(
                     score: 0.8,
                 };
             });
+            return reconcileRetrievedChunksWithSources(workspaceId, fromDb);
         }
 
         // If no keyword matches, fetch recent chunks from this workspace
         const recentChunks = await findChunksByWorkspaceId(workspaceId, RAG_TOP_K);
         if (recentChunks.length > 0) {
-            return recentChunks.map((chunk) => {
+            const recent = recentChunks.map((chunk) => {
                 const meta =
                     chunk.metadata &&
                     typeof chunk.metadata === "object" &&
@@ -132,6 +128,7 @@ export async function retrieveWorkspaceContext(
                     score: 0.5,
                 };
             });
+            return reconcileRetrievedChunksWithSources(workspaceId, recent);
         }
 
         // 4. Last fallback: Read directly from sources that have content
@@ -152,7 +149,7 @@ export async function retrieveWorkspaceContext(
         console.warn("Database source retrieval fallback error:", fallbackErr);
     }
 
-    return chunks;
+    return reconcileRetrievedChunksWithSources(workspaceId, chunks);
 }
 
 export type UserMemoryContext = string;

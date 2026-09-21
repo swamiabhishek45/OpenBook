@@ -2,6 +2,7 @@ import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { scrapeWebsite } from "../lib/sources/firecrawl.js";
 import { extractPdfFromBuffer } from "../lib/sources/pdf.js";
 import { enqueueSourceProcessing } from "../lib/events/source-events.js";
+import { deleteSourceVectors } from "../lib/pinecone.js";
 import { fetchYoutubeTranscript } from "../lib/sources/youtube.js";
 import {
     createSourceRecord,
@@ -101,6 +102,14 @@ export async function deleteSourceForWorkspace(
     userId: string,
 ) {
     await getSourceForWorkspace(workspaceId, sourceId, userId);
+    try {
+        await deleteSourceVectors(workspaceId, sourceId);
+    } catch (err) {
+        console.warn(
+            `Failed to delete Pinecone vectors for source ${sourceId}:`,
+            err,
+        );
+    }
     await deleteSourceRecord(sourceId);
 }
 

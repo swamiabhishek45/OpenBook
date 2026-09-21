@@ -103,6 +103,31 @@ export function findSourceByIdAndWorkspaceId(
     });
 }
 
+const sourceSummarySelect = {
+    id: true,
+    title: true,
+    type: true,
+    url: true,
+} as const;
+
+export type SourceSummary = Prisma.SourceGetPayload<{
+    select: typeof sourceSummarySelect;
+}>;
+
+export function findSourceSummariesByWorkspaceIdAndIds(
+    workspaceId: string,
+    sourceIds: string[],
+) {
+    if (sourceIds.length === 0) {
+        return Promise.resolve([] as SourceSummary[]);
+    }
+
+    return prisma.source.findMany({
+        where: { workspaceId, id: { in: sourceIds } },
+        select: sourceSummarySelect,
+    });
+}
+
 /**
  * Deletes a source document from PostgreSQL by its unique ID.
  *

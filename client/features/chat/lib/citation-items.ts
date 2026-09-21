@@ -1,4 +1,5 @@
 import type { CitationItem } from "@/components/agents/citations";
+import { uniqueCitationsBySource } from "./citation";
 import type { ChatCitation } from "./types";
 
 export function chatCitationsToAgentItems(
@@ -6,7 +7,9 @@ export function chatCitationsToAgentItems(
 ): CitationItem[] {
   if (!citations?.length) return [];
 
-  return citations.map((citation, index) => ({
+  const unique = uniqueCitationsBySource(citations);
+
+  return unique.map((citation, index) => ({
     id: citation.chunkId ?? citation.sourceId ?? `citation-${index}`,
     title: citation.sourceTitle,
     domain: citation.sourceType,

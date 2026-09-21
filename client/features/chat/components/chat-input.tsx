@@ -1,16 +1,23 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Globe, FileText, Zap, LoaderCircle } from "lucide-react";
+import { ArrowUp, Globe, Zap, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUsage, useUpgradeModal } from "@/features/billing";
 import { enhanceChatPrompt } from "../lib/api";
 import { toast } from "@/components/ui/toast";
+import {
+  CHAT_MODELS,
+  type ChatModelId,
+  useChatPreferences,
+} from "../stores/chat-preferences";
 
 
 interface ChatInputProps {
   workspaceId: string;
+  defaultModel?: string;
+  onModelChange?: (model: string) => void;
   onSendMessage: (message: string) => void;
   onStopStreaming?: () => void;
   isStreaming: boolean;
@@ -21,6 +28,8 @@ interface ChatInputProps {
 
 export function ChatInput({
   workspaceId,
+  defaultModel,
+  onModelChange,
   onSendMessage,
   onStopStreaming,
   isStreaming,
@@ -28,6 +37,8 @@ export function ChatInput({
   webSearchEnabled,
   onToggleWebSearch,
 }: ChatInputProps) {
+  const { getPrefs, setModel } = useChatPreferences();
+  const selectedModel = getPrefs(workspaceId, defaultModel).model;
   const [input, setInput] = useState("");
   const [promptBeforeEnhance, setPromptBeforeEnhance] = useState<string | null>(
     null,
@@ -180,15 +191,24 @@ export function ChatInput({
         {/* Bottom toolbar */}
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
-            {/* Source grounding status pill */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/70 border border-border text-[11px] text-muted-foreground">
-              <FileText className="w-3 h-3 text-foreground" />
-              <span>
-                {selectedSourcesCount > 0
-                  ? `${selectedSourcesCount} sources`
-                  : "No sources"}
-              </span>
-            </div>
+            <select
+              value={selectedModel}
+              onChange={(e) => {
+                const model = e.target.value as ChatModelId;
+                setModel(workspaceId, model);
+                onModelChange?.(model);
+              }}
+              disabled={isStreaming}
+              className="px-2.5 py-1 rounded-md bg-muted/70 border border-border text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
+              title="Chat model"
+              aria-label="Chat model"
+            >
+              {CHAT_MODELS.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
 
             {/* Web search toggle */}
             <button

@@ -141,7 +141,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     currentConversationId,
     setCurrentConversationId,
     deleteConversation,
-  } = useChat(workspaceId);
+  } = useChat(workspaceId, undefined, workspace?.defaultModel);
 
   const {
     artifacts,
@@ -206,6 +206,8 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           <ResizablePanel defaultSize="52%" minSize="30%">
             <ChatPanel
               workspaceId={workspaceId}
+              defaultModel={workspace?.defaultModel}
+              onModelChange={(defaultModel) => updateWorkspace({ defaultModel })}
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}
@@ -276,6 +278,8 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           {mobileTab === "chat" && (
             <ChatPanel
               workspaceId={workspaceId}
+              defaultModel={workspace?.defaultModel}
+              onModelChange={(defaultModel) => updateWorkspace({ defaultModel })}
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}

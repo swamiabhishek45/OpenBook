@@ -3,17 +3,14 @@
 import React from "react";
 import { Source } from "../lib/types";
 import {
-  FileText,
-  Globe,
-  FileCode,
   Trash2,
   Check,
   AlertCircle,
   Eye,
   RefreshCw,
 } from "lucide-react";
-import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import { SourceTypeIcon } from "./source-type-icon";
 import { cn } from "@/lib/utils";
 
 interface SourceItemProps {
@@ -35,19 +32,6 @@ export function SourceItem({
   onRetry,
   isRetrying = false,
 }: SourceItemProps) {
-  const getIcon = () => {
-    switch (source.type) {
-      case "PDF":
-        return <FileText className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
-      case "WEBSITE":
-        return <Globe className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
-      case "YOUTUBE":
-        return <YoutubeIcon className="w-4 h-4 text-red-500 dark:text-red-400" />;
-      default:
-        return <FileCode className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />;
-    }
-  };
-
   const getStatusBadge = () => {
     switch (source.status) {
       case "READY":
@@ -115,7 +99,14 @@ export function SourceItem({
 
         {/* Source Icon */}
         <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
-          {getIcon()}
+          <SourceTypeIcon
+            type={source.type}
+            className={
+              source.type === "YOUTUBE"
+                ? "text-red-500 dark:text-red-400"
+                : undefined
+            }
+          />
         </div>
 
         {/* Title & Status */}

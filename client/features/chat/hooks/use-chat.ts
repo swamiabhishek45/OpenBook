@@ -8,7 +8,11 @@ import { useChatPreferences } from "../stores/chat-preferences";
 import { useUpgradeModal } from "@/features/billing";
 
 
-export function useChat(workspaceId: string, activeConversationId?: string) {
+export function useChat(
+  workspaceId: string,
+  activeConversationId?: string,
+  defaultModel?: string,
+) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -23,7 +27,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
   }, [currentConversationId]);
 
   const { getPrefs, setWebSearch } = useChatPreferences();
-  const prefs = getPrefs(workspaceId);
+  const prefs = getPrefs(workspaceId, defaultModel);
   const webSearchEnabled = prefs.webSearch;
 
   const setWebSearchEnabled = useCallback(
@@ -140,7 +144,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
           parts: [{ type: "text" as const, text: m.content }],
         }));
 
-        const currentPrefs = getPrefs(workspaceId);
+        const currentPrefs = getPrefs(workspaceId, defaultModel);
 
         const response = await fetch(
           `${API_BASE_URL}/api/workspaces/${workspaceId}/chat`,
@@ -345,6 +349,7 @@ export function useChat(workspaceId: string, activeConversationId?: string) {
       messages,
       isStreaming,
       workspaceId,
+      defaultModel,
       getPrefs,
       queryClient,
     ]

@@ -180,17 +180,6 @@ export function WorkspaceHeader({
           </div>
         )}
 
-        {/* Model dropdown - hidden on mobile/tablet screens */}
-        <select
-          value={workspace?.defaultModel || "gpt-4o-mini"}
-          onChange={(e) => onUpdateModel?.(e.target.value)}
-          className="hidden md:block px-2.5 py-1 rounded-lg bg-muted border border-border text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer hover:bg-muted/80 transition-colors font-medium"
-          title="Select AI Model"
-        >
-          <option value="gpt-4o-mini">gpt-4o-mini</option>
-          <option value="gpt-4o">gpt-4o</option>
-        </select>
-
         {/* Pro Plan Badge */}
         <ProBadge />
 

@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
   workspaceId: string;
+  defaultModel?: string;
+  onModelChange?: (model: string) => void;
   messages: ChatMessageType[];
   isStreaming: boolean;
   onSendMessage: (message: string) => void;
@@ -61,6 +63,8 @@ const STARTER_PROMPTS = [
 
 export function ChatPanel({
   workspaceId,
+  defaultModel,
+  onModelChange,
   messages,
   isStreaming,
   onSendMessage,
@@ -319,6 +323,8 @@ export function ChatPanel({
       {/* Input Bar */}
       <ChatInput
         workspaceId={workspaceId}
+        defaultModel={defaultModel}
+        onModelChange={onModelChange}
         onSendMessage={onSendMessage}
         onStopStreaming={onStopStreaming}
         isStreaming={isStreaming}

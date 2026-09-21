@@ -9,14 +9,10 @@ interface CodeBlockProps {
   code: string;
 }
 
-/**
- * Lightweight token-based syntax highlighter that works across both light and dark themes
- */
 function highlightCode(code: string, language: string = "code"): React.ReactNode {
   const lines = code.split("\n");
 
   const highlightLine = (line: string, lineIdx: number) => {
-    // 1. Check full line comment
     const commentMatch = line.match(/^(\s*)((\/\/|#).*)$/);
     if (commentMatch) {
       return (
@@ -30,7 +26,6 @@ function highlightCode(code: string, language: string = "code"): React.ReactNode
       );
     }
 
-    // Regex tokenizer for keywords, strings, comments, numbers, and functions
     const tokenRegex =
       /(\/\/.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b(?:const|let|var|function|return|import|export|from|default|class|extends|if|else|switch|case|for|while|try|catch|finally|async|await|new|typeof|instanceof|void|interface|type|enum|public|private|protected|npm|npx|node|cd|mkdir|git|install|run|def|print|self|True|False|None)\b)|(\b(?:true|false|null|undefined|NaN|Infinity|\d+(?:\.\d+)?)\b)|(\b(?:require|console|log|error|warn|send|json|status|listen|use|get|post|put|delete|push|map|filter|reduce|find|forEach)\b)|([{}()[\],;.:=><!+\-*/%&|^?~]+)/g;
 
@@ -39,61 +34,51 @@ function highlightCode(code: string, language: string = "code"): React.ReactNode
     let match: RegExpExecArray | null;
 
     while ((match = tokenRegex.exec(line)) !== null) {
-      // Unmatched prefix text
       if (match.index > lastIndex) {
         parts.push(line.slice(lastIndex, match.index));
       }
 
-      const [
-        full,
-        comment,
-        str,
-        keyword,
-        literal,
-        fn,
-        operator,
-      ] = match;
+      const [full, comment, str, keyword, literal, fn, operator] = match;
 
       if (comment) {
         parts.push(
           <span key={match.index} className="text-zinc-500 dark:text-zinc-400 italic">
             {comment}
-          </span>
+          </span>,
         );
       } else if (str) {
         parts.push(
           <span key={match.index} className="text-emerald-800 dark:text-emerald-400 font-normal">
             {str}
-          </span>
+          </span>,
         );
       } else if (keyword) {
         parts.push(
           <span key={match.index} className="text-foreground font-semibold">
             {keyword}
-          </span>
+          </span>,
         );
       } else if (literal) {
         parts.push(
           <span key={match.index} className="text-amber-800 dark:text-amber-400 font-medium">
             {literal}
-          </span>
+          </span>,
         );
       } else if (fn) {
         parts.push(
           <span key={match.index} className="text-foreground/90 font-medium">
             {fn}
-          </span>
+          </span>,
         );
       } else if (operator) {
         parts.push(
           <span key={match.index} className="text-muted-foreground font-normal">
             {operator}
-          </span>
+          </span>,
         );
       } else {
         parts.push(full);
       }
-
 
       lastIndex = tokenRegex.lastIndex;
     }
@@ -113,7 +98,7 @@ function highlightCode(code: string, language: string = "code"): React.ReactNode
   return lines.map((line, idx) => highlightLine(line, idx));
 }
 
-export function CodeBlock({ language = "code", code }: CodeBlockProps) {
+function CodeBlock({ language = "code", code }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -126,7 +111,6 @@ export function CodeBlock({ language = "code", code }: CodeBlockProps) {
 
   return (
     <div className="my-4 rounded-xl overflow-hidden border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-xs">
-      {/* Code Header Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-200/80 dark:bg-zinc-900 border-b border-zinc-300/80 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-400 select-none">
         <div className="flex items-center gap-1.5 font-medium lowercase">
           <Terminal className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
@@ -153,15 +137,29 @@ export function CodeBlock({ language = "code", code }: CodeBlockProps) {
         </button>
       </div>
 
-      {/* Code Body */}
       <div className="px-5 py-4.5 overflow-x-auto font-mono text-[13px] leading-6 bg-zinc-100 dark:bg-zinc-950">
         <pre className="m-0 p-0 font-mono">
           <code>{highlightCode(code, displayLanguage)}</code>
         </pre>
       </div>
-
     </div>
   );
+}
+
+function parseFenceBlock(block: string): {
+  language: string;
+  code: string;
+} | null {
+  if (!block.startsWith("```")) return null;
+  const inner = block.slice(3);
+  const firstLineEnd = inner.indexOf("\n");
+  if (firstLineEnd !== -1) {
+    return {
+      language: inner.slice(0, firstLineEnd).trim(),
+      code: inner.slice(firstLineEnd + 1).replace(/```$/, "").trimEnd(),
+    };
+  }
+  return { language: "", code: inner.replace(/```$/, "").trimEnd() };
 }
 
 /**
@@ -175,46 +173,42 @@ function renderInlineText(text: string): React.ReactNode {
   let key = 0;
 
   while (remaining.length > 0) {
-    // 1. Inline code: `code`
     const codeMatch = remaining.match(/^`([^`]+)`/);
     if (codeMatch) {
       parts.push(
         <code
           key={key++}
-          className="px-1.5 py-0.5 mx-0.5 rounded-md bg-zinc-200/80 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-[12px] text-zinc-900 dark:text-zinc-100 font-medium"
+          className="px-1.5 py-0.5 mx-0.5 rounded-md bg-muted border border-border font-mono text-[12px] text-foreground font-medium"
         >
           {codeMatch[1]}
-        </code>
+        </code>,
       );
       remaining = remaining.slice(codeMatch[0].length);
       continue;
     }
 
-    // 2. Bold text: **text** or __text__
     const boldMatch = remaining.match(/^(\*\*|__)(.*?)\1/);
     if (boldMatch) {
       parts.push(
         <strong key={key++} className="font-semibold text-foreground">
           {renderInlineText(boldMatch[2])}
-        </strong>
+        </strong>,
       );
       remaining = remaining.slice(boldMatch[0].length);
       continue;
     }
 
-    // 3. Italic text: *text* or _text_
     const italicMatch = remaining.match(/^(\*|_)(.*?)\1/);
     if (italicMatch && !italicMatch[2].startsWith("*")) {
       parts.push(
         <em key={key++} className="italic text-foreground/90">
           {renderInlineText(italicMatch[2])}
-        </em>
+        </em>,
       );
       remaining = remaining.slice(italicMatch[0].length);
       continue;
     }
 
-    // 4. Links: [text](url)
     const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
     if (linkMatch) {
       parts.push(
@@ -226,13 +220,12 @@ function renderInlineText(text: string): React.ReactNode {
           className="text-primary underline underline-offset-2 hover:opacity-80 font-medium"
         >
           {linkMatch[1]}
-        </a>
+        </a>,
       );
       remaining = remaining.slice(linkMatch[0].length);
       continue;
     }
 
-    // 5. Citation pills: [1], [2], [1, 2]
     const citationMatch = remaining.match(/^\[(\d+(?:,\s*\d+)*)\]/);
     if (citationMatch) {
       parts.push(
@@ -242,13 +235,12 @@ function renderInlineText(text: string): React.ReactNode {
           title={`Source Citation ${citationMatch[1]}`}
         >
           {citationMatch[1]}
-        </span>
+        </span>,
       );
       remaining = remaining.slice(citationMatch[0].length);
       continue;
     }
 
-    // Next special char search
     const nextSpecial = remaining.search(/[`*_[]/);
     if (nextSpecial === -1) {
       parts.push(remaining);
@@ -268,143 +260,195 @@ function renderInlineText(text: string): React.ReactNode {
 interface ChatMarkdownProps {
   content: string;
   className?: string;
+  /** When true, the last fenced code block renders in streaming mode. */
+  isStreaming?: boolean;
 }
 
-/**
- * High-performance Markdown renderer for AI Chat messages with:
- * - Light/Dark theme matching code blocks with syntax color highlighting
- * - Clean typography without raw markdown hashes (###) or asterisks (**)
- * - Structured ordered/unordered lists
- */
-export function ChatMarkdown({ content, className }: ChatMarkdownProps) {
+function splitStreamingFences(content: string) {
+  const lastFence = content.lastIndexOf("```");
+  if (lastFence === -1) {
+    return { body: content, openFence: null as string | null };
+  }
+
+  const afterOpen = content.slice(lastFence + 3);
+  if (afterOpen.includes("```")) {
+    return { body: content, openFence: null };
+  }
+
+  return {
+    body: content.slice(0, lastFence),
+    openFence: content.slice(lastFence),
+  };
+}
+
+export function ChatMarkdown({
+  content,
+  className,
+  isStreaming = false,
+}: ChatMarkdownProps) {
   if (!content) return null;
 
-  // Split content by code blocks: ```lang ... ```
-  const rawBlocks = content.split(/(```[\s\S]*?```)/g);
+  const { body, openFence } = isStreaming
+    ? splitStreamingFences(content)
+    : { body: content, openFence: null };
+
+  const closedFenceBlocks = body.split(/(```[\s\S]*?```)/g);
+
+  const blocks: React.ReactNode[] = [];
+
+  closedFenceBlocks.forEach((block, bIdx) => {
+    if (block.startsWith("```") && block.endsWith("```")) {
+      const parsed = parseFenceBlock(block);
+      if (!parsed) return;
+
+      blocks.push(
+        <CodeBlock
+          key={`code-${bIdx}`}
+          language={parsed.language || "code"}
+          code={parsed.code}
+        />,
+      );
+      return;
+    }
+
+    if (!block.trim()) return;
+
+    const lines = block.split(/\r?\n/);
+    const elements: React.ReactNode[] = [];
+    let listBuffer: {
+      type: "ol" | "ul";
+      items: { num?: string; text: string }[];
+    } | null = null;
+
+    const flushList = () => {
+      if (!listBuffer) return;
+      const { type, items } = listBuffer;
+      if (type === "ol") {
+        elements.push(
+          <ol key={`ol-${elements.length}`} className="my-2.5 space-y-1.5 pl-1">
+            {items.map((it, idx) => (
+              <li key={idx} className="flex items-baseline gap-2 text-foreground/90">
+                <span className="font-mono text-xs font-semibold text-muted-foreground shrink-0 select-none">
+                  {it.num || `${idx + 1}.`}
+                </span>
+                <div className="flex-1">{renderInlineText(it.text)}</div>
+              </li>
+            ))}
+          </ol>,
+        );
+      } else {
+        elements.push(
+          <ul key={`ul-${elements.length}`} className="my-2.5 space-y-1.5 pl-1">
+            {items.map((it, idx) => (
+              <li key={idx} className="flex items-baseline gap-2.5 text-foreground/90">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 mt-1.5 select-none" />
+                <div className="flex-1">{renderInlineText(it.text)}</div>
+              </li>
+            ))}
+          </ul>,
+        );
+      }
+      listBuffer = null;
+    };
+
+    lines.forEach((line, lIdx) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        flushList();
+        return;
+      }
+
+      if (trimmed.startsWith("### ")) {
+        flushList();
+        elements.push(
+          <h3
+            key={`h3-${lIdx}`}
+            className="text-base font-semibold text-foreground mt-4 mb-1.5 tracking-tight"
+          >
+            {renderInlineText(trimmed.slice(4))}
+          </h3>,
+        );
+        return;
+      }
+      if (trimmed.startsWith("## ")) {
+        flushList();
+        elements.push(
+          <h2
+            key={`h2-${lIdx}`}
+            className="text-lg font-bold text-foreground mt-5 mb-2 tracking-tight"
+          >
+            {renderInlineText(trimmed.slice(3))}
+          </h2>,
+        );
+        return;
+      }
+      if (trimmed.startsWith("# ")) {
+        flushList();
+        elements.push(
+          <h1
+            key={`h1-${lIdx}`}
+            className="text-xl font-bold text-foreground mt-6 mb-2.5 tracking-tight"
+          >
+            {renderInlineText(trimmed.slice(2))}
+          </h1>,
+        );
+        return;
+      }
+
+      const olMatch = line.match(/^\s*(\d+[\.\)])\s+(.*)$/);
+      if (olMatch) {
+        if (!listBuffer || listBuffer.type !== "ol") {
+          flushList();
+          listBuffer = { type: "ol", items: [] };
+        }
+        listBuffer.items.push({ num: olMatch[1], text: olMatch[2] });
+        return;
+      }
+
+      const ulMatch = line.match(/^\s*[-*•]\s+(.*)$/);
+      if (ulMatch) {
+        if (!listBuffer || listBuffer.type !== "ul") {
+          flushList();
+          listBuffer = { type: "ul", items: [] };
+        }
+        listBuffer.items.push({ text: ulMatch[1] });
+        return;
+      }
+
+      flushList();
+      elements.push(
+        <p key={`p-${lIdx}`} className="my-1.5 leading-relaxed text-foreground/90">
+          {renderInlineText(line)}
+        </p>,
+      );
+    });
+
+    flushList();
+    blocks.push(<div key={`text-${bIdx}`}>{elements}</div>);
+  });
+
+  if (openFence) {
+    const openMatch = openFence.match(/^```([\w-]*)\n?([\s\S]*)$/);
+    const language = openMatch?.[1]?.trim() ?? "";
+    const code = openMatch?.[2] ?? "";
+
+    blocks.push(
+      <CodeBlock
+        key="code-streaming-open"
+        language={language || "code"}
+        code={code}
+      />,
+    );
+  }
 
   return (
-    <div className={cn("space-y-3 font-sans text-sm text-foreground leading-relaxed", className)}>
-      {rawBlocks.map((block, bIdx) => {
-        // If it's a code block
-        if (block.startsWith("```") && block.endsWith("```")) {
-          const firstLineEnd = block.indexOf("\n");
-          if (firstLineEnd !== -1) {
-            const language = block.slice(3, firstLineEnd).trim();
-            const code = block.slice(firstLineEnd + 1, -3);
-            return <CodeBlock key={bIdx} language={language} code={code} />;
-          }
-          const code = block.slice(3, -3);
-          return <CodeBlock key={bIdx} language="code" code={code} />;
-        }
-
-        // Handle normal markdown text block (paragraphs, headings, lists)
-        const lines = block.split(/\r?\n/);
-        const elements: React.ReactNode[] = [];
-        let listBuffer: { type: "ol" | "ul"; items: { num?: string; text: string }[] } | null = null;
-
-        const flushList = () => {
-          if (!listBuffer) return;
-          const { type, items } = listBuffer;
-          if (type === "ol") {
-            elements.push(
-              <ol key={`ol-${elements.length}`} className="my-2.5 space-y-1.5 pl-1">
-                {items.map((it, idx) => (
-                  <li key={idx} className="flex items-baseline gap-2 text-foreground/90">
-                    <span className="font-mono text-xs font-semibold text-muted-foreground shrink-0 select-none">
-                      {it.num || `${idx + 1}.`}
-                    </span>
-                    <div className="flex-1">{renderInlineText(it.text)}</div>
-                  </li>
-                ))}
-              </ol>
-            );
-          } else {
-            elements.push(
-              <ul key={`ul-${elements.length}`} className="my-2.5 space-y-1.5 pl-1">
-                {items.map((it, idx) => (
-                  <li key={idx} className="flex items-baseline gap-2.5 text-foreground/90">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 mt-1.5 select-none" />
-                    <div className="flex-1">{renderInlineText(it.text)}</div>
-                  </li>
-                ))}
-              </ul>
-            );
-          }
-          listBuffer = null;
-        };
-
-        lines.forEach((line, lIdx) => {
-          const trimmed = line.trim();
-
-          // Empty line
-          if (!trimmed) {
-            flushList();
-            return;
-          }
-
-          // Headings
-          if (trimmed.startsWith("### ")) {
-            flushList();
-            elements.push(
-              <h3 key={`h3-${lIdx}`} className="text-base font-semibold text-foreground mt-4 mb-1.5 tracking-tight">
-                {renderInlineText(trimmed.slice(4))}
-              </h3>
-            );
-            return;
-          }
-          if (trimmed.startsWith("## ")) {
-            flushList();
-            elements.push(
-              <h2 key={`h2-${lIdx}`} className="text-lg font-bold text-foreground mt-5 mb-2 tracking-tight">
-                {renderInlineText(trimmed.slice(3))}
-              </h2>
-            );
-            return;
-          }
-          if (trimmed.startsWith("# ")) {
-            flushList();
-            elements.push(
-              <h1 key={`h1-${lIdx}`} className="text-xl font-bold text-foreground mt-6 mb-2.5 tracking-tight">
-                {renderInlineText(trimmed.slice(2))}
-              </h1>
-            );
-            return;
-          }
-
-          // Numbered list item
-          const olMatch = line.match(/^\s*(\d+[\.\)])\s+(.*)$/);
-          if (olMatch) {
-            if (!listBuffer || listBuffer.type !== "ol") {
-              flushList();
-              listBuffer = { type: "ol", items: [] };
-            }
-            listBuffer.items.push({ num: olMatch[1], text: olMatch[2] });
-            return;
-          }
-
-          // Bullet list item
-          const ulMatch = line.match(/^\s*[-*•]\s+(.*)$/);
-          if (ulMatch) {
-            if (!listBuffer || listBuffer.type !== "ul") {
-              flushList();
-              listBuffer = { type: "ul", items: [] };
-            }
-            listBuffer.items.push({ text: ulMatch[1] });
-            return;
-          }
-
-          // Regular paragraph line
-          flushList();
-          elements.push(
-            <p key={`p-${lIdx}`} className="my-1.5 leading-relaxed text-foreground/90">
-              {renderInlineText(line)}
-            </p>
-          );
-        });
-
-        flushList();
-        return <div key={bIdx}>{elements}</div>;
-      })}
+    <div
+      className={cn(
+        "space-y-3 font-sans text-sm text-foreground leading-relaxed",
+        className,
+      )}
+    >
+      {blocks}
     </div>
   );
 }

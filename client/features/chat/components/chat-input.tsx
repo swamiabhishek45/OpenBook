@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Globe, FileText, Zap } from "lucide-react";
+import { ArrowUp, Globe, FileText, Zap, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUsage, useUpgradeModal } from "@/features/billing";
+import { enhanceChatPrompt } from "../lib/api";
+import { toast } from "@/components/ui/toast";
 
 
 interface ChatInputProps {
+  workspaceId: string;
   onSendMessage: (message: string) => void;
   onStopStreaming?: () => void;
   isStreaming: boolean;
@@ -17,6 +20,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({
+  workspaceId,
   onSendMessage,
   onStopStreaming,
   isStreaming,
@@ -25,6 +29,10 @@ export function ChatInput({
   onToggleWebSearch,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
+  const [promptBeforeEnhance, setPromptBeforeEnhance] = useState<string | null>(
+    null,
+  );
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { usage, isPro } = useUsage();
   const { openUpgradeModal } = useUpgradeModal();
@@ -55,10 +63,48 @@ export function ChatInput({
 
     onSendMessage(input);
     setInput("");
+    setPromptBeforeEnhance(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
   };
+
+  const handleEnhanceOrRevert = async () => {
+    if (isEnhancing || isStreaming) return;
+
+    if (promptBeforeEnhance !== null) {
+      setInput(promptBeforeEnhance);
+      setPromptBeforeEnhance(null);
+      return;
+    }
+
+    const current = input.trim();
+    if (!current) return;
+
+    setIsEnhancing(true);
+    try {
+      const { enhanced } = await enhanceChatPrompt(
+        workspaceId,
+        current,
+        selectedSourcesCount,
+      );
+      setPromptBeforeEnhance(current);
+      setInput(enhanced);
+    } catch (err) {
+      toast.add({
+        title: "Could not enhance prompt",
+        description:
+          err instanceof Error ? err.message : "Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const showEnhanceControl =
+    input.trim().length > 0 && !isStreaming && !isLimitReached;
+  const isEnhanced = promptBeforeEnhance !== null;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -96,15 +142,28 @@ export function ChatInput({
       )}
 
 
+      <div
+        className={cn(
+          "rounded-2xl p-[1.5px] transition-all duration-300",
+          isEnhancing
+            ? "bg-[linear-gradient(135deg,#22d3ee_0%,#8b5cf6_45%,#ec4899_100%)] shadow-[0_0_24px_rgba(139,92,246,0.25)]"
+            : "bg-border focus-within:bg-zinc-400 dark:focus-within:bg-zinc-600 has-[:focus]:bg-zinc-400 dark:has-[:focus]:bg-zinc-600",
+        )}
+      >
       <form
         onSubmit={handleSubmit}
-        className="relative rounded-2xl border border-border bg-card shadow-lg focus-within:border-zinc-400 dark:focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-ring transition-all p-3 space-y-2.5"
+        className="relative rounded-[calc(1rem-1px)] bg-card shadow-lg p-3 space-y-2.5"
       >
         {/* Text input area */}
         <textarea
           ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (promptBeforeEnhance !== null) {
+              setPromptBeforeEnhance(null);
+            }
+          }}
           onKeyDown={handleKeyDown}
           placeholder={
             isLimitReached
@@ -171,6 +230,37 @@ export function ChatInput({
             )}
           </div>
 
+          <div className="flex items-center gap-1.5">
+            {isEnhancing && (
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-muted/80 border border-border"
+                aria-label="Enhancing prompt"
+                aria-busy="true"
+              >
+                <LoaderCircle className="w-4 h-4 text-muted-foreground animate-spin" />
+              </div>
+            )}
+
+            {showEnhanceControl && !isEnhancing && (
+              <button
+                type="button"
+                onClick={() => void handleEnhanceOrRevert()}
+                title={
+                  isEnhanced
+                    ? "Restore your original prompt"
+                    : "Improve clarity with Gemini"
+                }
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-[11px] font-medium border border-[#2a2a2a] dark:border-[#333333] transition-colors",
+                  isEnhanced
+                    ? "bg-muted/50 text-foreground hover:bg-muted/80"
+                    : "bg-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {isEnhanced ? "Revert" : "Enhance prompt"}
+              </button>
+            )}
+
           {/* Submit / Stop button */}
           {isStreaming ? (
             <button
@@ -186,13 +276,15 @@ export function ChatInput({
               type="submit"
               disabled={!input.trim() || isLimitReached}
               title={isLimitReached ? "Upgrade to Pro to send messages" : "Send message"}
-              className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary hover:opacity-90 active:scale-95 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary hover:opacity-90 active:scale-95 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
             >
               <ArrowUp className="w-4 h-4 stroke-[2.5]" />
             </button>
           )}
+          </div>
         </div>
       </form>
+      </div>
     </div>
   );
 }

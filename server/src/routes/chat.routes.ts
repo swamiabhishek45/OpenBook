@@ -4,6 +4,7 @@ import {
     deleteConversation,
     listConversationMessages,
     listConversations,
+    enhancePrompt,
     streamChat,
 } from "../controllers/chat.controller.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -23,4 +24,5 @@ conversationRoutes.delete(
 
 export const chatRoutes = Router({ mergeParams: true });
 
+chatRoutes.post("/enhance-prompt", asyncHandler(enhancePrompt));
 chatRoutes.post("/", asyncHandler(streamChat));

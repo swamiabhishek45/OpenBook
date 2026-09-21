@@ -8,6 +8,7 @@ import { ThemeBlob } from "@/components/ui/theme-blob";
 import { StreamingResponse } from "@/components/agents/streaming-response";
 import { ReasoningText } from "@/components/agents/loading-states/reasoning-text";
 import { ChatMarkdown } from "@/components/ui/chat-markdown";
+import { chatCitationsToAgentItems } from "../lib/citation-items";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -59,12 +60,19 @@ export function ChatMessage({
       );
     }
 
+    const responseStatus =
+      isLast && isStreaming ? "streaming" : "complete";
+    const sourceItems = chatCitationsToAgentItems(message.citations);
+
     return (
       <StreamingResponse
-        status={isLast && isStreaming ? "streaming" : "complete"}
+        status={responseStatus}
         copyText={content}
+        sources={sourceItems}
+        announce={responseStatus === "streaming"}
+        showActions={responseStatus === "complete"}
       >
-        <ChatMarkdown content={content} />
+        <ChatMarkdown content={content} isStreaming={responseStatus === "streaming"} />
       </StreamingResponse>
     );
   };

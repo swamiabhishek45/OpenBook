@@ -17,6 +17,86 @@ interface CitationsProps {
   className?: string;
 }
 
+export function CitationStack({
+  citations,
+  className,
+}: {
+  citations: CitationItem[];
+  className?: string;
+}) {
+  if (!citations.length) return null;
+
+  const shown = citations.slice(0, 3);
+  const extra = citations.length - shown.length;
+
+  return (
+    <span className={cn("inline-flex items-center -space-x-1", className)}>
+      {shown.map((citation) => (
+        <span
+          key={citation.id}
+          title={citation.title}
+          className="inline-flex size-4 items-center justify-center rounded-full border border-border bg-background text-[8px] font-semibold text-muted-foreground"
+        >
+          {(citation.domain || citation.title).charAt(0).toUpperCase()}
+        </span>
+      ))}
+      {extra > 0 ? (
+        <span className="pl-1 text-[10px] text-muted-foreground">+{extra}</span>
+      ) : null}
+    </span>
+  );
+}
+
+export function CitationList({
+  citations,
+  idPrefix,
+  className,
+}: {
+  citations: CitationItem[];
+  idPrefix?: string;
+  className?: string;
+}) {
+  if (!citations.length) return null;
+
+  return (
+    <ul className={cn("space-y-1.5", className)}>
+      {citations.map((citation, index) => {
+        const itemId = idPrefix ? `${idPrefix}-${index}` : undefined;
+        const label = citation.title;
+        const meta = citation.domain || citation.snippet;
+
+        const row = (
+          <div className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-2 text-xs">
+            <p className="font-medium text-foreground truncate">{label}</p>
+            {meta ? (
+              <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
+                {meta}
+              </p>
+            ) : null}
+          </div>
+        );
+
+        return (
+          <li key={citation.id} id={itemId}>
+            {citation.url ? (
+              <a
+                href={citation.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+              >
+                {row}
+              </a>
+            ) : (
+              row
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function Citations({ sources = [], className }: CitationsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 

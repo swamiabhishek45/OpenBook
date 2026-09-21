@@ -26,6 +26,20 @@ export function listConversationMessages(
     );
 }
 
+export function enhanceChatPrompt(
+    workspaceId: string,
+    prompt: string,
+    sourcesCount?: number,
+) {
+    return apiFetch<{ enhanced: string }>(
+        `/api/workspaces/${workspaceId}/chat/enhance-prompt`,
+        {
+            method: "POST",
+            body: JSON.stringify({ prompt, sourcesCount }),
+        },
+    );
+}
+
 export function deleteConversation(
     workspaceId: string,
     conversationId: string,

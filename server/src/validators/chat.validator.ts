@@ -20,3 +20,10 @@ export const createConversationSchema = z.object({
 });
 
 export type CreateConversationInput = z.infer<typeof createConversationSchema>;
+
+export const enhancePromptSchema = z.object({
+    prompt: z.string().trim().min(1).max(8000),
+    sourcesCount: z.number().int().min(0).optional(),
+});
+
+export type EnhancePromptInput = z.infer<typeof enhancePromptSchema>;

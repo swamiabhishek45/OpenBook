@@ -205,6 +205,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           {/* Middle Panel: Chat Interface */}
           <ResizablePanel defaultSize="52%" minSize="30%">
             <ChatPanel
+              workspaceId={workspaceId}
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}
@@ -274,6 +275,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
 
           {mobileTab === "chat" && (
             <ChatPanel
+              workspaceId={workspaceId}
               messages={messages}
               isStreaming={isStreaming}
               onSendMessage={sendMessage}

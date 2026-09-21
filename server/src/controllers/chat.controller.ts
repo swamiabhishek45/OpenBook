@@ -7,10 +7,12 @@ import {
     listConversationsForWorkspace,
     streamWorkspaceChat,
 } from "../services/chat.services.js";
+import { enhanceChatPromptForWorkspace } from "../services/chat-prompt.services.js";
 import {
     chatBodySchema,
     conversationIdParamSchema,
     createConversationSchema,
+    enhancePromptSchema,
 } from "../validators/chat.validator.js";
 import { workspaceIdParamSchema } from "../validators/workspace.validator.js";
 
@@ -86,6 +88,20 @@ export async function deleteConversation(req: Request, res: Response) {
  * @param req - Express request with workspaceId param and chat message history in body
  * @param res - Express streaming response object
  */
+export async function enhancePrompt(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+    const body = enhancePromptSchema.parse(req.body);
+
+    const result = await enhanceChatPromptForWorkspace(
+        workspaceId,
+        req.session.user.id,
+        body.prompt,
+        body.sourcesCount,
+    );
+
+    res.json(result);
+}
+
 export async function streamChat(req: Request, res: Response) {
     const { workspaceId } = workspaceIdParamSchema.parse(req.params);
     const body = chatBodySchema.parse(req.body);

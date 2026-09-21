@@ -20,6 +20,7 @@ import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
+  workspaceId: string;
   messages: ChatMessageType[];
   isStreaming: boolean;
   onSendMessage: (message: string) => void;
@@ -59,6 +60,7 @@ const STARTER_PROMPTS = [
 ];
 
 export function ChatPanel({
+  workspaceId,
   messages,
   isStreaming,
   onSendMessage,
@@ -316,6 +318,7 @@ export function ChatPanel({
 
       {/* Input Bar */}
       <ChatInput
+        workspaceId={workspaceId}
         onSendMessage={onSendMessage}
         onStopStreaming={onStopStreaming}
         isStreaming={isStreaming}

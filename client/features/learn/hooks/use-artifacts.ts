@@ -25,6 +25,7 @@ export function useArtifacts(workspaceId: string) {
       );
       return hasProcessing ? 3000 : false;
     },
+    retry: 2,
   });
 
   const createArtifactMutation = useMutation({
@@ -80,6 +81,18 @@ export function useArtifacts(workspaceId: string) {
     },
   });
 
+  const retryArtifactMutation = useMutation({
+    mutationFn: async (artifactId: string) => {
+      return await apiClient<LearningArtifact>(
+        `/api/workspaces/${workspaceId}/artifacts/${artifactId}/retry`,
+        { method: "POST" }
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["artifacts", workspaceId] });
+    },
+  });
+
   return {
     artifacts: artifactsQuery.data || [],
     isLoading: artifactsQuery.isLoading,
@@ -90,5 +103,8 @@ export function useArtifacts(workspaceId: string) {
     isCreating: createArtifactMutation.isPending,
     deleteArtifact: deleteArtifactMutation.mutateAsync,
     isDeleting: deleteArtifactMutation.isPending,
+    retryArtifact: retryArtifactMutation.mutateAsync,
+    isRetrying: retryArtifactMutation.isPending,
+    retryingArtifactId: retryArtifactMutation.variables,
   };
 }

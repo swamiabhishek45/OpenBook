@@ -5,6 +5,7 @@ import {
     getArtifact,
     listArtifacts,
     interruptPodcast,
+    retryArtifact,
     streamPodcastAudio,
 } from "../controllers/artifact.controller.js";
 import { exportToNotion } from "../controllers/integration.controller.js";
@@ -17,5 +18,6 @@ artifactRoutes.post("/", asyncHandler(createArtifact));
 artifactRoutes.get("/:artifactId", asyncHandler(getArtifact));
 artifactRoutes.get("/:artifactId/audio", asyncHandler(streamPodcastAudio));
 artifactRoutes.delete("/:artifactId", asyncHandler(deleteArtifact));
+artifactRoutes.post("/:artifactId/retry", asyncHandler(retryArtifact));
 artifactRoutes.post("/:artifactId/podcast/interrupt", asyncHandler(interruptPodcast));
 artifactRoutes.post("/:artifactId/export/notion", asyncHandler(exportToNotion));

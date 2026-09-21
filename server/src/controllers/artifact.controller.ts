@@ -6,6 +6,7 @@ import {
     deleteArtifactForWorkspace,
     getArtifactForWorkspace,
     listArtifactsForWorkspace,
+    retryArtifactForWorkspace,
 } from "../services/artifact.services.js";
 import { processPodcastInterruption } from "../services/podcast-interruption.services.js";
 import { findArtifactByIdAndWorkspaceId } from "../repository/artifact.repository.js";
@@ -78,6 +79,19 @@ export async function deleteArtifact(req: Request, res: Response) {
         req.session.user.id,
     );
     res.status(204).send();
+}
+
+/**
+ * Handles HTTP POST request to retry generation for a failed artifact.
+ */
+export async function retryArtifact(req: Request, res: Response) {
+    const { workspaceId, artifactId } = artifactIdParamSchema.parse(req.params);
+    const artifact = await retryArtifactForWorkspace(
+        workspaceId,
+        artifactId,
+        req.session.user.id,
+    );
+    res.json(artifact);
 }
 
 /**

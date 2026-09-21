@@ -147,7 +147,10 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     artifacts,
     createArtifact,
     deleteArtifact,
+    retryArtifact,
     isCreating: isArtifactCreating,
+    isRetrying: isArtifactRetrying,
+    retryingArtifactId,
   } = useArtifacts(workspaceId);
 
   if (isWorkspaceLoading) {
@@ -236,7 +239,10 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
                 })
               }
               onDeleteArtifact={deleteArtifact}
+              onRetryArtifact={retryArtifact}
               isCreating={isArtifactCreating}
+              isRetrying={isArtifactRetrying}
+              retryingArtifactId={retryingArtifactId}
               selectedSourcesCount={selectedSourceIds.length}
             />
           </ResizablePanel>
@@ -293,7 +299,10 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
                 })
               }
               onDeleteArtifact={deleteArtifact}
+              onRetryArtifact={retryArtifact}
               isCreating={isArtifactCreating}
+              isRetrying={isArtifactRetrying}
+              retryingArtifactId={retryingArtifactId}
               selectedSourcesCount={selectedSourceIds.length}
             />
           )}

@@ -89,6 +89,7 @@ export function updateArtifactRecord(
     artifactId: string,
     data: {
         title?: string;
+        type?: ArtifactRecord["type"];
         content?: Prisma.InputJsonValue;
         status?: ArtifactRecord["status"];
         metadata?: Prisma.InputJsonValue;
@@ -122,5 +123,29 @@ export function findArtifactById(artifactId: string) {
     return prisma.learningArtifact.findUnique({
         where: { id: artifactId },
         select: artifactSelect,
+    });
+}
+
+const STALE_ARTIFACT_MS = 30 * 60 * 1000;
+
+/**
+ * Marks workspace artifacts stuck in PENDING/PROCESSING as FAILED after a timeout.
+ */
+export async function failStaleArtifactsForWorkspace(workspaceId: string) {
+    const staleBefore = new Date(Date.now() - STALE_ARTIFACT_MS);
+
+    await prisma.learningArtifact.updateMany({
+        where: {
+            workspaceId,
+            status: { in: ["PENDING", "PROCESSING"] },
+            updatedAt: { lt: staleBefore },
+        },
+        data: {
+            status: "FAILED",
+            metadata: {
+                processingError:
+                    "Generation timed out or was interrupted. Try generating again.",
+            },
+        },
     });
 }

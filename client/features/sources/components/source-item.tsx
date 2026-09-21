@@ -10,6 +10,7 @@ import {
   Check,
   AlertCircle,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { ThemeLoader } from "@/components/ui/theme-loader";
@@ -21,6 +22,8 @@ interface SourceItemProps {
   onToggleSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onPreview: (source: Source) => void;
+  onRetry?: (id: string) => void;
+  isRetrying?: boolean;
 }
 
 export function SourceItem({
@@ -29,6 +32,8 @@ export function SourceItem({
   onToggleSelect,
   onDelete,
   onPreview,
+  onRetry,
+  isRetrying = false,
 }: SourceItemProps) {
   const getIcon = () => {
     switch (source.type) {
@@ -57,10 +62,29 @@ export function SourceItem({
         );
       case "FAILED":
         return (
-          <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
-            <AlertCircle className="w-2.5 h-2.5" />
-            Failed
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
+              <AlertCircle className="w-2.5 h-2.5" />
+              Failed
+            </span>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRetry(source.id);
+                }}
+                disabled={isRetrying}
+                title="Retry processing"
+                className="flex items-center gap-1 text-[10px] font-medium text-foreground bg-muted hover:bg-muted/80 px-1.5 py-0.5 rounded border border-border disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={cn("w-2.5 h-2.5", isRetrying && "animate-spin")}
+                />
+                Retry
+              </button>
+            )}
+          </div>
         );
     }
   };

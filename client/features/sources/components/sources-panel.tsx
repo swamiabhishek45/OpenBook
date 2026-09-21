@@ -14,6 +14,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
+import { useReprocessSource } from "../hooks/use-sources";
 
 interface SourcesPanelProps {
   workspaceId?: string;
@@ -48,6 +49,7 @@ export function SourcesPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [previewSource, setPreviewSource] = useState<Source | null>(null);
+  const reprocessMutation = useReprocessSource(workspaceId ?? "");
 
   const filteredSources = sources.filter((s) =>
     s.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -152,6 +154,15 @@ export function SourcesPanel({
               onToggleSelect={onToggleSelect}
               onDelete={onDeleteSource}
               onPreview={(s) => setPreviewSource(s)}
+              onRetry={
+                workspaceId
+                  ? (id) => reprocessMutation.mutate(id)
+                  : undefined
+              }
+              isRetrying={
+                reprocessMutation.isPending &&
+                reprocessMutation.variables === source.id
+              }
             />
           ))
         )}

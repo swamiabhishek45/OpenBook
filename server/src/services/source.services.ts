@@ -8,6 +8,7 @@ import {
     deleteSourceRecord,
     findSourceByIdAndWorkspaceId,
     findSourcesByWorkspaceId,
+    updateSourceRecord,
     type SourceRecord,
 } from "../repository/source.repository.js";
 import { NotFoundError } from "../types/app-error.js";
@@ -318,6 +319,19 @@ export async function reprocessSourceForWorkspace(
 ) {
     const source = await getSourceForWorkspace(workspaceId, sourceId, userId);
 
+    if (source.status === "FAILED") {
+        const priorMetadata =
+            (source.metadata as Record<string, unknown> | null) ?? {};
+        await updateSourceRecord(sourceId, {
+            status: "PENDING",
+            metadata: {
+                ...priorMetadata,
+                processingError: undefined,
+                retriedAt: new Date().toISOString(),
+            },
+        });
+    }
+
     await enqueueSourceProcessing({
         sourceId: source.id,
         workspaceId: source.workspaceId,
@@ -347,6 +361,19 @@ export async function reprocessSourcesForWorkspace(
         : sources;
 
     for (const source of targetSources) {
+        if (source.status === "FAILED") {
+            const priorMetadata =
+                (source.metadata as Record<string, unknown> | null) ?? {};
+            await updateSourceRecord(source.id, {
+                status: "PENDING",
+                metadata: {
+                    ...priorMetadata,
+                    processingError: undefined,
+                    retriedAt: new Date().toISOString(),
+                },
+            });
+        }
+
         await enqueueSourceProcessing({
             sourceId: source.id,
             workspaceId: source.workspaceId,

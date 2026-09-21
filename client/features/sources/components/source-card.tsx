@@ -67,7 +67,7 @@ export function SourceCard({
               <button
                 type="button"
                 onClick={() => onReprocess(source)}
-                title="Reprocess source"
+                title="Retry processing"
                 className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               >
                 <RefreshCw className="w-3.5 h-3.5" />

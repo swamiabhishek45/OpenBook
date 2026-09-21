@@ -10,6 +10,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Crown,
+  RefreshCw,
 } from "lucide-react";
 import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import {
@@ -29,7 +30,10 @@ interface StudioPanelProps {
   artifacts: LearningArtifact[];
   onCreateArtifact: (type: ArtifactType) => Promise<unknown>;
   onDeleteArtifact: (id: string) => Promise<unknown>;
+  onRetryArtifact?: (id: string) => Promise<unknown>;
   isCreating: boolean;
+  isRetrying?: boolean;
+  retryingArtifactId?: string;
   selectedSourcesCount: number;
 }
 
@@ -118,7 +122,10 @@ export function StudioPanel({
   artifacts,
   onCreateArtifact,
   onDeleteArtifact,
+  onRetryArtifact,
   isCreating,
+  isRetrying = false,
+  retryingArtifactId,
   selectedSourcesCount,
 }: StudioPanelProps) {
   const { isPro } = useUsage();
@@ -146,6 +153,36 @@ export function StudioPanel({
     } finally {
       setGeneratingType(null);
     }
+  };
+
+  const renderFailedActions = (artifactId: string) => {
+    const isThisRetrying = isRetrying && retryingArtifactId === artifactId;
+
+    return (
+      <div className="flex items-center gap-1">
+        <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
+          <AlertCircle className="w-2.5 h-2.5" />
+          Failed
+        </span>
+        {onRetryArtifact && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void onRetryArtifact(artifactId);
+            }}
+            disabled={isThisRetrying}
+            title="Retry generation"
+            className="flex items-center gap-1 text-[10px] font-medium text-foreground bg-muted hover:bg-muted/80 px-2 py-0.5 rounded border border-border disabled:opacity-50"
+          >
+            <RefreshCw
+              className={cn("w-2.5 h-2.5", isThisRetrying && "animate-spin")}
+            />
+            Retry
+          </button>
+        )}
+      </div>
+    );
   };
 
   const getTypeIcon = (type: ArtifactType) => {
@@ -350,12 +387,8 @@ export function StudioPanel({
                         </span>
                       )}
 
-                      {artifact.status === "FAILED" && (
-                        <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          Failed
-                        </span>
-                      )}
+                      {artifact.status === "FAILED" &&
+                        renderFailedActions(artifact.id)}
 
                       {isReady && (
                         <div className="flex items-center gap-1">
@@ -429,12 +462,8 @@ export function StudioPanel({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {artifact.status === "FAILED" && (
-                        <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
-                          <AlertCircle className="w-2.5 h-2.5" />
-                          Failed
-                        </span>
-                      )}
+                      {artifact.status === "FAILED" &&
+                        renderFailedActions(artifact.id)}
 
                       {isReady && (
                         <div className="flex items-center gap-1">

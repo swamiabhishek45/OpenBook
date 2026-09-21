@@ -103,7 +103,7 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors disabled:opacity-50"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", reprocessMutation.isPending && "animate-spin")} />
-            Reprocess
+            Retry
           </button>
         )}
       </div>

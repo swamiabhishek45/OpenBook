@@ -3,13 +3,14 @@ import { enqueueArtifactGeneration } from "../lib/events/artifact-events.js";
 import {
     createArtifactRecord,
     deleteArtifactRecord,
+    failStaleArtifactsForWorkspace,
     findArtifactById,
     findArtifactByIdAndWorkspaceId,
     findArtifactsByWorkspaceId,
     updateArtifactRecord,
     type ArtifactRecord,
 } from "../repository/artifact.repository.js";
-import { NotFoundError } from "../types/app-error.js";
+import { NotFoundError, ValidationError } from "../types/app-error.js";
 import {
     gatherSourceContext,
     generateArtifactContent,
@@ -24,6 +25,13 @@ import {
 import { generateArtifactTitleWithGemini } from "../lib/gemini.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
 
+/** Maps legacy DB enum values to the types the API and client expect. */
+function normalizeArtifactRecord(artifact: ArtifactRecord): ArtifactRecord {
+    if (artifact.type !== "DIAGRAM") {
+        return artifact;
+    }
+    return { ...artifact, type: "MINDMAP" };
+}
 
 /**
  * Lists all learning artifacts in a workspace.
@@ -38,7 +46,26 @@ export async function listArtifactsForWorkspace(
     userId: string,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
-    return findArtifactsByWorkspaceId(workspaceId);
+    await failStaleArtifactsForWorkspace(workspaceId);
+    const artifacts = await findArtifactsByWorkspaceId(workspaceId);
+    return artifacts.map(normalizeArtifactRecord);
+}
+
+/**
+ * Persists a FAILED status and error message on an artifact row.
+ */
+export async function markArtifactFailed(artifactId: string, message: string) {
+    const artifact = await findArtifactById(artifactId);
+    if (!artifact || artifact.status === "READY") {
+        return;
+    }
+
+    await updateArtifactRecord(artifactId, {
+        status: "FAILED",
+        metadata: {
+            processingError: message,
+        },
+    });
 }
 
 /**
@@ -67,7 +94,7 @@ export async function getArtifactForWorkspace(
         throw new NotFoundError("Artifact not found");
     }
 
-    return artifact;
+    return normalizeArtifactRecord(artifact);
 }
 
 /**
@@ -115,10 +142,16 @@ export async function createArtifactForWorkspace(
     // Increment lifetime artifact counter (deletions won't restore quota)
     await incrementArtifactCount(userId);
 
-    await enqueueArtifactGeneration({
+    const enqueued = await enqueueArtifactGeneration({
         artifactId: artifact.id,
         workspaceId,
     });
+
+    if (!enqueued) {
+        void processArtifactById(artifact.id).catch((err) => {
+            console.error("Direct artifact generation failed:", err);
+        });
+    }
 
     return artifact;
 }
@@ -140,6 +173,59 @@ export async function deleteArtifactForWorkspace(
 ) {
     await getArtifactForWorkspace(workspaceId, artifactId, userId);
     await deleteArtifactRecord(artifactId);
+}
+
+/**
+ * Re-queues generation for a failed artifact without consuming usage quota again.
+ */
+export async function retryArtifactForWorkspace(
+    workspaceId: string,
+    artifactId: string,
+    userId: string,
+) {
+    const artifact = await getArtifactForWorkspace(
+        workspaceId,
+        artifactId,
+        userId,
+    );
+
+    if (artifact.status !== "FAILED") {
+        throw new ValidationError("Only failed artifacts can be retried");
+    }
+
+    const priorMetadata =
+        (artifact.metadata as Record<string, unknown> | null) ?? {};
+
+    await updateArtifactRecord(artifactId, {
+        status: "PENDING",
+        metadata: {
+            ...priorMetadata,
+            processingError: undefined,
+            retriedAt: new Date().toISOString(),
+        },
+    });
+
+    const enqueued = await enqueueArtifactGeneration({
+        artifactId,
+        workspaceId,
+    });
+
+    if (!enqueued) {
+        void processArtifactById(artifactId).catch((err) => {
+            console.error("Direct artifact retry failed:", err);
+        });
+    }
+
+    const updated = await findArtifactByIdAndWorkspaceId(
+        artifactId,
+        workspaceId,
+    );
+
+    if (!updated) {
+        throw new NotFoundError("Artifact not found");
+    }
+
+    return normalizeArtifactRecord(updated);
 }
 
 /**
@@ -166,6 +252,9 @@ export async function processArtifactById(artifactId: string) {
 
     await updateArtifactRecord(artifactId, { status: "PROCESSING" });
 
+    const artifactType =
+        artifact.type === "DIAGRAM" ? "MINDMAP" : artifact.type;
+
     try {
         const context = await gatherSourceContext(
             artifact.workspaceId,
@@ -173,18 +262,18 @@ export async function processArtifactById(artifactId: string) {
         );
 
         const content = await generateArtifactContent(
-            artifact.type,
+            artifactType,
             context.text,
         );
 
         // If title was a generic date fallback, refine it with specific topic/Gemini
         let finalTitle = artifact.title;
         if (finalTitle.includes(" · ")) {
-            if (artifact.type === "PODCAST" && (content as Record<string, unknown>)?.topic) {
+            if (artifactType === "PODCAST" && (content as Record<string, unknown>)?.topic) {
                 finalTitle = String((content as Record<string, unknown>).topic);
             } else {
                 finalTitle = await generateArtifactTitleWithGemini(
-                    artifact.type,
+                    artifactType,
                     context.text,
                     artifact.title,
                 );
@@ -193,6 +282,7 @@ export async function processArtifactById(artifactId: string) {
 
         return updateArtifactRecord(artifactId, {
             title: finalTitle,
+            type: artifactType,
             status: "READY",
             content: content as Prisma.InputJsonValue,
             metadata: {
@@ -207,12 +297,7 @@ export async function processArtifactById(artifactId: string) {
                 ? error.message
                 : "Artifact generation failed";
 
-        await updateArtifactRecord(artifactId, {
-            status: "FAILED",
-            metadata: {
-                processingError: message,
-            },
-        });
+        await markArtifactFailed(artifactId, message);
 
         throw error;
     }

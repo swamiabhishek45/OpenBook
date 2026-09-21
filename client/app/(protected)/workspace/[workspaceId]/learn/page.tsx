@@ -16,8 +16,15 @@ export default function WorkspaceLearnPage({
   params,
 }: WorkspaceLearnPageProps) {
   const { workspaceId } = use(params);
-  const { artifacts, createArtifact, deleteArtifact, isCreating } =
-    useArtifacts(workspaceId);
+  const {
+    artifacts,
+    createArtifact,
+    deleteArtifact,
+    retryArtifact,
+    isCreating,
+    isRetrying,
+    retryingArtifactId,
+  } = useArtifacts(workspaceId);
   const sourcesQuery = useSources(workspaceId);
   const sources = sourcesQuery.data || [];
 
@@ -41,7 +48,10 @@ export default function WorkspaceLearnPage({
           artifacts={artifacts}
           onCreateArtifact={(type) => createArtifact({ type })}
           onDeleteArtifact={deleteArtifact}
+          onRetryArtifact={retryArtifact}
           isCreating={isCreating}
+          isRetrying={isRetrying}
+          retryingArtifactId={retryingArtifactId}
           selectedSourcesCount={sources.length}
         />
       </div>

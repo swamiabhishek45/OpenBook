@@ -4,6 +4,7 @@ export type ArtifactType =
   | "FLASHCARDS"
   | "QUIZ"
   | "MINDMAP"
+  | "DIAGRAM"
   | "REPORT"
   | "PODCAST";
 

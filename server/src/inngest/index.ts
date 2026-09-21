@@ -1,6 +1,9 @@
 import { findChunksBySourceId } from "../repository/source-chunk.repository.js";
 import { findSourceById } from "../repository/source.repository.js";
-import { processArtifactById } from "../services/artifact.services.js";
+import {
+    markArtifactFailed,
+    processArtifactById,
+} from "../services/artifact.services.js";
 import { summarizeConversationById } from "../services/conversation-memory.services.js";
 import { chunkSourceContent, embedAndIndexSource, extractSourceContent, markSourceFailed, markSourceProcessing } from "../services/source-processing.services.js";
 import { inngest } from "./client.js";
@@ -98,9 +101,19 @@ export const generateArtifact = inngest.createFunction(
     async ({ event, step }) => {
         const { artifactId } = event.data;
 
-        await step.run("generate", () => processArtifactById(artifactId));
-
-        return { artifactId, status: "READY" };
+        try {
+            await step.run("generate", () => processArtifactById(artifactId));
+            return { artifactId, status: "READY" };
+        } catch (error) {
+            await step.run("mark-failed", async () => {
+                const message =
+                    error instanceof Error
+                        ? error.message
+                        : "Artifact generation failed";
+                await markArtifactFailed(artifactId, message);
+            });
+            throw error;
+        }
     },
 );
 

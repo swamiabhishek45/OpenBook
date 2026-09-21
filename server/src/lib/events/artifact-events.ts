@@ -14,13 +14,15 @@ import { inngest } from "../../inngest/client.js";
 export async function enqueueArtifactGeneration(input: {
     artifactId: string;
     workspaceId: string;
-}) {
+}): Promise<boolean> {
     try {
         await inngest.send({
             name: "artifact/generate",
             data: input,
         });
+        return true;
     } catch (err) {
         console.warn("Inngest enqueueArtifactGeneration warning (Inngest server may be offline):", err);
+        return false;
     }
 }

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { BookOpen, ExternalLink, X } from "lucide-react";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 interface NotionTokenGuideModalProps {
   isOpen: boolean;
@@ -15,7 +16,10 @@ export function NotionTokenGuideModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, onClose)}
+    >
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-fadeIn text-foreground relative">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Plus, X, Brain } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { useMemories } from "../hooks/use-memories";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 interface AddMemoryDialogProps {
   open: boolean;
@@ -30,7 +31,10 @@ export function AddMemoryDialog({ open, onOpenChange }: AddMemoryDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, () => onOpenChange(false))}
+    >
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fadeIn text-foreground">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">

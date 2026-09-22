@@ -19,6 +19,7 @@ import { GithubIcon } from "@/components/ui/github-icon";
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
+import { dismissOnBackdropClick } from "@/lib/modal";
 import {
   useCreateSource,
   useImportWebsiteSource,
@@ -324,7 +325,10 @@ export function AddSourceDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, handleClose)}
+    >
       <div className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fadeIn text-foreground">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">

@@ -1,13 +1,15 @@
 "use client"
 
 import * as React from "react"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+/** Uses Dialog root so backdrop clicks dismiss (Base UI AlertDialog root blocks outside press). */
+function AlertDialog({ ...props }: DialogPrimitive.Root.Props) {
+  return <DialogPrimitive.Root data-slot="alert-dialog" {...props} />
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {

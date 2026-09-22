@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 interface PodcastViewerProps {
   content?: { podcast?: PodcastContent } | null;
@@ -724,7 +725,12 @@ export function PodcastViewer({
 
       {/* "Ask the Hosts" Interruption Modal */}
       {isInterruptModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onMouseDown={(e) =>
+            dismissOnBackdropClick(e, () => setIsInterruptModalOpen(false))
+          }
+        >
           <div className="w-full max-w-lg bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4 animate-fadeIn text-foreground">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">

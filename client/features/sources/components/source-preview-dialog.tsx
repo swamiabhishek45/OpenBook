@@ -7,6 +7,7 @@ import { SourceTypeIcon } from "./source-type-icon";
 import { SourceStatusBadge } from "./source-status-badge";
 import { MarkdownPreview } from "./markdown-preview";
 import { formatDate } from "@/lib/utils";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 interface SourcePreviewDialogProps {
   source: Source | null;
@@ -23,7 +24,10 @@ export function SourcePreviewDialog({
   const chunkCount = typeof metadata.chunkCount === "number" ? metadata.chunkCount : null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, onClose)}
+    >
       <div className="w-full max-w-3xl max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-foreground">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">

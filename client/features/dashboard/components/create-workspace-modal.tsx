@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { FolderPlus } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { NotebookIconPicker } from "@/features/workspaces";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 interface CreateWorkspaceModalProps {
   isOpen: boolean;
@@ -31,7 +32,10 @@ export function CreateWorkspaceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, onClose)}
+    >
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-5 animate-fadeIn text-foreground">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2">

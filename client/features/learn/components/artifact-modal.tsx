@@ -26,6 +26,7 @@ import { AudioLinesIcon } from "@/components/ui/audio-lines";
 import { ExternalLink } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { apiClient } from "@/lib/api-client";
+import { dismissOnBackdropClick } from "@/lib/modal";
 
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -125,7 +126,10 @@ export function ArtifactModal({ artifact, onClose }: ArtifactModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onMouseDown={(e) => dismissOnBackdropClick(e, onClose)}
+    >
       <div className="w-full max-w-4xl max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-foreground">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">

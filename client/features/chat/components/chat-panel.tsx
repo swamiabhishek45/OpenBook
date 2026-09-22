@@ -116,22 +116,23 @@ export function ChatPanel({
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleClearActiveChat = async () => {
-    if (!messages.length && !currentConversationId) {
-      return;
+  const closeConfirmDialog = () => {
+    setConfirmAction(null);
+    setPendingDeleteId(null);
+  };
+
+  const handleConfirmAction = async () => {
+    if (confirmAction === "clear") {
+      if (currentConversationId) {
+        await onClearConversation(currentConversationId);
+      } else {
+        onNewChat();
+      }
+    } else if (confirmAction === "delete" && pendingDeleteId) {
+      await onDeleteConversation(pendingDeleteId);
+      setIsConvMenuOpen(false);
     }
-    if (
-      !confirm(
-        "Clear all messages in this chat? The conversation will stay in your history."
-      )
-    ) {
-      return;
-    }
-    if (currentConversationId) {
-      await onClearConversation(currentConversationId);
-    } else {
-      onNewChat();
-    }
+    closeConfirmDialog();
   };
 
   // Click outside to close conversation menu
@@ -219,9 +220,8 @@ export function ChatPanel({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (confirm("Delete this conversation?")) {
-                                  onDeleteConversation(c.id);
-                                }
+                                setPendingDeleteId(c.id);
+                                setConfirmAction("delete");
                               }}
                               title="Delete chat"
                               className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded"
@@ -244,7 +244,7 @@ export function ChatPanel({
           {(currentConversationId || messages.length > 0) && (
             <button
               type="button"
-              onClick={() => void handleClearActiveChat()}
+              onClick={() => setConfirmAction("clear")}
               title="Clear all messages in this chat"
               className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-muted-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
@@ -353,6 +353,40 @@ export function ChatPanel({
         webSearchEnabled={webSearchEnabled}
         onToggleWebSearch={onToggleWebSearch}
       />
+
+      <AlertDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeConfirmDialog();
+          }
+        }}
+      >
+        <AlertDialogContent size="default" className="sm:max-w-md">
+          <AlertDialogHeader className="text-left place-items-start">
+            <AlertDialogTitle>
+              {confirmAction === "delete"
+                ? "Delete conversation?"
+                : "Clear chat messages?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "delete"
+                ? "This will permanently remove this conversation and all of its messages. This cannot be undone."
+                : "All messages in this chat will be removed. The conversation will stay in your history so you can start fresh."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              variant="destructive"
+              onClick={() => void handleConfirmAction()}
+            >
+              {confirmAction === "delete" ? "Delete" : "Clear messages"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

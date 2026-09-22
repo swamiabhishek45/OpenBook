@@ -55,7 +55,7 @@ export function SourceCard({
               </div>
             )}
             <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
-              <SourceTypeIcon type={source.type} />
+              <SourceTypeIcon type={source.type} source={source} />
             </div>
             <h4 className="text-xs font-semibold text-foreground truncate group-hover:underline">
               {source.title}

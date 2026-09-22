@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState } from "react";
 import {
   FileText,
   Globe,
@@ -9,7 +12,8 @@ import {
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
 import { GithubIcon } from "@/components/ui/github-icon";
 import { cn } from "@/lib/utils";
-import type { SourceType } from "../lib/types";
+import type { Source, SourceType } from "../lib/types";
+import { getWebsiteFaviconUrl } from "../lib/favicon";
 
 const iconMap = {
   PDF: FileText,
@@ -22,13 +26,43 @@ const iconMap = {
   GITHUB_REPO: GithubIcon,
 } as const;
 
-
 interface SourceTypeIconProps {
   type: SourceType;
   className?: string;
+  /** When provided, WEBSITE sources show the site favicon when available. */
+  source?: Pick<Source, "type" | "url" | "metadata"> | null;
 }
 
-export function SourceTypeIcon({ type, className }: SourceTypeIconProps) {
+export function SourceTypeIcon({ type, className, source }: SourceTypeIconProps) {
+  const [faviconFailed, setFaviconFailed] = useState(false);
+
+  const faviconUrl =
+    source && type === "WEBSITE" && !faviconFailed
+      ? getWebsiteFaviconUrl(source as Source)
+      : null;
+
+  if (faviconUrl) {
+    return (
+      <img
+        src={faviconUrl}
+        alt=""
+        width={16}
+        height={16}
+        className={cn("w-4 h-4 shrink-0 rounded-sm object-contain", className)}
+        onError={() => setFaviconFailed(true)}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+
   const Icon = iconMap[type] || FileText;
-  return <Icon className={cn("w-4 h-4 shrink-0 text-zinc-800 dark:text-zinc-200", className)} />;
+  return (
+    <Icon
+      className={cn(
+        "w-4 h-4 shrink-0 text-zinc-800 dark:text-zinc-200",
+        className
+      )}
+    />
+  );
 }

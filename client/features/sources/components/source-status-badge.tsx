@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { SOURCE_STATUS_LABELS } from "../lib/constants";
 import type { SourceStatus } from "../lib/types";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { ThemeLoader } from "@/components/ui/theme-loader";
+import { CircularLoader } from "@/components/ui/circular-loader";
 
 interface SourceStatusBadgeProps {
   status: SourceStatus;
@@ -37,7 +37,7 @@ export function SourceStatusBadge({
         return <CheckCircle2 className="w-2.5 h-2.5" />;
       case "PROCESSING":
       case "PENDING":
-        return <ThemeLoader size={12} />;
+        return <CircularLoader size={12} />;
       case "FAILED":
         return <AlertCircle className="w-2.5 h-2.5" />;
       default:

@@ -53,7 +53,11 @@ export function SourceSidebarList({
               className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border border-transparent hover:border-border hover:bg-muted/40 text-xs text-foreground transition-all group"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <SourceTypeIcon type={source.type} className="text-muted-foreground group-hover:text-foreground" />
+                <SourceTypeIcon
+                  type={source.type}
+                  source={source}
+                  className="text-muted-foreground group-hover:text-foreground"
+                />
                 <span className="truncate">{source.title}</span>
               </div>
               <SourceStatusBadge status={source.status} showIcon={false} className="text-[9px] px-1 py-0" />

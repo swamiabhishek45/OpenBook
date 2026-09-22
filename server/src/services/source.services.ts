@@ -1,5 +1,6 @@
 import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { scrapeWebsite } from "../lib/sources/firecrawl.js";
+import { buildFaviconUrl } from "../lib/sources/favicon.js";
 import { extractPdfFromBuffer } from "../lib/sources/pdf.js";
 import { enqueueSourceProcessing } from "../lib/events/source-events.js";
 import { deleteSourceVectors } from "../lib/pinecone.js";
@@ -174,6 +175,7 @@ export async function importWebsiteSource(
     await assertCanCreateSource(userId);
 
     const scraped = await scrapeWebsite(input.url);
+    const faviconUrl = buildFaviconUrl(scraped.sourceUrl);
 
     return createAndProcessSource({
         workspaceId,
@@ -184,6 +186,7 @@ export async function importWebsiteSource(
         status: "PENDING",
         metadata: {
             importedFrom: scraped.sourceUrl,
+            ...(faviconUrl ? { faviconUrl } : {}),
         },
     });
 }
@@ -299,6 +302,8 @@ export async function importWebSearchSource(
     await getWorkspaceByIdForUser(workspaceId, userId);
     await assertCanCreateSource(userId);
 
+    const faviconUrl = buildFaviconUrl(input.url);
+
     return createAndProcessSource({
         workspaceId,
         type: "WEBSITE",
@@ -309,6 +314,7 @@ export async function importWebSearchSource(
         metadata: {
             importedFrom: input.url,
             isWebSearch: true,
+            ...(faviconUrl ? { faviconUrl } : {}),
         },
     });
 }

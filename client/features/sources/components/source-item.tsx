@@ -9,7 +9,7 @@ import {
   Eye,
   RefreshCw,
 } from "lucide-react";
-import { ThemeLoader } from "@/components/ui/theme-loader";
+import { CircularLoader } from "@/components/ui/circular-loader";
 import { SourceTypeIcon } from "./source-type-icon";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,7 @@ export function SourceItem({
       case "PENDING":
         return (
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-            <ThemeLoader size={12} />
+            <CircularLoader size={12} />
             Indexing
           </span>
         );
@@ -101,6 +101,7 @@ export function SourceItem({
         <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
           <SourceTypeIcon
             type={source.type}
+            source={source}
             className={
               source.type === "YOUTUBE"
                 ? "text-red-500 dark:text-red-400"

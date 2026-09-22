@@ -29,7 +29,7 @@ export function SourcePreviewDialog({
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
           <div className="flex items-center gap-3 min-w-0 pr-4">
             <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
-              <SourceTypeIcon type={source.type} />
+              <SourceTypeIcon type={source.type} source={source} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    clearConversationMessages,
     createConversation,
     deleteConversation,
     listConversationMessages,
@@ -16,6 +17,10 @@ conversationRoutes.post("/", asyncHandler(createConversation));
 conversationRoutes.get(
     "/:conversationId/messages",
     asyncHandler(listConversationMessages),
+);
+conversationRoutes.delete(
+    "/:conversationId/messages",
+    asyncHandler(clearConversationMessages),
 );
 conversationRoutes.delete(
     "/:conversationId",

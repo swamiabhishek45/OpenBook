@@ -64,3 +64,12 @@ export function createMessageRecord(data: CreateMessageData) {
         select: messageSelect,
     });
 }
+
+/**
+ * Removes all messages in a conversation (keeps the conversation row).
+ */
+export function deleteMessagesByConversationId(conversationId: string) {
+    return prisma.message.deleteMany({
+        where: { conversationId },
+    });
+}

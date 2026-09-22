@@ -30,10 +30,12 @@ import {
     touchConversation,
     updateConversationRecord,
     deleteConversationRecord,
+    resetConversationSummary,
 } from "../repository/conversation.repository.js";
 import {
     createMessageRecord,
     countMessagesByConversationId,
+    deleteMessagesByConversationId,
     findMessagesByConversationId,
 } from "../repository/message.repository.js";
 
@@ -168,6 +170,29 @@ export async function deleteConversationForWorkspace(
     }
 
     await deleteConversationRecord(conversationId);
+}
+
+/**
+ * Clears all messages in a conversation but keeps the conversation in the sidebar.
+ */
+export async function clearConversationMessagesForWorkspace(
+    workspaceId: string,
+    conversationId: string,
+    userId: string,
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+
+    const conversation = await findConversationByIdAndWorkspaceId(
+        conversationId,
+        workspaceId,
+    );
+
+    if (!conversation) {
+        throw new NotFoundError("Conversation not found");
+    }
+
+    await deleteMessagesByConversationId(conversationId);
+    await resetConversationSummary(conversationId);
 }
 
 /**

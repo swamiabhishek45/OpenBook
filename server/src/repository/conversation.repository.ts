@@ -144,3 +144,18 @@ export async function deleteConversationRecord(conversationId: string) {
         where: { id: conversationId },
     });
 }
+
+/**
+ * Clears rolling summary state after messages are wiped.
+ */
+export function resetConversationSummary(conversationId: string) {
+    return prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+            summary: null,
+            summaryMessageCount: 0,
+            summarizedAt: null,
+        },
+        select: conversationSelect,
+    });
+}

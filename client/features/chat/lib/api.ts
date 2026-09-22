@@ -50,6 +50,16 @@ export function deleteConversation(
     );
 }
 
+export function clearConversationMessages(
+    workspaceId: string,
+    conversationId: string,
+) {
+    return apiFetch<void>(
+        `/api/workspaces/${workspaceId}/conversations/${conversationId}/messages`,
+        { method: "DELETE" },
+    );
+}
+
 export function parseCitations(value: unknown): ChatMessage["citations"] {
     if (!Array.isArray(value)) {
         return null;

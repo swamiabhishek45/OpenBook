@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { UIMessage } from "ai";
 import {
+    clearConversationMessagesForWorkspace,
     createConversationForWorkspace,
     deleteConversationForWorkspace,
     getConversationMessagesForWorkspace,
@@ -75,6 +76,20 @@ export async function deleteConversation(req: Request, res: Response) {
     const { workspaceId, conversationId } =
         conversationIdParamSchema.parse(req.params);
     await deleteConversationForWorkspace(
+        workspaceId,
+        conversationId,
+        req.session.user.id,
+    );
+    res.status(204).send();
+}
+
+/**
+ * Clears message history for a conversation without removing the conversation.
+ */
+export async function clearConversationMessages(req: Request, res: Response) {
+    const { workspaceId, conversationId } =
+        conversationIdParamSchema.parse(req.params);
+    await clearConversationMessagesForWorkspace(
         workspaceId,
         conversationId,
         req.session.user.id,

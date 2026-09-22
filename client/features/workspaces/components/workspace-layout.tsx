@@ -141,6 +141,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     currentConversationId,
     setCurrentConversationId,
     deleteConversation,
+    clearConversation,
   } = useChat(workspaceId, undefined, workspace?.defaultModel);
 
   const {
@@ -220,6 +221,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               currentConversationId={currentConversationId}
               onSelectConversation={(id) => setCurrentConversationId(id || undefined)}
               onDeleteConversation={deleteConversation}
+              onClearConversation={clearConversation}
             />
           </ResizablePanel>
 
@@ -292,6 +294,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
               currentConversationId={currentConversationId}
               onSelectConversation={(id) => setCurrentConversationId(id || undefined)}
               onDeleteConversation={deleteConversation}
+              onClearConversation={clearConversation}
             />
           )}
 

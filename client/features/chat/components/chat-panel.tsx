@@ -17,7 +17,19 @@ import {
   ArrowUp,
 } from "lucide-react";
 import { ThemeLoader } from "@/components/ui/theme-loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+
+type ChatConfirmAction = "clear" | "delete" | null;
 
 interface ChatPanelProps {
   workspaceId: string;
@@ -35,6 +47,7 @@ interface ChatPanelProps {
   currentConversationId?: string;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onClearConversation: (id: string) => void | Promise<void>;
 }
 
 const STARTER_PROMPTS = [
@@ -77,11 +90,14 @@ export function ChatPanel({
   currentConversationId,
   onSelectConversation,
   onDeleteConversation,
+  onClearConversation,
 }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isConvMenuOpen, setIsConvMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ChatConfirmAction>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const convMenuRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom as messages stream
@@ -100,15 +116,21 @@ export function ChatPanel({
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDeleteActiveChat = () => {
+  const handleClearActiveChat = async () => {
+    if (!messages.length && !currentConversationId) {
+      return;
+    }
+    if (
+      !confirm(
+        "Clear all messages in this chat? The conversation will stay in your history."
+      )
+    ) {
+      return;
+    }
     if (currentConversationId) {
-      if (confirm("Are you sure you want to delete this chat conversation?")) {
-        onDeleteConversation(currentConversationId);
-      }
-    } else if (messages.length > 0) {
-      if (confirm("Clear current chat messages?")) {
-        onNewChat();
-      }
+      await onClearConversation(currentConversationId);
+    } else {
+      onNewChat();
     }
   };
 
@@ -217,18 +239,17 @@ export function ChatPanel({
           </div>
         </div>
 
-        {/* Header Action Buttons: Delete, New Chat */}
+        {/* Header Action Buttons: Clear, New Chat */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Delete Active Chat Button */}
           {(currentConversationId || messages.length > 0) && (
             <button
               type="button"
-              onClick={handleDeleteActiveChat}
-              title="Delete conversation"
+              onClick={() => void handleClearActiveChat()}
+              title="Clear all messages in this chat"
               className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-muted-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Delete</span>
+              <span className="hidden md:inline">Clear</span>
             </button>
           )}
 

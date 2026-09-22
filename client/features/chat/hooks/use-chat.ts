@@ -87,11 +87,28 @@ export function useChat(
       queryClient.invalidateQueries({
         queryKey: ["conversations", workspaceId],
       });
-      if (currentConversationId === convId) {
+      if (currentConversationIdRef.current === convId) {
         currentConversationIdRef.current = undefined;
         setCurrentConversationId(undefined);
         setMessages([]);
       }
+    },
+  });
+
+  const clearConversationMutation = useMutation({
+    mutationFn: async (convId: string) => {
+      return await apiClient(
+        `/api/workspaces/${workspaceId}/conversations/${convId}/messages`,
+        { method: "DELETE" }
+      );
+    },
+    onSuccess: (_, convId) => {
+      if (currentConversationIdRef.current === convId) {
+        setMessages([]);
+      }
+      queryClient.invalidateQueries({
+        queryKey: ["messages", workspaceId, convId],
+      });
     },
   });
 
@@ -389,6 +406,7 @@ export function useChat(
     currentConversationId,
     setCurrentConversationId: selectConversation,
     deleteConversation: deleteConversationMutation.mutateAsync,
+    clearConversation: clearConversationMutation.mutateAsync,
   };
 }
 

@@ -54,16 +54,22 @@ export interface LimitDetails {
 export async function getUserPlan(userId: string) {
     const user = await findUserPlanDetails(userId);
 
-    const isExpired =
-        user?.planExpiresAt && new Date(user.planExpiresAt) <= new Date();
+    const subscriptionPlan: PlanType = user?.plan ?? "FREE";
+    const planExpiresAt = user?.planExpiresAt ?? null;
+    const subscriptionExpired =
+        subscriptionPlan !== "FREE" &&
+        planExpiresAt !== null &&
+        new Date(planExpiresAt) <= new Date();
 
-    const plan: PlanType = isExpired ? "FREE" : user?.plan ?? "FREE";
+    const plan: PlanType = subscriptionExpired ? "FREE" : subscriptionPlan;
     const isPro = plan === "PRO" || plan === "PRO_PLUS";
     const isProPlus = plan === "PRO_PLUS";
 
     return {
         plan,
-        planExpiresAt: user?.planExpiresAt ?? null,
+        subscriptionPlan,
+        subscriptionExpired,
+        planExpiresAt,
         isPro,
         isProPlus,
         limits: PLAN_LIMITS[plan],
@@ -77,8 +83,15 @@ export async function getUserPlan(userId: string) {
  * @returns Comprehensive usage metrics with current counts, maximum limits, and exceeded flags
  */
 export async function getUserUsage(userId: string) {
-    const { plan, isPro, isProPlus, planExpiresAt, limits } =
-        await getUserPlan(userId);
+    const {
+        plan,
+        subscriptionPlan,
+        subscriptionExpired,
+        isPro,
+        isProPlus,
+        planExpiresAt,
+        limits,
+    } = await getUserPlan(userId);
 
     const [workspaceCount, sourceCount, userArtifacts, messageCount] =
         await Promise.all([
@@ -92,6 +105,8 @@ export async function getUserUsage(userId: string) {
 
     return {
         plan,
+        subscriptionPlan,
+        subscriptionExpired,
         isPro,
         isProPlus,
         planExpiresAt,

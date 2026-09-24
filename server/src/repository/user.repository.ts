@@ -51,17 +51,46 @@ export function findUserById(userId: string) {
  * @param plan - Target PlanType enum value
  * @returns Promise resolving to updated user summary
  */
-export function updateUserPlan(userId: string, plan: PlanType) {
-    return prisma.user.update({
-        where: { id: userId },
-        data: { plan },
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            plan: true,
-        },
+const SUBSCRIPTION_PERIOD_DAYS = 30;
+
+function computePlanExpiry(currentExpiry: Date | null | undefined): Date {
+    const now = new Date();
+    const base =
+        currentExpiry && currentExpiry > now ? currentExpiry : now;
+    const next = new Date(base);
+    next.setDate(next.getDate() + SUBSCRIPTION_PERIOD_DAYS);
+    return next;
+}
+
+/**
+ * Sets plan and extends subscription by 30 days (stacks from current expiry if still active).
+ */
+export function renewOrUpgradeUserPlan(userId: string, plan: PlanType) {
+    return prisma.$transaction(async (tx) => {
+        const existing = await tx.user.findUnique({
+            where: { id: userId },
+            select: { planExpiresAt: true },
+        });
+
+        const planExpiresAt = computePlanExpiry(existing?.planExpiresAt);
+
+        return tx.user.update({
+            where: { id: userId },
+            data: { plan, planExpiresAt },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                plan: true,
+                planExpiresAt: true,
+            },
+        });
     });
+}
+
+/** @deprecated Prefer renewOrUpgradeUserPlan for paid checkouts */
+export function updateUserPlan(userId: string, plan: PlanType) {
+    return renewOrUpgradeUserPlan(userId, plan);
 }
 
 /**

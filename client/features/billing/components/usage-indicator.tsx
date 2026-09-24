@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Zap, Layers, FileText, MessageSquare, Compass, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -186,22 +187,33 @@ export function UsageIndicator({
         </div>
       </div>
 
-      {!isProPlus && (
+      <div className="flex flex-col gap-2 mt-2">
+        {!isProPlus && (
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() =>
+              openUpgradeModal({
+                reason: "Upgrade your plan for higher limits and unlimited access.",
+              })
+            }
+            className="w-full gap-1.5 font-semibold text-xs"
+          >
+            <Zap className="w-3.5 h-3.5 fill-primary-foreground" />
+            <span>{plan === "PRO" ? "Upgrade to Pro+ (₹499/mo)" : "Upgrade Plan"}</span>
+          </Button>
+        )}
         <Button
           type="button"
-          variant="default"
+          variant="outline"
           size="sm"
-          onClick={() =>
-            openUpgradeModal({
-              reason: "Upgrade your plan for higher limits and unlimited access.",
-            })
-          }
-          className="w-full gap-1.5 font-semibold text-xs mt-2"
+          asChild
+          className="w-full text-xs font-medium"
         >
-          <Zap className="w-3.5 h-3.5 fill-primary-foreground" />
-          <span>{plan === "PRO" ? "Upgrade to Pro+ (₹499/mo)" : "Upgrade Plan"}</span>
+          <Link href="/settings/billing">Manage billing &amp; usage</Link>
         </Button>
-      )}
+      </div>
     </div>
   );
 }

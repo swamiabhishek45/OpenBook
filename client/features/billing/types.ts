@@ -7,7 +7,11 @@ export interface UsageMetric {
 export type PlanType = "FREE" | "PRO" | "PRO_PLUS";
 
 export interface UserUsage {
+  /** Effective plan for limits (FREE if subscription expired). */
   plan: PlanType;
+  /** Plan stored on the account (may still be PRO while expired). */
+  subscriptionPlan?: PlanType;
+  subscriptionExpired?: boolean;
   isPro: boolean;
   isProPlus?: boolean;
   planExpiresAt: string | null;

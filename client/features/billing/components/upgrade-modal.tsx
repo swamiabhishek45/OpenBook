@@ -87,7 +87,8 @@ const PLANS: PlanConfig[] = [
 
 export function UpgradeModal() {
   const { isOpen, reason, closeUpgradeModal } = useUpgradeModal();
-  const { plan: currentPlan } = useUsage();
+  const { usage, plan: effectivePlan } = useUsage();
+  const currentPlan = usage?.subscriptionPlan ?? effectivePlan;
   const { checkout, isLoading, error } = useRazorpayCheckout();
   const [selectedPlan, setSelectedPlan] = useState<"PRO" | "PRO_PLUS">("PRO");
 
@@ -135,7 +136,11 @@ export function UpgradeModal() {
         <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
             {PLANS.map((planItem) => {
-              const isCurrent = currentPlan === planItem.id;
+              const isCurrent =
+                currentPlan === planItem.id && !usage?.subscriptionExpired;
+              const canRenew =
+                currentPlan === planItem.id &&
+                planItem.id !== "FREE";
               const isPopular = planItem.isPopular;
 
               return (
@@ -236,7 +241,7 @@ export function UpgradeModal() {
                       <Button
                         variant={isPopular ? "default" : "outline"}
                         size="sm"
-                        disabled={isCurrent || (isLoading && selectedPlan === planItem.id)}
+                        disabled={isLoading && selectedPlan === planItem.id}
                         onClick={() => handleUpgrade(planItem.id as "PRO" | "PRO_PLUS")}
                         className={cn(
                           "w-full text-xs font-semibold gap-1.5 rounded-xl h-9 transition-all cursor-pointer",
@@ -247,6 +252,11 @@ export function UpgradeModal() {
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             <span>Processing...</span>
+                          </>
+                        ) : canRenew ? (
+                          <>
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                            <span>Renew ({planItem.price}/mo)</span>
                           </>
                         ) : isCurrent ? (
                           <div className="flex items-center gap-1">

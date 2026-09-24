@@ -6,4 +6,5 @@ export * from "./components/upgrade-modal";
 export * from "./components/pro-badge";
 export * from "./components/usage-indicator";
 export * from "./components/premium-avatar";
+export * from "./components/billing-settings-view";
 

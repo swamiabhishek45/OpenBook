@@ -16,6 +16,7 @@ import {
   User,
   Settings,
   Brain,
+  CreditCard,
   LayoutGrid,
   Zap,
 } from "lucide-react";
@@ -288,6 +289,15 @@ export function WorkspaceHeader({
                       </span>
                     </Link>
                   )}
+
+                  <Link
+                    href="/settings/billing"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Billing &amp; plan</span>
+                  </Link>
 
                   <Link
                     href="/settings/memory"

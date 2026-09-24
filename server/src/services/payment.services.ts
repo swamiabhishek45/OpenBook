@@ -6,7 +6,10 @@ import {
     markPaymentRecordFailed,
     updatePaymentRecordSuccess,
 } from "../repository/payment.repository.js";
-import { findUserPlanDetails, updateUserPlan } from "../repository/user.repository.js";
+import {
+    findUserPlanDetails,
+    renewOrUpgradeUserPlan,
+} from "../repository/user.repository.js";
 import { AppError, ValidationError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 import type { VerifyPaymentInput } from "../validators/payment.validator.js";
@@ -168,6 +171,8 @@ export async function verifyRazorpayPayment(
     const targetPlan: PlanType =
         paymentRecord?.plan ?? input.plan ?? "PRO";
 
+    const userBefore = await findUserPlanDetails(userId);
+
     // Update payment record to SUCCESS
     await updatePaymentRecordSuccess({
         orderId: razorpay_order_id,
@@ -176,14 +181,20 @@ export async function verifyRazorpayPayment(
     });
 
     // Upgrade user to the purchased plan
-    const updatedUser = await updateUserPlan(userId, targetPlan);
+    const updatedUser = await renewOrUpgradeUserPlan(userId, targetPlan);
 
     const planDisplayName =
         targetPlan === "PRO_PLUS" ? "ChaiBookLM Pro+" : "ChaiBookLM Pro";
 
+    const renewedSamePlan =
+        userBefore?.plan === targetPlan && targetPlan !== "FREE";
+
     return {
         success: true,
         plan: updatedUser.plan,
-        message: `Congratulations! You have successfully upgraded to ${planDisplayName}.`,
+        planExpiresAt: updatedUser.planExpiresAt,
+        message: renewedSamePlan
+            ? `Your ${planDisplayName} subscription is renewed through ${updatedUser.planExpiresAt?.toISOString().slice(0, 10)}.`
+            : `Congratulations! You have successfully upgraded to ${planDisplayName}.`,
     };
 }

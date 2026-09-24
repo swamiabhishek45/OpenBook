@@ -10,6 +10,9 @@ export interface CitationItem {
   domain?: string;
   url?: string;
   snippet?: string;
+  indexLabel?: string;
+  sourceId?: string;
+  page?: number;
 }
 
 interface CitationsProps {
@@ -51,23 +54,38 @@ export function CitationList({
   citations,
   idPrefix,
   className,
+  highlightedId,
 }: {
   citations: CitationItem[];
   idPrefix?: string;
   className?: string;
+  highlightedId?: string | null;
 }) {
   if (!citations.length) return null;
 
   return (
     <ul className={cn("space-y-1.5", className)}>
       {citations.map((citation, index) => {
-        const itemId = idPrefix ? `${idPrefix}-${index}` : undefined;
+        const itemId = idPrefix ? `${idPrefix}-${citation.id}` : undefined;
         const label = citation.title;
         const meta = citation.domain || citation.snippet;
 
         const row = (
-          <div className="rounded-lg border border-border/60 bg-background/80 px-2.5 py-2 text-xs">
-            <p className="font-medium text-foreground truncate">{label}</p>
+          <div
+            className={cn(
+              "rounded-lg border border-border/60 bg-background/80 px-2.5 py-2 text-xs transition-colors",
+              highlightedId === citation.id &&
+                "border-primary/50 bg-primary/5 ring-1 ring-primary/20",
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {citation.indexLabel ? (
+                <span className="shrink-0 inline-flex min-w-5 justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-primary">
+                  {citation.indexLabel}
+                </span>
+              ) : null}
+              <p className="font-medium text-foreground truncate">{label}</p>
+            </div>
             {meta ? (
               <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
                 {meta}

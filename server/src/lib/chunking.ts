@@ -1,14 +1,14 @@
+import { CHUNK_OVERLAP, CHUNK_SIZE } from "./ai-config.js";
+import {
+    layoutBlockChunkLimit,
+    segmentIntoLayoutBlocks,
+} from "./chunking/layout.js";
+
 export type TextChunk = {
     index: number;
     content: string;
     metadata?: Record<string, unknown>;
 };
-
-/** Default maximum characters per chunk when no option is passed. */
-const DEFAULT_CHUNK_SIZE = 1000;
-
-/** Default overlap between consecutive chunks (helps preserve context at boundaries). */
-const DEFAULT_CHUNK_OVERLAP = 100;
 
 const SEPARATORS = ["\n\n", "\n", ". ", " ", ""];
 
@@ -92,6 +92,40 @@ function splitText(text: string, chunkSize: number, chunkOverlap: number): strin
  * @param options - Configurable chunkSize (default 1000), chunkOverlap (default 100), and custom metadata
  * @returns Array of sequential TextChunk objects
  */
+function chunkTextWithLayout(
+    text: string,
+    options: {
+        chunkSize?: number;
+        chunkOverlap?: number;
+        metadata?: Record<string, unknown>;
+    } = {},
+): TextChunk[] {
+    const chunkOverlap = options.chunkOverlap ?? CHUNK_OVERLAP;
+    const baseMetadata = options.metadata ?? {};
+    const blocks = segmentIntoLayoutBlocks(text);
+    const parts: { content: string; metadata: Record<string, unknown> }[] = [];
+
+    for (const block of blocks) {
+        const limit = layoutBlockChunkLimit(block);
+        const slices = splitText(block.content, limit, chunkOverlap);
+        for (const slice of slices) {
+            parts.push({
+                content: slice,
+                metadata: {
+                    ...baseMetadata,
+                    contentType: block.type,
+                },
+            });
+        }
+    }
+
+    return parts.map((part, index) => ({
+        index,
+        content: part.content,
+        metadata: part.metadata,
+    }));
+}
+
 export function chunkText(
     text: string,
     options: {
@@ -100,15 +134,7 @@ export function chunkText(
         metadata?: Record<string, unknown>;
     } = {},
 ): TextChunk[] {
-    const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
-    const chunkOverlap = options.chunkOverlap ?? DEFAULT_CHUNK_OVERLAP;
-    const parts = splitText(text, chunkSize, chunkOverlap);
-
-    return parts.map((content, index) => ({
-        index,
-        content,
-        metadata: options.metadata,
-    }));
+    return chunkTextWithLayout(text, options);
 }
 
 /**
@@ -134,7 +160,7 @@ export function chunkPages(
             continue;
         }
 
-        const pageChunks = chunkText(pageText, {
+        const pageChunks = chunkTextWithLayout(pageText, {
             ...options,
             metadata: { page: pageIndex + 1 },
         });

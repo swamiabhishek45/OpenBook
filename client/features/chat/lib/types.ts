@@ -1,4 +1,6 @@
 export type ChatCitation = {
+    /** 1-based index into the numbered context blocks ([1], [2], …) or web blocks ([W1]). */
+    index?: number;
     sourceId?: string;
     sourceTitle: string;
     sourceType: string;

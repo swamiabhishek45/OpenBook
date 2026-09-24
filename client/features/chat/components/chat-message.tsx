@@ -25,6 +25,10 @@ export function ChatMessage({
   const { data: session } = useSession();
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const [highlightedSourceId, setHighlightedSourceId] = useState<string | null>(
+    null,
+  );
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -64,15 +68,35 @@ export function ChatMessage({
       isLast && isStreaming ? "streaming" : "complete";
     const sourceItems = chatCitationsToAgentItems(message.citations);
 
+    const handleCitationActivate = (citationId: string) => {
+      setHighlightedSourceId(citationId);
+      setSourcesOpen(true);
+      requestAnimationFrame(() => {
+        const el = document.getElementById(
+          `response-source-${citationId}`,
+        );
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    };
+
     return (
       <StreamingResponse
         status={responseStatus}
         copyText={content}
         sources={sourceItems}
+        sourcesOpen={sourcesOpen}
+        onSourcesOpenChange={setSourcesOpen}
+        highlightedSourceId={highlightedSourceId}
+        sourceIdPrefix="response-source"
         announce={responseStatus === "streaming"}
-        showActions={responseStatus === "complete"}
+        showActions={true}
       >
-        <ChatMarkdown content={content} isStreaming={responseStatus === "streaming"} />
+        <ChatMarkdown
+          content={content}
+          isStreaming={responseStatus === "streaming"}
+          citations={message.citations ?? undefined}
+          onCitationActivate={handleCitationActivate}
+        />
       </StreamingResponse>
     );
   };

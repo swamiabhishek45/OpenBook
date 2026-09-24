@@ -211,11 +211,13 @@ export async function uploadPdfSource(
 
     let content: string | null = null;
     let pageCount: number | undefined;
+    let pageTexts: string[] | undefined;
 
     try {
         const extracted = await extractPdfFromBuffer(file.buffer);
         content = extracted.text;
         pageCount = extracted.pageCount;
+        pageTexts = extracted.pages;
     } catch (parseErr) {
         console.warn("Direct PDF buffer extraction notice:", parseErr);
     }
@@ -250,6 +252,7 @@ export async function uploadPdfSource(
         metadata: {
             ...uploadMetadata,
             pageCount,
+            ...(pageTexts?.length ? { pageTexts } : {}),
         },
     });
 }

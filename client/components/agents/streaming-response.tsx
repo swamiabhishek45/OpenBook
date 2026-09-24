@@ -52,6 +52,8 @@ export interface StreamingResponseProps {
   announce?: boolean;
   /** Hides the built-in completion actions without changing response status. */
   showActions?: boolean;
+  /** Highlights a source row when an inline citation is activated. */
+  highlightedSourceId?: string | null;
   className?: string;
   contentClassName?: string;
   actionsClassName?: string;
@@ -105,6 +107,7 @@ export function StreamingResponse({
   onFeedbackChange,
   announce = true,
   showActions = true,
+  highlightedSourceId = null,
   className,
   contentClassName,
   actionsClassName,
@@ -124,7 +127,9 @@ export function StreamingResponse({
   const canCopy = Boolean(copyText || onCopy);
   const hasSources = sources.length > 0;
   const shouldShowActions =
-    showActions && !streaming && (canCopy || onRetry || complete || hasSources);
+    showActions &&
+    ((!streaming && (canCopy || onRetry || complete)) ||
+      (hasSources && (complete || streaming)));
   const sourcesContentId = `${baseId}-sources`;
   const resolvedSourcePrefix =
     sourceIdPrefix ?? `response-source-${baseId.replace(/:/g, "")}`;
@@ -185,7 +190,7 @@ export function StreamingResponse({
             className="mt-3"
           >
             <div className={cn("flex items-center gap-0.5", actionsClassName)}>
-              {canCopy ? (
+              {!streaming && canCopy ? (
                 <ResponseAction
                   label={copied ? "Copied" : "Copy response"}
                   onClick={handleCopy}
@@ -197,7 +202,7 @@ export function StreamingResponse({
                   )}
                 </ResponseAction>
               ) : null}
-              {onRetry ? (
+              {!streaming && onRetry ? (
                 <ResponseAction label="Retry response" onClick={onRetry}>
                   <RotateCcw className="size-3.5" />
                 </ResponseAction>
@@ -252,6 +257,7 @@ export function StreamingResponse({
                 <CitationList
                   citations={sources}
                   idPrefix={resolvedSourcePrefix}
+                  highlightedId={highlightedSourceId}
                   className="mt-2 rounded-xl bg-muted p-2"
                 />
               </AgentDisclosure>

@@ -1,75 +1,124 @@
-import { RAG_MIN_SCORE, RAG_TOP_K } from "../ai-config.js";
-import { embedTexts } from "../openai.js";
+import {
+    RAG_MIN_SCORE,
+    RAG_RETRIEVE_K,
+    RAG_TOP_K,
+    RERANK_ENABLED,
+} from "../ai-config.js";
+import { embedQueryText } from "../openai.js";
 import { queryWorkspaceVectors } from "../pinecone.js";
-import { searchChunksByWorkspace, findChunksByWorkspaceId } from "../../repository/source-chunk.repository.js";
+import {
+    searchChunksByWorkspace,
+    findChunksByWorkspaceId,
+} from "../../repository/source-chunk.repository.js";
 import { findSourcesByWorkspaceId } from "../../repository/source.repository.js";
 import {
     reconcileRetrievedChunksWithSources,
     type RetrievedChunk,
 } from "./reconcile.js";
+import { rerankChunks } from "./rerank.js";
 
 export type { RetrievedChunk };
 
-export async function retrieveWorkspaceContext(
+export type RetrieveTiming = {
+    embedQueryMs?: number;
+    pineconeQueryMs?: number;
+    rerankMs?: number;
+    embedCacheHit?: boolean;
+    embedTokens?: number;
+};
+
+function matchToChunk(
+    match: { score?: number; metadata?: Record<string, unknown> },
+): RetrievedChunk | null {
+    const score = match.score ?? 0;
+    const metadata = match.metadata;
+    if (
+        !metadata ||
+        typeof metadata.sourceId !== "string" ||
+        typeof metadata.sourceTitle !== "string" ||
+        typeof metadata.sourceType !== "string" ||
+        typeof metadata.chunkId !== "string" ||
+        typeof metadata.text !== "string"
+    ) {
+        return null;
+    }
+
+    return {
+        sourceId: metadata.sourceId,
+        sourceTitle: metadata.sourceTitle,
+        sourceType: metadata.sourceType,
+        chunkId: metadata.chunkId,
+        chunkIndex: Number(metadata.chunkIndex ?? 0),
+        ...(typeof metadata.page === "number" ? { page: metadata.page } : {}),
+        text: metadata.text,
+        score,
+        vectorScore: score,
+    };
+}
+
+export async function retrieveWorkspaceCandidates(
+    workspaceId: string,
+    query: string,
+    retrieveK: number = RAG_RETRIEVE_K,
+    timing?: RetrieveTiming,
+): Promise<RetrievedChunk[]> {
+    const chunks: RetrievedChunk[] = [];
+
+    try {
+        const embedStart = performance.now();
+        const { embedding, cacheHit, promptTokens } = await embedQueryText(query);
+        if (timing) {
+            timing.embedQueryMs = Math.round(performance.now() - embedStart);
+            timing.embedCacheHit = cacheHit;
+            timing.embedTokens = promptTokens;
+        }
+
+        if (embedding) {
+            const pineconeStart = performance.now();
+            const matches = await queryWorkspaceVectors(
+                workspaceId,
+                embedding,
+                retrieveK,
+            );
+            if (timing) {
+                timing.pineconeQueryMs = Math.round(
+                    performance.now() - pineconeStart,
+                );
+            }
+
+            for (const match of matches) {
+                const chunk = matchToChunk({
+                    score: match.score,
+                    metadata: match.metadata as Record<string, unknown>,
+                });
+                if (chunk) {
+                    chunks.push(chunk);
+                }
+            }
+        }
+    } catch (err) {
+        console.warn(
+            "Vector retrieval notice (falling back to database source search):",
+            err,
+        );
+    }
+
+    if (chunks.length > 0) {
+        return reconcileRetrievedChunksWithSources(workspaceId, chunks);
+    }
+
+    return reconcileRetrievedChunksWithSources(
+        workspaceId,
+        await retrieveDatabaseFallback(workspaceId, query),
+    );
+}
+
+async function retrieveDatabaseFallback(
     workspaceId: string,
     query: string,
 ): Promise<RetrievedChunk[]> {
     const chunks: RetrievedChunk[] = [];
 
-    // 1. Try vector retrieval via Pinecone
-    try {
-        const [embedding] = await embedTexts([query]);
-        if (embedding) {
-            const matches = await queryWorkspaceVectors(
-                workspaceId,
-                embedding,
-                RAG_TOP_K,
-            );
-
-            for (const match of matches) {
-                const score = match.score ?? 0;
-                if (score < RAG_MIN_SCORE) {
-                    continue;
-                }
-
-                const metadata = match.metadata as
-                    | Record<string, unknown>
-                    | undefined;
-                if (
-                    !metadata ||
-                    typeof metadata.sourceId !== "string" ||
-                    typeof metadata.sourceTitle !== "string" ||
-                    typeof metadata.sourceType !== "string" ||
-                    typeof metadata.chunkId !== "string" ||
-                    typeof metadata.text !== "string"
-                ) {
-                    continue;
-                }
-
-                chunks.push({
-                    sourceId: metadata.sourceId,
-                    sourceTitle: metadata.sourceTitle,
-                    sourceType: metadata.sourceType,
-                    chunkId: metadata.chunkId,
-                    chunkIndex: Number(metadata.chunkIndex ?? 0),
-                    ...(typeof metadata.page === "number"
-                        ? { page: metadata.page }
-                        : {}),
-                    text: metadata.text,
-                    score,
-                });
-            }
-        }
-    } catch (err) {
-        console.warn("Vector retrieval notice (falling back to database source search):", err);
-    }
-
-    // 2. If vector retrieval found matches, return them (after DB reconcile)
-    if (chunks.length > 0) {
-        return reconcileRetrievedChunksWithSources(workspaceId, chunks);
-    }
-
-    // 3. Fallback: Search PostgreSQL source chunks directly
     try {
         const queryTerms = query
             .toLowerCase()
@@ -84,7 +133,7 @@ export async function retrieveWorkspaceContext(
         );
 
         if (dbChunks.length > 0) {
-            const fromDb = dbChunks.map((chunk) => {
+            return dbChunks.map((chunk) => {
                 const meta =
                     chunk.metadata &&
                     typeof chunk.metadata === "object" &&
@@ -103,13 +152,14 @@ export async function retrieveWorkspaceContext(
                     score: 0.8,
                 };
             });
-            return reconcileRetrievedChunksWithSources(workspaceId, fromDb);
         }
 
-        // If no keyword matches, fetch recent chunks from this workspace
-        const recentChunks = await findChunksByWorkspaceId(workspaceId, RAG_TOP_K);
+        const recentChunks = await findChunksByWorkspaceId(
+            workspaceId,
+            RAG_TOP_K,
+        );
         if (recentChunks.length > 0) {
-            const recent = recentChunks.map((chunk) => {
+            return recentChunks.map((chunk) => {
                 const meta =
                     chunk.metadata &&
                     typeof chunk.metadata === "object" &&
@@ -128,12 +178,12 @@ export async function retrieveWorkspaceContext(
                     score: 0.5,
                 };
             });
-            return reconcileRetrievedChunksWithSources(workspaceId, recent);
         }
 
-        // 4. Last fallback: Read directly from sources that have content
         const sources = await findSourcesByWorkspaceId(workspaceId);
-        const readySources = sources.filter((s) => s.content && s.content.trim().length > 0);
+        const readySources = sources.filter(
+            (s) => s.content && s.content.trim().length > 0,
+        );
         for (const source of readySources.slice(0, 3)) {
             chunks.push({
                 sourceId: source.id,
@@ -149,7 +199,41 @@ export async function retrieveWorkspaceContext(
         console.warn("Database source retrieval fallback error:", fallbackErr);
     }
 
-    return reconcileRetrievedChunksWithSources(workspaceId, chunks);
+    return chunks;
+}
+
+export async function retrieveWorkspaceContext(
+    workspaceId: string,
+    query: string,
+    timing?: RetrieveTiming,
+): Promise<RetrievedChunk[]> {
+    const candidates = await retrieveWorkspaceCandidates(
+        workspaceId,
+        query,
+        RAG_RETRIEVE_K,
+        timing,
+    );
+
+    if (candidates.length === 0) {
+        return candidates;
+    }
+
+    let ranked = candidates;
+
+    if (RERANK_ENABLED && process.env.COHERE_API_KEY?.trim()) {
+        const rerankStart = performance.now();
+        ranked = await rerankChunks(query, candidates, RAG_TOP_K);
+        if (timing) {
+            timing.rerankMs = Math.round(performance.now() - rerankStart);
+        }
+    } else {
+        ranked = candidates
+            .slice()
+            .sort((a, b) => b.score - a.score)
+            .slice(0, RAG_TOP_K);
+    }
+
+    return ranked.filter((chunk) => chunk.score >= RAG_MIN_SCORE);
 }
 
 export type UserMemoryContext = string;

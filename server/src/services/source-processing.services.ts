@@ -32,6 +32,8 @@ type SourceMetadata = {
     chunkCount?: number;
     pageCount?: number;
     indexedAt?: string;
+    pageTexts?: string[];
+    chunkVersion?: number;
 };
 
 /**
@@ -42,6 +44,44 @@ type SourceMetadata = {
  * @throws {Error} When source content or Cloudinary fileUrl metadata is missing
  */
 async function extractSourceText(source: SourceRecord) {
+    const metadata =
+        source.metadata &&
+            typeof source.metadata === "object" &&
+            !Array.isArray(source.metadata)
+            ? (source.metadata as SourceMetadata)
+            : {};
+
+    if (source.type === "PDF") {
+        const storedPages = Array.isArray(metadata.pageTexts)
+            ? metadata.pageTexts.filter(
+                (page): page is string =>
+                    typeof page === "string" && page.trim().length > 0,
+            )
+            : [];
+
+        if (storedPages.length > 0) {
+            const text = source.content?.trim() || storedPages.join("\n\n");
+            return {
+                text,
+                pageCount: storedPages.length,
+                pages: storedPages,
+            };
+        }
+
+        if (metadata.fileUrl) {
+            const extracted = await extractPdfFromCloudinary({
+                fileUrl: metadata.fileUrl,
+                publicId: metadata.publicId,
+                resourceType: metadata.resourceType ?? "image",
+            });
+            return {
+                text: extracted.text,
+                pageCount: extracted.pageCount,
+                pages: extracted.pages,
+            };
+        }
+    }
+
     const text = source.content?.trim();
     if (text) {
         return {
@@ -52,26 +92,7 @@ async function extractSourceText(source: SourceRecord) {
     }
 
     if (source.type === "PDF") {
-        const metadata =
-            source.metadata &&
-                typeof source.metadata === "object" &&
-                !Array.isArray(source.metadata)
-                ? (source.metadata as SourceMetadata)
-                : {};
-        if (!metadata.fileUrl) {
-            throw new Error("PDF source is missing fileUrl metadata");
-        }
-
-        const extracted = await extractPdfFromCloudinary({
-            fileUrl: metadata.fileUrl,
-            publicId: metadata.publicId,
-            resourceType: metadata.resourceType ?? "image",
-        });
-        return {
-            text: extracted.text,
-            pageCount: extracted.pageCount,
-            pages: extracted.pages,
-        };
+        throw new Error("PDF source is missing fileUrl metadata and pageTexts");
     }
 
     throw new Error(`Source ${source.id} has no extractable content`);
@@ -140,11 +161,17 @@ export async function extractSourceContent(sourceId: string) {
             ? (source.metadata as SourceMetadata)
             : {};
 
+    const chunkVersion = (metadata.chunkVersion ?? 0) + 1;
+
     await updateSourceRecord(sourceId, {
         content: extracted.text,
         metadata: {
             ...metadata,
             pageCount: extracted.pageCount ?? metadata.pageCount,
+            ...(extracted.pages?.length
+                ? { pageTexts: extracted.pages }
+                : {}),
+            chunkVersion,
         },
     });
 
@@ -238,6 +265,8 @@ export async function embedAndIndexSource(
     source: SourceRecord,
     chunks: SourceChunkRecord[],
 ) {
+    await deleteSourceVectors(source.workspaceId, source.id);
+
     const batchSize = 50;
     const records: PineconeRecord<VectorMetadata>[] = [];
 
@@ -268,6 +297,9 @@ export async function embedAndIndexSource(
                     text: chunk.content.slice(0, 35000),
                     ...(typeof chunkMetadata.page === "number"
                         ? { page: chunkMetadata.page }
+                        : {}),
+                    ...(typeof chunkMetadata.contentType === "string"
+                        ? { contentType: chunkMetadata.contentType }
                         : {}),
                 },
             });

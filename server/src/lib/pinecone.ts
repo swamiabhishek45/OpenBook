@@ -101,6 +101,7 @@ export type VectorMetadata = {
     sourceType: string;
     text: string;
     page?: number;
+    contentType?: string;
 };
 
 /**

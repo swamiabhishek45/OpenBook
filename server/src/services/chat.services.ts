@@ -16,8 +16,16 @@ import {
     CHAT_MODELS,
     CONVERSATION_SUMMARY_INTERVAL,
     RECENT_MESSAGE_WINDOW,
+    RERANK_ENABLED,
 } from "../lib/ai-config.js";
 import { enqueueConversationSummarize } from "../lib/events/conversation-events.js";
+import {
+    applyCitationFallback,
+    parseWebCitationIndices,
+    parseWorkspaceCitationIndices,
+    resolveCitationsFromRetrieval,
+    resolveWebCitationsFromResults,
+} from "../lib/rag/citation-parse.js";
 import {
     buildChatSystemPrompt,
     retrieveWorkspaceContext,
@@ -53,6 +61,10 @@ import {
 import { getWorkspaceByIdForUser } from "./workspace.services.js";
 import { assertCanSendMessage } from "./usage.services.js";
 import { addMemoriesFromMessages, searchUserMemories } from "../lib/mem0.js";
+import { createRequestMetrics } from "../lib/observability/request-metrics.js";
+import { estimateChatCostUsd } from "../lib/openai.js";
+import { createMessageMetricsRecord } from "../repository/message-metrics.repository.js";
+import type { RetrieveTiming } from "../lib/rag/retrieve.js";
 
 
 /**
@@ -287,12 +299,34 @@ export async function streamWorkspaceChat(
         content: userText,
     });
 
+    const requestMetrics = createRequestMetrics();
+    const retrieveTiming: RetrieveTiming = {};
+
+    const mem0Start = performance.now();
     const [retrievedChunks, userMemories] = await Promise.all([
-        retrieveWorkspaceContext(workspaceId, userText),
+        retrieveWorkspaceContext(workspaceId, userText, retrieveTiming),
         searchUserMemories(userId, userText),
     ]);
+    requestMetrics.setStage("mem0", Math.round(performance.now() - mem0Start));
+    if (retrieveTiming.embedQueryMs !== undefined) {
+        requestMetrics.setStage("embed_query", retrieveTiming.embedQueryMs);
+    }
+    if (retrieveTiming.pineconeQueryMs !== undefined) {
+        requestMetrics.setStage("pinecone_query", retrieveTiming.pineconeQueryMs);
+    }
+    if (retrieveTiming.rerankMs !== undefined) {
+        requestMetrics.setStage("rerank", retrieveTiming.rerankMs);
+        requestMetrics.setRerankCalls(RERANK_ENABLED ? 1 : 0);
+    }
+    if (retrieveTiming.embedCacheHit !== undefined) {
+        requestMetrics.setEmbedCacheHit(retrieveTiming.embedCacheHit);
+    }
+    if (retrieveTiming.embedTokens !== undefined) {
+        requestMetrics.setEmbedTokens(retrieveTiming.embedTokens);
+    }
 
-    const citations = retrievedChunks.map((chunk) => ({
+    const pendingStreamCitations = retrievedChunks.map((chunk, index) => ({
+        index: index + 1,
         sourceId: chunk.sourceId,
         sourceTitle: chunk.sourceTitle,
         sourceType: chunk.sourceType,
@@ -302,6 +336,7 @@ export async function streamWorkspaceChat(
         excerpt: chunk.text.slice(0, 280),
         score: chunk.score,
     }));
+
     const systemPrompt = buildChatSystemPrompt({
         chunks: retrievedChunks,
         conversationSummary: conversation.summary,
@@ -316,10 +351,17 @@ export async function streamWorkspaceChat(
             : input.messages;
 
     let webSearchResults: TavilySearchResponse | null = null;
-
     const stream = createUIMessageStream({
         originalMessages: input.messages,
         execute: async ({ writer }) => {
+            if (pendingStreamCitations.length > 0) {
+                writer.write({
+                    type: "data-rag-citations",
+                    data: pendingStreamCitations,
+                } as Parameters<typeof writer.write>[0]);
+            }
+
+            const llmStart = performance.now();
             const tools =
                 webSearchEnabled
                     ? {
@@ -348,6 +390,16 @@ export async function streamWorkspaceChat(
                 messages: await convertToModelMessages(contextMessages),
                 tools,
                 stopWhen: webSearchEnabled ? isStepCount(3) : undefined,
+                onFinish: ({ usage }) => {
+                    requestMetrics.setLlmUsage({
+                        promptTokens: usage?.inputTokens,
+                        completionTokens: usage?.outputTokens,
+                    });
+                    requestMetrics.setStage(
+                        "llm_stream",
+                        Math.round(performance.now() - llmStart),
+                    );
+                },
             });
 
             writer.merge(toUIMessageStream({ stream: result.stream }));
@@ -362,25 +414,72 @@ export async function streamWorkspaceChat(
                 return;
             }
 
-            const webCitations = webSearchResults
-                ? webSearchResults.results.map((result) => ({
-                    sourceType: "WEB" as const,
-                    sourceTitle: result.title,
-                    url: result.url,
-                    excerpt: result.content.slice(0, 280),
-                }))
-                : [];
-            const allCitations = await reconcileWorkspaceCitations(
-                workspaceId,
-                [...citations, ...webCitations],
+            const workspaceIndices = parseWorkspaceCitationIndices(assistantText);
+            let workspaceCitations = resolveCitationsFromRetrieval(
+                retrievedChunks,
+                workspaceIndices,
+            );
+            workspaceCitations = applyCitationFallback(
+                retrievedChunks,
+                workspaceCitations,
             );
 
-            await createMessageRecord({
+            const webCitations =
+                webSearchResults
+                    ? resolveWebCitationsFromResults(
+                        webSearchResults.results,
+                        parseWebCitationIndices(assistantText),
+                    )
+                    : [];
+
+            const allCitations = await reconcileWorkspaceCitations(
+                workspaceId,
+                [...workspaceCitations, ...webCitations],
+            );
+
+            const savedMessage = await createMessageRecord({
                 conversationId: conversation.id,
                 role: "ASSISTANT",
                 content: assistantText,
                 citations: allCitations,
             });
+
+            const metricsSnapshot = requestMetrics.finish();
+            const estimatedCostUsd = estimateChatCostUsd(chatModel, {
+                promptTokens: metricsSnapshot.llmPromptTokens,
+                completionTokens: metricsSnapshot.llmCompletionTokens,
+                embedTokens: metricsSnapshot.embedTokens,
+            });
+
+            await createMessageMetricsRecord({
+                messageId: savedMessage.id,
+                embedTokens: metricsSnapshot.embedTokens,
+                llmPromptTokens: metricsSnapshot.llmPromptTokens,
+                llmCompletionTokens: metricsSnapshot.llmCompletionTokens,
+                rerankCalls: metricsSnapshot.rerankCalls,
+                embedCacheHit: metricsSnapshot.embedCacheHit,
+                stagesMs: metricsSnapshot.stagesMs,
+                estimatedCostUsd,
+            }).catch((error) => {
+                console.error("Failed to persist message metrics:", error);
+            });
+
+            console.info(
+                JSON.stringify({
+                    event: "chat_request_metrics",
+                    workspaceId,
+                    conversationId: conversation.id,
+                    retrieveK: retrievedChunks.length,
+                    citationCount: allCitations.length,
+                    stagesMs: metricsSnapshot.stagesMs,
+                    tokens: {
+                        embed: metricsSnapshot.embedTokens,
+                        llmPrompt: metricsSnapshot.llmPromptTokens,
+                        llmCompletion: metricsSnapshot.llmCompletionTokens,
+                    },
+                    embedCacheHit: metricsSnapshot.embedCacheHit,
+                }),
+            );
 
             await touchConversation(conversation.id);
 

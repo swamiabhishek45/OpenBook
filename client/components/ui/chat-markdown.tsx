@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import { Check, Copy, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ChatCitation } from "@/features/chat/lib/types";
+import { getCitationByIndex } from "@/features/chat/lib/citation";
+import { chatCitationsToAgentItems } from "@/features/chat/lib/citation-items";
 
 interface CodeBlockProps {
   language?: string;
@@ -165,7 +168,13 @@ function parseFenceBlock(block: string): {
 /**
  * Parses markdown inline elements: bold, italic, inline code, links, citations [1]
  */
-function renderInlineText(text: string): React.ReactNode {
+function renderInlineText(
+  text: string,
+  options?: {
+    citations?: ChatCitation[];
+    onCitationActivate?: (citationId: string) => void;
+  },
+): React.ReactNode {
   if (!text) return null;
 
   const parts: React.ReactNode[] = [];
@@ -191,7 +200,7 @@ function renderInlineText(text: string): React.ReactNode {
     if (boldMatch) {
       parts.push(
         <strong key={key++} className="font-semibold text-foreground">
-          {renderInlineText(boldMatch[2])}
+          {renderInlineText(boldMatch[2], options)}
         </strong>,
       );
       remaining = remaining.slice(boldMatch[0].length);
@@ -202,7 +211,7 @@ function renderInlineText(text: string): React.ReactNode {
     if (italicMatch && !italicMatch[2].startsWith("*")) {
       parts.push(
         <em key={key++} className="italic text-foreground/90">
-          {renderInlineText(italicMatch[2])}
+          {renderInlineText(italicMatch[2], options)}
         </em>,
       );
       remaining = remaining.slice(italicMatch[0].length);
@@ -226,16 +235,60 @@ function renderInlineText(text: string): React.ReactNode {
       continue;
     }
 
+    const webCitationMatch = remaining.match(/^\[W(\d+(?:\s*,\s*W?\d+)*)\]/i);
+    if (webCitationMatch) {
+      const label = `W${webCitationMatch[1].replace(/\s+/g, "")}`;
+      const firstIndex = Number.parseInt(
+        webCitationMatch[1].split(",")[0]?.replace(/^W/i, "").trim() ?? "",
+        10,
+      );
+      const citation =
+        options?.citations && Number.isFinite(firstIndex)
+          ? getCitationByIndex(options.citations, firstIndex, "web")
+          : null;
+      const citationId = citation
+        ? chatCitationsToAgentItems([citation])[0]?.id
+        : undefined;
+
+      parts.push(
+        <button
+          type="button"
+          key={key++}
+          onClick={() => citationId && options?.onCitationActivate?.(citationId)}
+          className="inline-flex items-center justify-center px-1.5 py-0.2 mx-0.5 text-[10px] font-mono font-medium rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/25 align-baseline cursor-pointer select-none hover:bg-sky-500/20"
+          title={citation?.sourceTitle ?? `Web citation ${label}`}
+        >
+          {label}
+        </button>,
+      );
+      remaining = remaining.slice(webCitationMatch[0].length);
+      continue;
+    }
+
     const citationMatch = remaining.match(/^\[(\d+(?:,\s*\d+)*)\]/);
     if (citationMatch) {
+      const firstIndex = Number.parseInt(
+        citationMatch[1].split(",")[0]?.trim() ?? "",
+        10,
+      );
+      const citation =
+        options?.citations && Number.isFinite(firstIndex)
+          ? getCitationByIndex(options.citations, firstIndex, "workspace")
+          : null;
+      const citationId = citation
+        ? chatCitationsToAgentItems([citation])[0]?.id
+        : undefined;
+
       parts.push(
-        <span
+        <button
+          type="button"
           key={key++}
-          className="inline-flex items-center justify-center px-1.5 py-0.2 mx-0.5 text-[10px] font-mono font-medium rounded-full bg-primary/10 text-primary border border-primary/20 align-baseline cursor-default select-none"
-          title={`Source Citation ${citationMatch[1]}`}
+          onClick={() => citationId && options?.onCitationActivate?.(citationId)}
+          className="inline-flex items-center justify-center px-1.5 py-0.2 mx-0.5 text-[10px] font-mono font-medium rounded-full bg-primary/10 text-primary border border-primary/20 align-baseline cursor-pointer select-none hover:bg-primary/20"
+          title={citation?.sourceTitle ?? `Source citation ${citationMatch[1]}`}
         >
           {citationMatch[1]}
-        </span>,
+        </button>,
       );
       remaining = remaining.slice(citationMatch[0].length);
       continue;
@@ -262,6 +315,8 @@ interface ChatMarkdownProps {
   className?: string;
   /** When true, the last fenced code block renders in streaming mode. */
   isStreaming?: boolean;
+  citations?: ChatCitation[];
+  onCitationActivate?: (citationId: string) => void;
 }
 
 function splitStreamingFences(content: string) {
@@ -285,8 +340,13 @@ export function ChatMarkdown({
   content,
   className,
   isStreaming = false,
+  citations,
+  onCitationActivate,
 }: ChatMarkdownProps) {
   if (!content) return null;
+
+  const renderInline = (text: string) =>
+    renderInlineText(text, { citations, onCitationActivate });
 
   const { body, openFence } = isStreaming
     ? splitStreamingFences(content)
@@ -331,7 +391,7 @@ export function ChatMarkdown({
                 <span className="font-mono text-xs font-semibold text-muted-foreground shrink-0 select-none">
                   {it.num || `${idx + 1}.`}
                 </span>
-                <div className="flex-1">{renderInlineText(it.text)}</div>
+                <div className="flex-1">{renderInline(it.text)}</div>
               </li>
             ))}
           </ol>,
@@ -342,7 +402,7 @@ export function ChatMarkdown({
             {items.map((it, idx) => (
               <li key={idx} className="flex items-baseline gap-2.5 text-foreground/90">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 mt-1.5 select-none" />
-                <div className="flex-1">{renderInlineText(it.text)}</div>
+                <div className="flex-1">{renderInline(it.text)}</div>
               </li>
             ))}
           </ul>,
@@ -365,7 +425,7 @@ export function ChatMarkdown({
             key={`h3-${lIdx}`}
             className="text-base font-semibold text-foreground mt-4 mb-1.5 tracking-tight"
           >
-            {renderInlineText(trimmed.slice(4))}
+            {renderInline(trimmed.slice(4))}
           </h3>,
         );
         return;
@@ -377,7 +437,7 @@ export function ChatMarkdown({
             key={`h2-${lIdx}`}
             className="text-lg font-bold text-foreground mt-5 mb-2 tracking-tight"
           >
-            {renderInlineText(trimmed.slice(3))}
+            {renderInline(trimmed.slice(3))}
           </h2>,
         );
         return;
@@ -389,7 +449,7 @@ export function ChatMarkdown({
             key={`h1-${lIdx}`}
             className="text-xl font-bold text-foreground mt-6 mb-2.5 tracking-tight"
           >
-            {renderInlineText(trimmed.slice(2))}
+            {renderInline(trimmed.slice(2))}
           </h1>,
         );
         return;
@@ -418,7 +478,7 @@ export function ChatMarkdown({
       flushList();
       elements.push(
         <p key={`p-${lIdx}`} className="my-1.5 leading-relaxed text-foreground/90">
-          {renderInlineText(line)}
+          {renderInline(line)}
         </p>,
       );
     });

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { ChatMessage, Conversation } from "../types";
+import { ChatCitation, ChatMessage, Conversation } from "../types";
 import { useChatPreferences } from "../stores/chat-preferences";
 import { useUpgradeModal } from "@/features/billing";
 
@@ -207,6 +207,19 @@ export function useChat(
         let accumulated = "";
         let buffer = "";
 
+        let pendingCitations: ChatCitation[] | undefined;
+
+        const applyStreamCitations = (citations: ChatCitation[]) => {
+          pendingCitations = citations;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessageId
+                ? { ...msg, citations }
+                : msg,
+            ),
+          );
+        };
+
         const parseLine = (rawLine: string): string | null => {
           const trimmed = rawLine.trim();
           if (!trimmed || trimmed === "data: [DONE]") return null;
@@ -216,6 +229,15 @@ export function useChat(
             const jsonStr = trimmed.slice(6).trim();
             try {
               const data = JSON.parse(jsonStr);
+              if (
+                data &&
+                typeof data === "object" &&
+                data.type === "data-rag-citations" &&
+                Array.isArray(data.data)
+              ) {
+                applyStreamCitations(data.data as ChatCitation[]);
+                return null;
+              }
               if (typeof data === "string") return data;
               return (
                 data.delta ??
@@ -249,6 +271,15 @@ export function useChat(
           if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
             try {
               const data = JSON.parse(trimmed);
+              if (
+                data &&
+                typeof data === "object" &&
+                data.type === "data-rag-citations" &&
+                Array.isArray(data.data)
+              ) {
+                applyStreamCitations(data.data as ChatCitation[]);
+                return null;
+              }
               if (typeof data === "string") return data;
               return (
                 data.delta ??

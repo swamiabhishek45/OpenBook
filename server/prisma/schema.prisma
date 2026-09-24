@@ -227,17 +227,45 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   conversationId String
   role           MessageRole
   content        String
   citations      Json?
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  metrics        MessageMetrics?
 
   @@index([conversationId])
   @@index([conversationId, createdAt])
   @@map("message")
+}
+
+model MessageMetrics {
+  id                  String   @id @default(cuid())
+  messageId           String   @unique
+  embedTokens         Int?
+  llmPromptTokens     Int?
+  llmCompletionTokens Int?
+  rerankCalls         Int?     @default(0)
+  embedCacheHit       Boolean?
+  stagesMs            Json?
+  estimatedCostUsd    Decimal? @db.Decimal(10, 6)
+  createdAt           DateTime @default(now())
+  message             Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("message_metrics")
+}
+
+model QueryEmbeddingCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  embedding Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("query_embedding_cache")
 }
 
 enum ArtifactType {

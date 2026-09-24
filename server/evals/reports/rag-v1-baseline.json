@@ -1,0 +1,6 @@
+{
+  "dataset": "rag-v1",
+  "retrieval_precision_at_k": 0,
+  "retrieval_recall_at_k": 0,
+  "mrr": 0
+}

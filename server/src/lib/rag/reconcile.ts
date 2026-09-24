@@ -8,6 +8,7 @@ export type RetrievedChunk = {
     page?: number;
     text: string;
     score: number;
+    vectorScore?: number;
 };
 
 type WorkspaceCitation = {

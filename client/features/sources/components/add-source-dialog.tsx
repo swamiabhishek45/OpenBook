@@ -474,7 +474,7 @@ export function AddSourceDialog({
                   {imageFile ? imageFile.name : "Upload a photo, scan, or screenshot"}
                 </div>
                 <div className="text-[11px] text-muted-foreground max-w-sm">
-                  We run OCR and index the text so you can ask questions about it in chat. PNG, JPG, WEBP, GIF, and more — up to 15MB.
+                  Supports PNG, JPG, WEBP, GIF, and more — up to 15MB.
                 </div>
               </div>
 

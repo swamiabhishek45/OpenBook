@@ -1,5 +1,6 @@
 export type SourceType =
   | "PDF"
+  | "IMAGE"
   | "WEBSITE"
   | "YOUTUBE"
   | "TEXT"

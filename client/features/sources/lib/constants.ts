@@ -2,6 +2,7 @@ import type { SourceStatus, SourceType } from "./types";
 
 export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
     PDF: "PDF",
+    IMAGE: "Image",
     WEBSITE: "Website",
     YOUTUBE: "YouTube",
     TEXT: "Text",
@@ -22,6 +23,7 @@ export const SOURCE_TYPES: SourceType[] = [
     "TEXT",
     "MARKDOWN",
     "PDF",
+    "IMAGE",
     "WEBSITE",
     "YOUTUBE",
     "GOOGLE_DOC",

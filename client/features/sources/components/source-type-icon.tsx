@@ -7,6 +7,7 @@ import {
   Type,
   FileCode,
   BookOpen,
+  ImageIcon,
 } from "lucide-react";
 
 import { YoutubeIcon } from "@/components/ui/youtube-icon";
@@ -17,6 +18,7 @@ import { getWebsiteFaviconUrl } from "../lib/favicon";
 
 const iconMap = {
   PDF: FileText,
+  IMAGE: ImageIcon,
   WEBSITE: Globe,
   YOUTUBE: YoutubeIcon,
   TEXT: Type,

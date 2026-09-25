@@ -17,6 +17,7 @@ import {
     listSources,
     reprocessSource,
     reprocessSources,
+    uploadImageSource,
     uploadPdfSource,
 } from "../lib/api";
 
@@ -123,6 +124,29 @@ export function useUploadPdfSource(workspaceId: string) {
             file: File;
             title?: string;
         }) => uploadPdfSource(workspaceId, file, title),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({
+                queryKey: sourceKeys(workspaceId).all,
+            });
+            void queryClient.invalidateQueries({
+                queryKey: ["user-usage"],
+            });
+        },
+        onError: handleSourceLimitError,
+    });
+}
+
+export function useUploadImageSource(workspaceId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            file,
+            title,
+        }: {
+            file: File;
+            title?: string;
+        }) => uploadImageSource(workspaceId, file, title),
         onSuccess: () => {
             void queryClient.invalidateQueries({
                 queryKey: sourceKeys(workspaceId).all,

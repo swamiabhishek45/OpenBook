@@ -113,6 +113,40 @@ export async function uploadPdfSource(
     return data as Source;
 }
 
+export async function uploadImageSource(
+    workspaceId: string,
+    file: File,
+    title?: string,
+) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    if (title?.trim()) {
+        formData.append("title", title.trim());
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/api/workspaces/${workspaceId}/sources/upload/image`,
+        {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+        },
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+        throw new ApiError(
+            response.status,
+            (data as { error?: string } | null)?.error ?? "Image upload failed",
+            (data as { details?: unknown } | null)?.details,
+        );
+    }
+
+    return data as Source;
+}
+
 export function deleteSource(workspaceId: string, sourceId: string) {
     return apiFetch<void>(
         `/api/workspaces/${workspaceId}/sources/${sourceId}`,

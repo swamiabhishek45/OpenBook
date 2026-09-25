@@ -35,6 +35,7 @@ const FOOTER_COLUMNS: { heading: string; links: FooterLink[] }[] = [
     heading: "Resources",
     links: [
       { label: "Docs", href: DOCS_URL, external: true },
+      { label: "Pricing", href: "/pricing" },
       { label: "Integrations", href: "/settings/integrations" },
       { label: "Billing & plan", href: "/settings/billing" },
       { label: "FAQ", href: "#faq" },

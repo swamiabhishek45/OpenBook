@@ -12,9 +12,10 @@ import {
     listSources,
     reprocessSource,
     reprocessSources,
+    uploadImage,
     uploadPdf,
 } from "../controllers/source.controller.js";
-import { uploadSinglePdf } from "../middleware/upload.middleware.js";
+import { uploadSingleImage, uploadSinglePdf } from "../middleware/upload.middleware.js";
 
 export const sourceRoutes = Router({ mergeParams: true });
 
@@ -22,6 +23,12 @@ sourceRoutes.post(
     "/upload",
     uploadSinglePdf,
     asyncHandler(uploadPdf),
+);
+
+sourceRoutes.post(
+    "/upload/image",
+    uploadSingleImage,
+    asyncHandler(uploadImage),
 );
 
 import { importDriveFile, importPage, importGithub } from "../controllers/integration.controller.js";

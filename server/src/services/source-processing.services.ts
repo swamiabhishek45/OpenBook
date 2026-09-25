@@ -2,6 +2,7 @@ import type { PineconeRecord } from "@pinecone-database/pinecone";
 import type { Prisma } from "../generated/prisma/client.js";
 import { chunkPages, chunkText } from "../lib/chunking.js";
 import { embedTexts } from "../lib/openai.js";
+import { extractTextFromCloudinaryImage } from "../lib/sources/image-ocr.js";
 import { extractPdfFromCloudinary } from "../lib/sources/pdf.js";
 import {
     deleteSourceVectors,
@@ -34,6 +35,8 @@ type SourceMetadata = {
     indexedAt?: string;
     pageTexts?: string[];
     chunkVersion?: number;
+    mimeType?: string;
+    ocrModel?: string;
 };
 
 /**
@@ -72,7 +75,7 @@ async function extractSourceText(source: SourceRecord) {
             const extracted = await extractPdfFromCloudinary({
                 fileUrl: metadata.fileUrl,
                 publicId: metadata.publicId,
-                resourceType: metadata.resourceType ?? "image",
+                resourceType: metadata.resourceType ?? "raw",
             });
             return {
                 text: extracted.text,
@@ -80,6 +83,33 @@ async function extractSourceText(source: SourceRecord) {
                 pages: extracted.pages,
             };
         }
+    }
+
+    if (source.type === "IMAGE") {
+        const existing = source.content?.trim();
+        if (existing) {
+            return {
+                text: existing,
+                pageCount: undefined,
+                pages: undefined,
+            };
+        }
+
+        if (metadata.fileUrl) {
+            const ocr = await extractTextFromCloudinaryImage({
+                fileUrl: metadata.fileUrl,
+                publicId: metadata.publicId,
+                mimeType: metadata.mimeType,
+            });
+            return {
+                text: ocr.text,
+                pageCount: undefined,
+                pages: undefined,
+                extraMetadata: { ocrModel: ocr.model },
+            };
+        }
+
+        throw new Error("Image source is missing fileUrl metadata");
     }
 
     const text = source.content?.trim();
@@ -163,10 +193,18 @@ export async function extractSourceContent(sourceId: string) {
 
     const chunkVersion = (metadata.chunkVersion ?? 0) + 1;
 
+    const extraMetadata =
+        "extraMetadata" in extracted &&
+        extracted.extraMetadata &&
+        typeof extracted.extraMetadata === "object"
+            ? extracted.extraMetadata
+            : {};
+
     await updateSourceRecord(sourceId, {
         content: extracted.text,
         metadata: {
             ...metadata,
+            ...extraMetadata,
             pageCount: extracted.pageCount ?? metadata.pageCount,
             ...(extracted.pages?.length
                 ? { pageTexts: extracted.pages }

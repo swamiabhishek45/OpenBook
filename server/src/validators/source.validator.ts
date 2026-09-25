@@ -2,10 +2,14 @@ import { z } from "zod";
 
 export const sourceTypeSchema = z.enum([
     "PDF",
+    "IMAGE",
     "WEBSITE",
     "YOUTUBE",
     "TEXT",
     "MARKDOWN",
+    "GOOGLE_DOC",
+    "NOTION_PAGE",
+    "GITHUB_REPO",
 ]);
 
 export const sourceStatusSchema = z.enum([

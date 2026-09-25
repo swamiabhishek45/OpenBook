@@ -1,6 +1,10 @@
 /** Default chat model when the client or workspace does not specify one. */
 export const CHAT_MODEL = "gpt-4o-mini";
 
+/** Vision model for image source OCR (defaults to chat model). */
+export const OCR_VISION_MODEL =
+    process.env.OCR_VISION_MODEL?.trim() || CHAT_MODEL;
+
 /** Allowed chat models exposed to the client and workspace settings. */
 export const CHAT_MODELS = ["gpt-4o-mini", "gpt-4o"] as const;
 

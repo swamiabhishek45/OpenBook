@@ -22,6 +22,10 @@ export function SourcePreviewDialog({
 
   const metadata = source.metadata || {};
   const chunkCount = typeof metadata.chunkCount === "number" ? metadata.chunkCount : null;
+  const fileUrl =
+    typeof metadata.fileUrl === "string"
+      ? metadata.fileUrl
+      : source.url ?? null;
 
   return (
     <div
@@ -87,10 +91,23 @@ export function SourcePreviewDialog({
             </div>
           )}
 
+          {source.type === "IMAGE" && fileUrl && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Image
+              </h3>
+              <img
+                src={fileUrl}
+                alt={source.title}
+                className="max-h-64 w-full rounded-xl border border-border object-contain bg-muted/30"
+              />
+            </div>
+          )}
+
           {source.content ? (
             <div className="space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Extracted Content
+                {source.type === "IMAGE" ? "OCR & description" : "Extracted Content"}
               </h3>
               <MarkdownPreview content={source.content} />
             </div>

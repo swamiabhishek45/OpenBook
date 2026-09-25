@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import {
   Upload,
+  ImageIcon,
   Globe,
   FileText,
   X,
@@ -25,6 +26,7 @@ import {
   useImportWebsiteSource,
   useImportYoutubeSource,
   useUploadPdfSource,
+  useUploadImageSource,
   useImportGoogleDriveSource,
   useImportNotionSource,
   useImportGithubSource,
@@ -48,6 +50,7 @@ export interface AddSourceDialogProps {
 
 type TabType =
   | "pdf"
+  | "image"
   | "website"
   | "youtube"
   | "text"
@@ -57,11 +60,12 @@ type TabType =
 
 const FORM_CONTROL_CLASSNAME =
   "w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring";
-const TAB_CLASSNAME =
-  "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors";
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/gif,image/webp,image/bmp,image/tiff,image/heic,image/heif,.png,.jpg,.jpeg,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif";
 
 const SOURCE_TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
   { id: "pdf", label: "PDF", icon: <Upload className="size-3.5" /> },
+  { id: "image", label: "Image", icon: <ImageIcon className="size-3.5" /> },
   { id: "google-drive", label: "Google Drive", icon: <FolderOpen className="size-3.5" /> },
   { id: "notion", label: "Notion", icon: <BookOpen className="size-3.5" /> },
   { id: "website", label: "Web URL", icon: <Globe className="size-3.5" /> },
@@ -108,6 +112,7 @@ export function AddSourceDialog({
 
   // Hook-based mutations
   const uploadPdfMutation = useUploadPdfSource(workspaceId || "");
+  const uploadImageMutation = useUploadImageSource(workspaceId || "");
   const importWebsiteMutation = useImportWebsiteSource(workspaceId || "");
   const importYoutubeMutation = useImportYoutubeSource(workspaceId || "");
   const createSourceMutation = useCreateSource(workspaceId || "");
@@ -118,6 +123,8 @@ export function AddSourceDialog({
   // Form states
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfTitle, setPdfTitle] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageTitle, setImageTitle] = useState("");
   const [webUrl, setWebUrl] = useState("");
   const [webTitle, setWebTitle] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -138,6 +145,7 @@ export function AddSourceDialog({
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Query connected integrations
   const { data: integrations, refetch: refetchIntegrations } = useQuery<IntegrationsStatus>({
@@ -265,6 +273,7 @@ export function AddSourceDialog({
     const title = (value: string) => value.trim() || undefined;
 
     if (activeTab === "pdf" && !pdfFile) return setError("Please select a PDF file.");
+    if (activeTab === "image" && !imageFile) return setError("Please select an image file.");
     if (activeTab === "website" && !webUrl.trim()) return setError("Please enter a valid website URL.");
     if (activeTab === "youtube" && !youtubeUrl.trim()) return setError("Please enter a valid YouTube video URL.");
     if (activeTab === "text" && (!textTitle.trim() || !textContent.trim())) {
@@ -287,6 +296,12 @@ export function AddSourceDialog({
           await (onUploadPdf
             ? onUploadPdf(pdfFile!, title(pdfTitle))
             : uploadPdfMutation.mutateAsync({ file: pdfFile!, title: title(pdfTitle) }));
+          break;
+        case "image":
+          await uploadImageMutation.mutateAsync({
+            file: imageFile!,
+            title: title(imageTitle),
+          });
           break;
         case "website":
           await (onImportWebsite
@@ -344,27 +359,33 @@ export function AddSourceDialog({
           </button>
         </div>
 
-        {/* Tab Bar */}
-        <div className="flex items-center justify-center border-b border-border bg-muted/40 px-4 pt-2 gap-1 overflow-x-auto select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {SOURCE_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                setActiveTab(tab.id);
-                setError(null);
-              }}
-              className={cn(
-                TAB_CLASSNAME,
-                activeTab === tab.id
-                  ? "border-foreground font-semibold text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        {/* Source type grid — 4 × 2 */}
+        <div className="border-b border-border bg-muted/40 px-4 py-4 select-none">
+          <div className="grid grid-cols-4 gap-2">
+            {SOURCE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setError(null);
+                }}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2.5 min-h-[4.25rem] text-[11px] font-medium transition-colors cursor-pointer",
+                  activeTab === tab.id
+                    ? "border-foreground bg-background text-foreground shadow-sm ring-1 ring-foreground/10"
+                    : "border-border bg-card/60 text-muted-foreground hover:border-foreground/35 hover:bg-card hover:text-foreground",
+                )}
+              >
+                <span className="flex shrink-0 items-center justify-center [&_svg]:size-4">
+                  {tab.icon}
+                </span>
+                <span className="text-center leading-snug line-clamp-2">
+                  {tab.label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Content Body */}
@@ -416,6 +437,56 @@ export function AddSourceDialog({
                   placeholder="e.g. Research Paper"
                   value={pdfTitle}
                   onChange={(e) => setPdfTitle(e.target.value)}
+                  className={FORM_CONTROL_CLASSNAME}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "image" && (
+            <div className="space-y-4">
+              <div
+                onClick={() => imageInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2",
+                  imageFile
+                    ? "border-foreground bg-muted/30"
+                    : "border-border hover:border-zinc-400 hover:bg-muted/20"
+                )}
+              >
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept={IMAGE_ACCEPT}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setImageFile(file);
+                      if (!imageTitle) {
+                        setImageTitle(file.name.replace(/\.[^/.]+$/, ""));
+                      }
+                    }
+                  }}
+                />
+                <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                <div className="text-xs font-medium text-foreground">
+                  {imageFile ? imageFile.name : "Upload a photo, scan, or screenshot"}
+                </div>
+                <div className="text-[11px] text-muted-foreground max-w-sm">
+                  We run OCR and index the text so you can ask questions about it in chat. PNG, JPG, WEBP, GIF, and more — up to 15MB.
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                  Source Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Lecture slide photo"
+                  value={imageTitle}
+                  onChange={(e) => setImageTitle(e.target.value)}
                   className={FORM_CONTROL_CLASSNAME}
                 />
               </div>

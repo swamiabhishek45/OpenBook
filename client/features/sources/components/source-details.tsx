@@ -146,13 +146,36 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
         </div>
       )}
 
+      {source.type === "IMAGE" && fileUrl && (
+        <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between text-xs">
+            <p className="font-medium text-foreground">{fileName || "Uploaded image"}</p>
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground underline hover:text-foreground"
+            >
+              Open original
+            </a>
+          </div>
+          <img
+            src={fileUrl}
+            alt={source.title}
+            className="max-h-80 w-full rounded-lg border border-border object-contain bg-muted/30"
+          />
+        </div>
+      )}
+
       {/* Main Content / Status State */}
       {isProcessing ? (
         <div className="p-12 text-center border border-dashed border-border rounded-2xl bg-card space-y-2">
           <CircularLoader size={36} className="mx-auto text-muted-foreground" />
           <p className="text-xs font-medium text-foreground">Processing Source</p>
           <p className="text-[11px] text-muted-foreground">
-            Extracting text, chunking passages, and embedding vector index.
+            {source.type === "IMAGE"
+              ? "Running OCR, chunking text, and building the search index."
+              : "Extracting text, chunking passages, and embedding vector index."}
           </p>
         </div>
       ) : source.status === "FAILED" ? (

@@ -39,6 +39,13 @@ export function SiteNav({ isAuthenticated = false }: SiteNavProps) {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/pricing"
+            className="hidden sm:inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Pricing
+          </Link>
+
           <a
             href={GITHUB_URL}
             target="_blank"

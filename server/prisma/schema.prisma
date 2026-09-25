@@ -129,6 +129,7 @@ model Workspace {
 
 enum SourceType {
   PDF
+  IMAGE
   WEBSITE
   YOUTUBE
   TEXT

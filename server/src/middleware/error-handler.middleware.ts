@@ -40,7 +40,11 @@ export function errorHandler(
         return;
     }
 
-    if (error instanceof Error && error.message === "Only PDF files are allowed") {
+    if (
+        error instanceof Error &&
+        (error.message === "Only PDF files are allowed" ||
+            error.message === "Only image files are allowed")
+    ) {
         res.status(400).json({ error: error.message });
         return;
     }

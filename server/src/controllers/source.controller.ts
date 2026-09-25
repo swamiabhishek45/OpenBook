@@ -22,6 +22,7 @@ import {
     listSourcesForWorkspace,
     reprocessSourceForWorkspace,
     reprocessSourcesForWorkspace,
+    uploadImageSource,
     uploadPdfSource,
 } from "../services/source.services.js";
 import { importWebSearchSchema, reprocessSourcesSchema } from "../validators/source.validator.js";
@@ -227,6 +228,29 @@ export async function uploadPdf(req: Request, res: Response) {
         typeof req.body.title === "string" ? req.body.title : undefined;
 
     const source = await uploadPdfSource(
+        workspaceId,
+        req.session.user.id,
+        req.file,
+        title,
+    );
+
+    res.status(201).json(source);
+}
+
+/**
+ * Handles HTTP POST multipart upload for an image source (vision OCR + RAG indexing).
+ */
+export async function uploadImage(req: Request, res: Response) {
+    const { workspaceId } = workspaceIdParamSchema.parse(req.params);
+
+    if (!req.file) {
+        throw new ValidationError("Image file is required");
+    }
+
+    const title =
+        typeof req.body.title === "string" ? req.body.title : undefined;
+
+    const source = await uploadImageSource(
         workspaceId,
         req.session.user.id,
         req.file,

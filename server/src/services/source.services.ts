@@ -1,4 +1,5 @@
-import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
+import { uploadImageToCloudinary, uploadPdfToCloudinary } from "../lib/cloudinary.js";
+import { extractTextFromImageBuffer } from "../lib/sources/image-ocr.js";
 import { scrapeWebsite } from "../lib/sources/firecrawl.js";
 import { buildFaviconUrl } from "../lib/sources/favicon.js";
 import { extractPdfFromBuffer } from "../lib/sources/pdf.js";
@@ -253,6 +254,82 @@ export async function uploadPdfSource(
             ...uploadMetadata,
             pageCount,
             ...(pageTexts?.length ? { pageTexts } : {}),
+        },
+    });
+}
+
+/**
+ * Uploads an image to Cloudinary, runs vision OCR, and creates an IMAGE source for RAG.
+ */
+export async function uploadImageSource(
+    workspaceId: string,
+    userId: string,
+    file: Express.Multer.File,
+    title?: string,
+) {
+    await getWorkspaceByIdForUser(workspaceId, userId);
+    await assertCanCreateSource(userId);
+
+    let content: string | null = null;
+    let ocrModel: string | undefined;
+
+    try {
+        const ocr = await extractTextFromImageBuffer(
+            file.buffer,
+            file.mimetype,
+        );
+        content = ocr.text;
+        ocrModel = ocr.model;
+    } catch (parseErr) {
+        console.warn("Image OCR at upload notice:", parseErr);
+    }
+
+    let uploadMetadata: Record<string, unknown> = {
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+    };
+
+    try {
+        const upload = await uploadImageToCloudinary(
+            file.buffer,
+            file.originalname,
+            file.mimetype,
+        );
+        uploadMetadata = {
+            ...uploadMetadata,
+            fileUrl: upload.secureUrl,
+            publicId: upload.publicId,
+            resourceType: upload.resourceType,
+        };
+    } catch (cloudErr) {
+        console.warn(
+            "Cloudinary image upload skipped or failed (will retry OCR from buffer in pipeline if needed):",
+            cloudErr,
+        );
+        if (!content) {
+            throw cloudErr;
+        }
+    }
+
+    const fileUrl =
+        typeof uploadMetadata.fileUrl === "string"
+            ? uploadMetadata.fileUrl
+            : undefined;
+
+    return createAndProcessSource({
+        workspaceId,
+        type: "IMAGE",
+        title:
+            title?.trim() ||
+            file.originalname.replace(/\.[^/.]+$/, "") ||
+            "Image",
+        content,
+        url: fileUrl,
+        status: "PENDING",
+        metadata: {
+            ...uploadMetadata,
+            ...(ocrModel ? { ocrModel } : {}),
         },
     });
 }

@@ -148,6 +148,116 @@ export async function uploadPdfToCloudinary(
     };
 }
 
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".bmp": "image/bmp",
+    ".tif": "image/tiff",
+    ".tiff": "image/tiff",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+};
+
+function resolveImageMimeType(filename: string, mimeType?: string) {
+    if (mimeType?.startsWith("image/")) {
+        return mimeType;
+    }
+
+    const ext = filename.toLowerCase().match(/\.[^.]+$/)?.[0] ?? "";
+    return IMAGE_MIME_BY_EXT[ext] ?? "image/jpeg";
+}
+
+/**
+ * Uploads an image buffer to Cloudinary (`resource_type: image`).
+ */
+export async function uploadImageToCloudinary(
+    buffer: Buffer,
+    filename: string,
+    mimeType?: string,
+): Promise<CloudinaryUploadResult> {
+    if (!cloudName) {
+        throw new ValidationError("Cloudinary is not configured on the server");
+    }
+
+    const contentType = resolveImageMimeType(filename, mimeType);
+
+    if (apiKey && apiSecret && apiKey !== apiSecret) {
+        try {
+            cloudinary.config({
+                cloud_name: cloudName,
+                api_key: apiKey,
+                api_secret: apiSecret,
+                secure: true,
+            });
+
+            const base64Data = `data:${contentType};base64,${buffer.toString("base64")}`;
+            const cleanId = filename.replace(/\.[^/.]+$/, "");
+
+            const result = await cloudinary.uploader.upload(base64Data, {
+                resource_type: "image",
+                folder: "chaibook/images",
+                public_id: cleanId,
+            });
+
+            if (result?.secure_url) {
+                return {
+                    secureUrl: result.secure_url,
+                    publicId: result.public_id,
+                    bytes: result.bytes || buffer.length,
+                    originalFilename: filename,
+                    resourceType: "image",
+                };
+            }
+        } catch (signedErr) {
+            console.warn(
+                "Cloudinary signed image upload failed, attempting unsigned upload:",
+                signedErr,
+            );
+        }
+    }
+
+    const form = new FormData();
+    form.append(
+        "file",
+        new Blob([new Uint8Array(buffer)], { type: contentType }),
+        filename,
+    );
+    form.append("upload_preset", uploadPreset);
+    form.append("folder", "chaibook/images");
+
+    const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: form },
+    );
+
+    const result = (await response.json()) as CloudinaryUploadResponse;
+
+    if (!response.ok) {
+        const message =
+            result.error?.message ??
+            `Cloudinary image upload failed (${response.status})`;
+
+        if (response.status === 403) {
+            throw new ValidationError(
+                "Cloudinary rejected the image upload. Check CLOUDINARY_UPLOAD_PRESET in server/.env.",
+            );
+        }
+
+        throw new ValidationError(message);
+    }
+
+    return {
+        secureUrl: result.secure_url,
+        publicId: result.public_id,
+        bytes: result.bytes,
+        originalFilename: filename,
+        resourceType: "image",
+    };
+}
+
 /**
  * Uploads an MP3 audio buffer to Cloudinary.
  * Tries signed upload via SDK first (if API credentials configured),

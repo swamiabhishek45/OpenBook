@@ -66,14 +66,14 @@ const IMAGE_ACCEPT =
   "image/png,image/jpeg,image/gif,image/webp,image/bmp,image/tiff,image/heic,image/heif,.png,.jpg,.jpeg,.gif,.webp,.bmp,.tif,.tiff,.heic,.heif";
 
 const SOURCE_TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
-  { id: "pdf", label: "PDF", icon: <Upload className="size-3.5" /> },
-  { id: "image", label: "Image", icon: <ImageIcon className="size-3.5" /> },
-  { id: "google-drive", label: "Google Drive", icon: <GoogleDriveIcon size={16} /> },
-  { id: "notion", label: "Notion", icon: <NotionIcon size={14} /> },
-  { id: "website", label: "Web URL", icon: <Globe className="size-3.5" /> },
-  { id: "youtube", label: "YouTube", icon: <YoutubeIcon size={14} /> },
-  { id: "text", label: "Text", icon: <FileText className="size-3.5" /> },
-  { id: "github", label: "GitHub", icon: <GithubIcon size={14} /> },
+  { id: "pdf", label: "PDF", icon: <Upload className="size-5" /> },
+  { id: "image", label: "Image", icon: <ImageIcon className="size-5" /> },
+  { id: "google-drive", label: "Google Drive", icon: <GoogleDriveIcon size={20} /> },
+  { id: "notion", label: "Notion", icon: <NotionIcon size={20} /> },
+  { id: "website", label: "Web URL", icon: <Globe className="size-5" /> },
+  { id: "youtube", label: "YouTube", icon: <YoutubeIcon size={20} /> },
+  { id: "text", label: "Text", icon: <FileText className="size-5" /> },
+  { id: "github", label: "GitHub", icon: <GithubIcon size={20} /> },
 ];
 
 interface IntegrationsStatus {
@@ -379,7 +379,9 @@ export function AddSourceDialog({
                     : "border-border bg-card/60 text-muted-foreground hover:border-foreground/35 hover:bg-card hover:text-foreground",
                 )}
               >
-                <span className="flex shrink-0 items-center justify-center [&_svg]:size-4">
+                <span
+                  className="flex size-5 shrink-0 items-center justify-center [&_svg]:size-5 [&_img]:size-5 [&>span]:size-5"
+                >
                   {tab.icon}
                 </span>
                 <span className="text-center leading-snug line-clamp-2">

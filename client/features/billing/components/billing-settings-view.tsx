@@ -63,7 +63,13 @@ function daysUntil(iso: string | null | undefined) {
   return Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-export function BillingSettingsView() {
+type BillingSettingsViewProps = {
+  workspaceId?: string;
+};
+
+export function BillingSettingsView({
+  workspaceId,
+}: BillingSettingsViewProps = {}) {
   const { usage, plan, isPro, isProPlus, isLoading, isError } = useUsage();
   const { checkout, isLoading: checkoutLoading } = useRazorpayCheckout();
   const { openUpgradeModal } = useUpgradeModal();
@@ -129,15 +135,24 @@ export function BillingSettingsView() {
     );
   }
 
-  return (
+  const integrationsHref = workspaceId
+    ? `/workspace/${workspaceId}/integrations`
+    : "/settings/integrations";
+  const memoryHref = workspaceId
+    ? `/workspace/${workspaceId}/memory`
+    : "/settings/memory";
+
+  const main = (
     <div className="flex flex-1 flex-col gap-8 p-6 md:p-8 max-w-3xl mx-auto w-full">
       <div className="flex items-start gap-3">
-        <Link
-          href="/dashboard"
-          className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
+        {!workspaceId && (
+          <Link
+            href="/dashboard"
+            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        )}
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-foreground" />
@@ -292,20 +307,42 @@ export function BillingSettingsView() {
         <h2 className="text-xs font-semibold text-foreground">Quick links</h2>
         <div className="flex flex-wrap gap-2 text-xs">
           <Link
-            href="/settings/integrations"
+            href={integrationsHref}
             className="text-primary hover:underline underline-offset-2"
           >
             Integrations
           </Link>
           <span className="text-muted-foreground">·</span>
           <Link
-            href="/settings/memory"
+            href={memoryHref}
             className="text-primary hover:underline underline-offset-2"
           >
             Memory settings
           </Link>
         </div>
       </section>
+    </div>
+  );
+
+  if (workspaceId) {
+    return main;
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="border-b border-border px-6 py-3.5 flex items-center justify-between bg-card">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Dashboard</span>
+        </Link>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Billing &amp; Plan
+        </span>
+      </div>
+      {main}
     </div>
   );
 }

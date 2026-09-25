@@ -8,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function BillingSettingsPage() {
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <BillingSettingsView />
-    </div>
-  );
+  return <BillingSettingsView />;
 }

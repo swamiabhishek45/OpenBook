@@ -34,13 +34,13 @@ export function SourcePreviewDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => dismissOnBackdropClick(e, onClose)}
     >
-      <div className="w-full max-w-3xl max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-foreground">
+      <div className="w-full sm:max-w-3xl max-h-[92dvh] sm:max-h-[85vh] bg-card border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-foreground">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
-          <div className="flex items-center gap-3 min-w-0 pr-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2 sm:pr-4">
             <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
               <SourceTypeIcon type={source.type} source={source} />
             </div>
@@ -51,7 +51,7 @@ export function SourcePreviewDialog({
                 </h2>
                 <SourceStatusBadge status={source.status} />
               </div>
-              <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
                 <span>{source.type}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -80,7 +80,7 @@ export function SourcePreviewDialog({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 text-foreground">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 text-foreground overscroll-contain">
           {source.url && source.type !== "IMAGE" && (
             <div className="p-3 bg-muted/40 border border-border rounded-lg text-xs flex items-center gap-2">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />

@@ -14,11 +14,11 @@ import {
   Check,
   LogOut,
   User,
-  Settings,
   Brain,
   CreditCard,
   LayoutGrid,
   Zap,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
@@ -138,7 +138,16 @@ export function WorkspaceHeader({
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-1.5 border-t border-border">
+              <div className="pt-1.5 border-t border-border space-y-1">
+                {workspaceId && (
+                  <Link
+                    href={`/workspace/${workspaceId}/settings`}
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <span>Notebook settings</span>
+                  </Link>
+                )}
                 <Link
                   href="/dashboard"
                   onClick={() => setIsDropdownOpen(false)}
@@ -155,32 +164,6 @@ export function WorkspaceHeader({
 
       {/* Middle/Right Quick Tabs & Controls */}
       <div className="flex items-center gap-2">
-        {workspaceId && (
-          <div className="hidden xl:flex items-center gap-1 bg-muted/40 p-0.5 rounded-lg border border-border text-[11px]">
-            <Link
-              href={`/workspace/${workspaceId}/sources`}
-              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <Layers className="w-3 h-3" />
-              <span>Library ({sourcesCount})</span>
-            </Link>
-            <Link
-              href={`/settings/memory`}
-              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <Brain className="w-3 h-3" />
-              <span>Memory</span>
-            </Link>
-            <Link
-              href={`/workspace/${workspaceId}/settings`}
-              className="px-2.5 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <Settings className="w-3 h-3" />
-              <span>Settings</span>
-            </Link>
-          </div>
-        )}
-
         {/* Pro Plan Badge — hidden on small screens to save header space */}
         <ProBadge className="hidden md:inline-flex" />
 
@@ -272,9 +255,8 @@ export function WorkspaceHeader({
 
 
 
-                {/* Workspace Navigation Links (Library, Memory, Settings) */}
-                <div className="space-y-0.5 pt-1">
-                  {workspaceId && (
+                {workspaceId && (
+                  <div className="space-y-0.5 pt-1">
                     <Link
                       href={`/workspace/${workspaceId}/sources`}
                       onClick={() => setIsProfileMenuOpen(false)}
@@ -288,37 +270,35 @@ export function WorkspaceHeader({
                         {sourcesCount}
                       </span>
                     </Link>
-                  )}
 
-                  <Link
-                    href="/settings/billing"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
-                  >
-                    <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>Billing &amp; plan</span>
-                  </Link>
-
-                  <Link
-                    href="/settings/memory"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
-                  >
-                    <Brain className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>Memory</span>
-                  </Link>
-
-                  {workspaceId && (
                     <Link
-                      href={`/workspace/${workspaceId}/settings`}
+                      href={`/workspace/${workspaceId}/memory`}
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
                     >
-                      <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>Settings</span>
+                      <Brain className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Memory</span>
                     </Link>
-                  )}
-                </div>
+
+                    <Link
+                      href={`/workspace/${workspaceId}/billing`}
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Billing &amp; plan</span>
+                    </Link>
+
+                    <Link
+                      href={`/workspace/${workspaceId}/integrations`}
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                    >
+                      <Plug className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Integrations</span>
+                    </Link>
+                  </div>
+                )}
 
                 {/* Divider & Logout */}
                 <div className="pt-1 border-t border-border">

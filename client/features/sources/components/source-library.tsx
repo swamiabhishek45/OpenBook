@@ -30,13 +30,15 @@ import { AddSourceDialog } from "./add-source-dialog";
 import { SourceCard } from "./source-card";
 import { SourcePreviewDialog } from "./source-preview-dialog";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SourceLibraryProps {
   workspaceId: string;
 }
 
 export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const isMobile = useIsMobile();
+  const [view, setView] = useState<"grid" | "list">("list");
   const [addOpen, setAddOpen] = useState(false);
   const [previewSource, setPreviewSource] = useState<Source | null>(null);
   const [filters, setFilters] = useState<SourceFilters>({});
@@ -47,6 +49,14 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const typeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isMobile) {
+      setView("grid");
+    } else {
+      setView("list");
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -95,14 +105,14 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 md:p-8 max-w-6xl mx-auto w-full">
+    <div className="flex flex-1 flex-col gap-4 sm:gap-6 p-3 sm:p-6 md:p-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden pb-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-0.5 min-w-0">
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight text-foreground">
             Source Library
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] sm:text-xs text-muted-foreground">
             {sources
               ? `${sources.length} source${sources.length === 1 ? "" : "s"} in this workspace`
               : "All knowledge sources in this workspace"}
@@ -112,7 +122,7 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-foreground text-background hover:opacity-90 active:scale-[0.99] transition-all shadow-xs shrink-0"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 text-xs font-medium rounded-lg bg-foreground text-background hover:opacity-90 active:scale-[0.99] transition-all shadow-xs shrink-0"
         >
           <Plus className="w-4 h-4" />
           Add Source
@@ -136,19 +146,18 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
             />
           </div>
 
-          {/* Type & Status Selects & View Toggle */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:flex-wrap sm:items-center sm:w-auto">
             {/* Custom Type Dropdown */}
-            <div className="relative" ref={typeRef}>
+            <div className="relative min-w-0" ref={typeRef}>
               <button
                 type="button"
                 onClick={() => {
                   setIsTypeOpen(!isTypeOpen);
                   setIsStatusOpen(false);
                 }}
-                className="px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center justify-between gap-1.5 transition-colors cursor-pointer min-w-0"
               >
-                <span>
+                <span className="truncate">
                   {filters.type ? SOURCE_TYPE_LABELS[filters.type] : "All Types"}
                 </span>
                 <ChevronDown
@@ -160,7 +169,7 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
               </button>
 
               {isTypeOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-40 rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
+                <div className="absolute left-0 right-0 sm:right-auto sm:w-44 top-full mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
                   <button
                     type="button"
                     onClick={() => {
@@ -205,16 +214,16 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
             </div>
 
             {/* Custom Status Dropdown */}
-            <div className="relative" ref={statusRef}>
+            <div className="relative min-w-0" ref={statusRef}>
               <button
                 type="button"
                 onClick={() => {
                   setIsStatusOpen(!isStatusOpen);
                   setIsTypeOpen(false);
                 }}
-                className="px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground flex items-center justify-between gap-1.5 transition-colors cursor-pointer min-w-0"
               >
-                <span>
+                <span className="truncate">
                   {filters.status ? SOURCE_STATUS_LABELS[filters.status] : "All Statuses"}
                 </span>
                 <ChevronDown
@@ -226,7 +235,7 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
               </button>
 
               {isStatusOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-40 rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
+                <div className="absolute left-0 right-0 sm:right-auto sm:w-44 top-full mt-1.5 max-h-56 overflow-y-auto rounded-xl border border-border bg-card shadow-2xl p-1 z-30 animate-fadeIn space-y-0.5 text-xs">
                   <button
                     type="button"
                     onClick={() => {
@@ -270,8 +279,7 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
               )}
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-xl border border-border bg-card p-0.5">
+            <div className="hidden sm:flex items-center rounded-xl border border-border bg-card p-0.5">
               <button
                 type="button"
                 onClick={() => setView("grid")}
@@ -307,26 +315,30 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
                 if (selectionMode) exitSelectionMode();
                 else setSelectionMode(true);
               }}
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors"
+              className="col-span-2 sm:col-span-1 px-3 py-2 text-xs rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors"
             >
               {selectionMode ? "Done" : "Select"}
             </button>
 
-            {/* Reprocess Failed Button */}
             {failedCount > 0 && (
               <button
                 type="button"
                 disabled={reprocessFailedMutation.isPending}
                 onClick={() => void reprocessFailedMutation.mutateAsync(undefined)}
-                className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors disabled:opacity-50"
+                className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-medium rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors disabled:opacity-50"
               >
                 <RefreshCw
                   className={cn(
-                    "w-3.5 h-3.5",
+                    "w-3.5 h-3.5 shrink-0",
                     reprocessFailedMutation.isPending && "animate-spin"
                   )}
                 />
-                <span>Reprocess Failed ({failedCount})</span>
+                <span className="truncate">
+                  <span className="sm:hidden">Retry failed ({failedCount})</span>
+                  <span className="hidden sm:inline">
+                    Reprocess Failed ({failedCount})
+                  </span>
+                </span>
               </button>
             )}
           </div>
@@ -351,11 +363,11 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
 
         {/* Selection Toolbar */}
         {selectionMode && (
-          <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/40 text-xs">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl border border-border bg-muted/40 text-xs">
             <span className="text-muted-foreground">
               {selectedIds.length} source{selectedIds.length === 1 ? "" : "s"} selected
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               {selectedIds.length > 0 && (
                 <button
                   type="button"
@@ -385,9 +397,20 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
 
       {/* Sources Grid / List Content */}
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={cn(
+            "grid gap-2 sm:gap-3",
+            view === "grid" ? "sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1",
+          )}
+        >
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 rounded-xl border border-border bg-card animate-pulse" />
+            <div
+              key={i}
+              className={cn(
+                "rounded-xl border border-border bg-card animate-pulse",
+                view === "list" ? "h-14" : "h-32",
+              )}
+            />
           ))}
         </div>
       ) : error ? (
@@ -397,14 +420,15 @@ export function SourceLibrary({ workspaceId }: SourceLibraryProps) {
       ) : sources && sources.length > 0 ? (
         <div
           className={cn(
-            "grid gap-3",
-            view === "grid" ? "sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+            "grid gap-2 sm:gap-3",
+            view === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1",
           )}
         >
           {sources.map((source) => (
             <SourceCard
               key={source.id}
               source={source}
+              layout={view}
               selected={selectedIds.includes(source.id)}
               onToggleSelect={selectionMode ? toggleSelectId : undefined}
               onSelect={(s) => setPreviewSource(s)}

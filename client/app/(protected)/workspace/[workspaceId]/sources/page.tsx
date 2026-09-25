@@ -1,6 +1,5 @@
 import { SourceLibrary } from "@/features/sources";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { WorkspacePageShell } from "@/features/workspaces/components/workspace-page-shell";
 
 interface WorkspaceSourcesPageProps {
   params: Promise<{
@@ -14,17 +13,8 @@ export default async function WorkspaceSourcesPage({
   const { workspaceId } = await params;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <div className="border-b border-border px-6 py-3.5 flex items-center justify-between bg-card">
-        <Link
-          href={`/workspace/${workspaceId}`}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Workspace Chat</span>
-        </Link>
-      </div>
+    <WorkspacePageShell workspaceId={workspaceId} sectionLabel="Library">
       <SourceLibrary workspaceId={workspaceId} />
-    </div>
+    </WorkspacePageShell>
   );
 }

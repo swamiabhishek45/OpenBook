@@ -7,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function MemorySettingsPage() {
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <MemorySettingsView />
-    </div>
-  );
+  return <MemorySettingsView />;
 }

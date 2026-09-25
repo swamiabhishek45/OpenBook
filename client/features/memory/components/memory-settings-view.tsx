@@ -8,21 +8,32 @@ import { useMemories } from "../hooks/use-memories";
 import { MemoryList } from "./memory-list";
 import { AddMemoryDialog } from "./add-memory-dialog";
 
-export function MemorySettingsView() {
+type MemorySettingsViewProps = {
+  workspaceId?: string;
+};
+
+export function MemorySettingsView({
+  workspaceId,
+}: MemorySettingsViewProps = {}) {
   const { memories, isLoading } = useMemories();
   const [addOpen, setAddOpen] = useState(false);
 
-  return (
+  const backHref = workspaceId
+    ? `/workspace/${workspaceId}`
+    : "/dashboard";
+
+  const content = (
     <div className="flex flex-1 flex-col gap-6 p-6 md:p-8 max-w-4xl mx-auto w-full">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3 min-w-0">
-          <Link
-            href="/dashboard"
-            className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
+          {!workspaceId && (
+            <Link
+              href={backHref}
+              className="p-2 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          )}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-foreground" />
@@ -58,6 +69,28 @@ export function MemorySettingsView() {
 
       {/* Add Memory Dialog */}
       <AddMemoryDialog open={addOpen} onOpenChange={setAddOpen} />
+    </div>
+  );
+
+  if (workspaceId) {
+    return content;
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="border-b border-border px-6 py-3.5 flex items-center justify-between bg-card">
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Dashboard</span>
+        </Link>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Memory
+        </span>
+      </div>
+      {content}
     </div>
   );
 }

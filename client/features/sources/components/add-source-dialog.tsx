@@ -8,8 +8,6 @@ import {
   FileText,
   X,
   Plus,
-  FolderOpen,
-  BookOpen,
   Search,
   Check,
   HelpCircle,
@@ -34,6 +32,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { NotionTokenGuideModal } from "./notion-token-guide-modal";
+import {
+  GoogleDriveIcon,
+  NotionIcon,
+} from "@/components/ui/integration-brand-icons";
 
 
 export interface AddSourceDialogProps {
@@ -66,8 +68,8 @@ const IMAGE_ACCEPT =
 const SOURCE_TABS: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
   { id: "pdf", label: "PDF", icon: <Upload className="size-3.5" /> },
   { id: "image", label: "Image", icon: <ImageIcon className="size-3.5" /> },
-  { id: "google-drive", label: "Google Drive", icon: <FolderOpen className="size-3.5" /> },
-  { id: "notion", label: "Notion", icon: <BookOpen className="size-3.5" /> },
+  { id: "google-drive", label: "Google Drive", icon: <GoogleDriveIcon size={16} /> },
+  { id: "notion", label: "Notion", icon: <NotionIcon size={14} /> },
   { id: "website", label: "Web URL", icon: <Globe className="size-3.5" /> },
   { id: "youtube", label: "YouTube", icon: <YoutubeIcon size={14} /> },
   { id: "text", label: "Text", icon: <FileText className="size-3.5" /> },
@@ -498,7 +500,7 @@ export function AddSourceDialog({
             <div className="space-y-4">
               {!integrations?.googleDrive?.connected ? (
                 <div className="p-8 text-center border border-border rounded-2xl bg-muted/20 space-y-4">
-                  <FolderOpen className="w-10 h-10 mx-auto text-muted-foreground" />
+                  <GoogleDriveIcon size={48} className="mx-auto" />
                   <div className="space-y-1">
                     <h3 className="text-xs font-bold text-foreground">
                       Connect your Google Drive
@@ -588,7 +590,7 @@ export function AddSourceDialog({
                   </button>
 
                   <div className="text-center space-y-1">
-                    <BookOpen className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <NotionIcon size={36} className="mx-auto" />
                     <h3 className="text-xs font-bold text-foreground">
                       Connect your Notion Workspace
                     </h3>

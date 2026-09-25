@@ -18,7 +18,7 @@ import {
   CreditCard,
   LayoutGrid,
   Zap,
-  Plug,
+  Puzzle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
@@ -294,7 +294,7 @@ export function WorkspaceHeader({
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
                     >
-                      <Plug className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Puzzle className="w-3.5 h-3.5 text-muted-foreground" />
                       <span>Integrations</span>
                     </Link>
                   </div>

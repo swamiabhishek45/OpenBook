@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Trash2, Plug } from "lucide-react";
+import { ArrowLeft, ExternalLink, Trash2, Puzzle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { ThemeLoader } from "@/components/ui/theme-loader";
@@ -307,7 +307,7 @@ export function IntegrationsSettingsView({
     <div className="flex-1 max-w-6xl mx-auto w-full min-w-0 p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8 select-none">
       <div className="max-w-2xl">
         <div className="flex items-center gap-2">
-          <Plug className="w-5 h-5 text-foreground shrink-0" />
+          <Puzzle className="w-5 h-5 text-foreground shrink-0" />
           <h1 className="text-lg sm:text-xl font-semibold text-foreground">
             Cloud Integrations
           </h1>

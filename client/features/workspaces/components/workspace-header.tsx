@@ -181,8 +181,8 @@ export function WorkspaceHeader({
           </div>
         )}
 
-        {/* Pro Plan Badge */}
-        <ProBadge />
+        {/* Pro Plan Badge — hidden on small screens to save header space */}
+        <ProBadge className="hidden md:inline-flex" />
 
         {/* Theme Toggle */}
         <ThemeToggle />

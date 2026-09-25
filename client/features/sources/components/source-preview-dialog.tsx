@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Source } from "../lib/types";
-import { X, Calendar, Layers, ExternalLink } from "lucide-react";
+import { X, Calendar, Layers, ExternalLink, Download, Loader2 } from "lucide-react";
+import { downloadImageFile } from "../lib/download-image";
 import { SourceTypeIcon } from "./source-type-icon";
 import { SourceStatusBadge } from "./source-status-badge";
 import { MarkdownPreview } from "./markdown-preview";
@@ -18,9 +19,13 @@ export function SourcePreviewDialog({
   source,
   onClose,
 }: SourcePreviewDialogProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!source) return null;
 
   const metadata = source.metadata || {};
+  const fileName =
+    typeof metadata.fileName === "string" ? metadata.fileName : source.title;
   const chunkCount = typeof metadata.chunkCount === "number" ? metadata.chunkCount : null;
   const fileUrl =
     typeof metadata.fileUrl === "string"
@@ -76,7 +81,7 @@ export function SourcePreviewDialog({
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 text-foreground">
-          {source.url && (
+          {source.url && source.type !== "IMAGE" && (
             <div className="p-3 bg-muted/40 border border-border rounded-lg text-xs flex items-center gap-2">
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               <span className="text-muted-foreground">URL: </span>
@@ -92,10 +97,34 @@ export function SourcePreviewDialog({
           )}
 
           {source.type === "IMAGE" && fileUrl && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Image
-              </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Image
+                </h3>
+                <button
+                  type="button"
+                  disabled={isDownloading}
+                  onClick={async () => {
+                    setIsDownloading(true);
+                    try {
+                      await downloadImageFile(fileUrl, fileName);
+                    } catch {
+                      window.open(fileUrl, "_blank", "noopener,noreferrer");
+                    } finally {
+                      setIsDownloading(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                >
+                  {isDownloading ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Download className="size-3.5" />
+                  )}
+                  Download image
+                </button>
+              </div>
               <img
                 src={fileUrl}
                 alt={source.title}

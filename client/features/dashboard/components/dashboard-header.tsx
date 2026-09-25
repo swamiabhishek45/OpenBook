@@ -29,7 +29,7 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
 
       {/* User profile & theme actions */}
       <div className="flex items-center gap-3">
-        <ProBadge />
+        <ProBadge className="hidden md:inline-flex" />
 
         <ThemeToggle />
 

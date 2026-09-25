@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, ExternalLink, RefreshCw, Layers, Calendar, FileText } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw, Layers, FileText, Download, Loader2 } from "lucide-react";
+import { downloadImageFile } from "../lib/download-image";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { CircularLoader } from "@/components/ui/circular-loader";
 import { useSource, useReprocessSource } from "../hooks/use-sources";
@@ -22,6 +23,7 @@ interface SourceDetailProps {
 export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
   const { data: source, isLoading, error } = useSource(workspaceId, sourceId);
   const reprocessMutation = useReprocessSource(workspaceId);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
 
   if (isLoading) {
     return (
@@ -110,7 +112,7 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
       </div>
 
       {/* External URL if present */}
-      {source.url && (
+      {source.url && source.type !== "IMAGE" && (
         <div className="flex items-center gap-2 text-xs p-3 rounded-lg border border-border bg-card text-muted-foreground">
           <ExternalLink className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">URL:</span>
@@ -148,16 +150,33 @@ export function SourceDetail({ workspaceId, sourceId }: SourceDetailProps) {
 
       {source.type === "IMAGE" && fileUrl && (
         <div className="space-y-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between gap-2 text-xs">
             <p className="font-medium text-foreground">{fileName || "Uploaded image"}</p>
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground underline hover:text-foreground"
+            <button
+              type="button"
+              disabled={isDownloadingImage}
+              onClick={async () => {
+                setIsDownloadingImage(true);
+                try {
+                  await downloadImageFile(
+                    fileUrl,
+                    fileName || source.title,
+                  );
+                } catch {
+                  window.open(fileUrl, "_blank", "noopener,noreferrer");
+                } finally {
+                  setIsDownloadingImage(false);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 font-medium text-foreground transition-colors hover:bg-muted/80 disabled:opacity-50"
             >
-              Open original
-            </a>
+              {isDownloadingImage ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              Download image
+            </button>
           </div>
           <img
             src={fileUrl}

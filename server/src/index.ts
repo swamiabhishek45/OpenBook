@@ -9,6 +9,12 @@ import { errorHandler } from "./middleware/error-handler.middleware.js";
 import { inngest } from "./inngest/client.js"
 import { serve } from "inngest/express";
 import { functions } from "./inngest/index.js"
+import {
+    configureInngestServeEnv,
+    logInngestStartupMode,
+} from "./inngest/config.js";
+
+configureInngestServeEnv();
 
 const rawClientUrls = process.env.CLIENT_URL || "http://localhost:3000";
 const allowedOrigins = rawClientUrls
@@ -66,6 +72,7 @@ registerRoutes(app);
 
 app.use(errorHandler)
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`Server is running on port ${PORT}`);
+    logInngestStartupMode();
 });

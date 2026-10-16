@@ -2,7 +2,8 @@
  * Inngest event helpers for background artifact generation.
  */
 
-import { inngest } from "../../inngest/client.js";
+import { processArtifactById } from "../../services/artifact.services.js";
+import { sendInngestEvent } from "./inngest-send.js";
 
 /**
  * Enqueues an artifact generation job to run asynchronously via Inngest.
@@ -15,14 +16,19 @@ export async function enqueueArtifactGeneration(input: {
     artifactId: string;
     workspaceId: string;
 }): Promise<boolean> {
-    try {
-        await inngest.send({
-            name: "artifact/generate",
-            data: input,
+    const accepted = await sendInngestEvent({
+        name: "artifact/generate",
+        data: input,
+    });
+
+    if (!accepted) {
+        void processArtifactById(input.artifactId).catch((err) => {
+            console.error(
+                `Artifact generation failed for ${input.artifactId}:`,
+                err,
+            );
         });
-        return true;
-    } catch (err) {
-        console.warn("Inngest enqueueArtifactGeneration warning (Inngest server may be offline):", err);
-        return false;
     }
+
+    return true;
 }

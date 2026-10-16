@@ -1,6 +1,5 @@
-
-
-import { inngest } from "../../inngest/client.js";
+import { sendInngestEvent } from "./inngest-send.js";
+import { processSourceById } from "../../services/source-processing-runner.js";
 
 /**
  * Enqueues a source processing job to run asynchronously via Inngest.
@@ -15,12 +14,17 @@ export async function enqueueSourceProcessing(input: {
     sourceId: string;
     workspaceId: string;
 }) {
-    try {
-        await inngest.send({
-            name: "source/created",
-            data: input,
+    const accepted = await sendInngestEvent({
+        name: "source/created",
+        data: input,
+    });
+
+    if (!accepted) {
+        void processSourceById(input.sourceId).catch((err) => {
+            console.error(
+                `Source processing failed for ${input.sourceId}:`,
+                err,
+            );
         });
-    } catch (err) {
-        console.warn("Inngest enqueueSourceProcessing warning (Inngest server may be offline):", err);
     }
 }

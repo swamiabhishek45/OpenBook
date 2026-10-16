@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Streamdown } from "streamdown";
+import { Streamdown, type PluginConfig } from "streamdown";
 import { code } from "@streamdown/code";
 
 export type StreamdownContentProps = {
@@ -17,7 +17,10 @@ export function StreamdownContent({
     isAnimating = false,
     className,
 }: StreamdownContentProps) {
-    const plugins = useMemo(() => ({ code }), []);
+    const plugins = useMemo(
+        () => ({ code }) as PluginConfig,
+        [],
+    );
 
     return (
         <Streamdown

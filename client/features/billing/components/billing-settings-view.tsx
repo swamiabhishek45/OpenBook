@@ -11,7 +11,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeLoader } from "@/components/ui/theme-loader";
 import { cn } from "@/lib/utils";
@@ -128,9 +128,12 @@ export function BillingSettingsView({
         <p className="text-sm text-muted-foreground">
           Could not load your subscription. Try again from the dashboard.
         </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard">Back to dashboard</Link>
-        </Button>
+        <Link
+          href="/dashboard"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          Back to dashboard
+        </Link>
       </div>
     );
   }

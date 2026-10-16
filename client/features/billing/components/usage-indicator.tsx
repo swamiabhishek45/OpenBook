@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Zap, Layers, FileText, MessageSquare, Compass, Crown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUsage } from "../hooks/use-usage";
 import { useUpgradeModal } from "../stores/use-upgrade-modal";
@@ -204,15 +204,16 @@ export function UsageIndicator({
             <span>{plan === "PRO" ? "Upgrade to Pro+ (₹499/mo)" : "Upgrade Plan"}</span>
           </Button>
         )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          asChild
-          className="w-full text-xs font-medium"
+        <Link
+          href="/settings/billing"
+          className={buttonVariants({
+            variant: "outline",
+            size: "sm",
+            className: "w-full text-xs font-medium",
+          })}
         >
-          <Link href="/settings/billing">Manage billing &amp; usage</Link>
-        </Button>
+          Manage billing &amp; usage
+        </Link>
       </div>
     </div>
   );

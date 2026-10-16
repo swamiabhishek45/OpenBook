@@ -1,4 +1,5 @@
 import {
+    Errors,
     Pinecone,
     type Index,
     type PineconeRecord,
@@ -88,7 +89,39 @@ export async function ensurePineconeIndex() {
  */
 export async function getPineconeIndex(): Promise<Index> {
     await ensurePineconeIndex();
-    return getPineconeClient().index({name:indexName});
+    return getPineconeClient().index({ name: indexName });
+}
+
+/**
+ * Pinecone returns 404 when deleting from an empty or missing namespace — treat as no-op.
+ * Message/name checks are required because `instanceof` can fail across duplicate bundles.
+ */
+export function isIgnorablePineconeDeleteError(error: unknown) {
+    if (error instanceof Errors.PineconeNotFoundError) {
+        return true;
+    }
+    if (!(error instanceof Error)) {
+        return false;
+    }
+    if (error.name === "PineconeNotFoundError") {
+        return true;
+    }
+    const message = error.message.toLowerCase();
+    return (
+        message.includes("http status 404") &&
+        message.includes("/vectors/delete")
+    );
+}
+
+async function deleteVectorsSafely(operation: () => Promise<void>) {
+    try {
+        await operation();
+    } catch (error) {
+        if (isIgnorablePineconeDeleteError(error)) {
+            return;
+        }
+        throw error;
+    }
 }
 
 /** Metadata stored on each Pinecone vector for RAG retrieval and citations. */
@@ -142,9 +175,11 @@ export async function deleteSourceVectors(
     sourceId: string,
 ) {
     const index = await getPineconeIndex();
-    await index.namespace(workspaceId).deleteMany({
-        filter: { sourceId: { $eq: sourceId } },
-    });
+    await deleteVectorsSafely(() =>
+        index.namespace(workspaceId).deleteMany({
+            filter: { sourceId: { $eq: sourceId } },
+        }),
+    );
 }
 
 /**
@@ -158,7 +193,7 @@ export async function deleteSourceVectors(
  */
 export async function deleteWorkspaceVectors(workspaceId: string) {
     const index = await getPineconeIndex();
-    await index.namespace(workspaceId).deleteAll();
+    await deleteVectorsSafely(() => index.namespace(workspaceId).deleteAll());
 }
 
 /**

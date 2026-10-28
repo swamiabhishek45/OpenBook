@@ -1,7 +1,7 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: chaibook-postgres-build
+    container_name: openbook-postgres
     environment:
       POSTGRES_DB: chaibook
       POSTGRES_USER: postgres

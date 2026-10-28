@@ -11,7 +11,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "eval:rag": "tsx evals/run-rag-eval.ts",
-    "test:rag": "tsx --test src/lib/rag/citation-parse.test.ts src/lib/chunking/layout.test.ts"
+    "typecheck": "tsc --noEmit",
+    "test:unit": "tsx --test src/lib/rag/citation-parse.test.ts src/lib/chunking/layout.test.ts src/config/env.test.ts",
+    "test:rag": "tsx --test src/lib/rag/citation-parse.test.ts src/lib/chunking/layout.test.ts src/config/env.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +34,8 @@
     "firecrawl": "^4.32.0",
     "inngest": "^4.18.0",
     "mem0ai": "^3.1.5",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "multer": "^2.2.0",
     "openai": "^7.4.0",
     "pg": "^8.23.0",

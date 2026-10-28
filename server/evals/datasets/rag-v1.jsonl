@@ -1,1 +1,3 @@
 {"id":"q001","workspaceFixture":"eval-workspace-local","query":"What is the main topic of the onboarding document?","goldChunkIds":[],"goldSourceIds":[],"notes":"Populate chunk IDs after seeding fixture workspace."}
+{"id":"q002","workspaceFixture":"eval-workspace-local","query":"Summarize the key steps in the onboarding checklist.","goldChunkIds":[],"goldSourceIds":[],"notes":"Add goldChunkIds after evals/seed-fixture-workspace.ts"}
+{"id":"q003","workspaceFixture":"eval-workspace-local","query":"Which sources mention pricing or subscription tiers?","goldChunkIds":[],"goldSourceIds":[],"notes":"Use for cross-source recall; requires seeded fixtures."}

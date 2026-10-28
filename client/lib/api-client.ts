@@ -1,5 +1,6 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081";
+import { getClientEnv } from "@/lib/env";
+
+const API_BASE_URL = getClientEnv().apiUrl;
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

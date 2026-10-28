@@ -1,0 +1,23 @@
+{
+  "name": "openbook",
+  "private": true,
+  "description": "OpenBook monorepo — Next.js client + Express server",
+  "scripts": {
+    "dev": "concurrently -n server,inngest,client -c blue,magenta,green \"npm run dev --prefix server\" \"npm run inngest --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev:inngest": "npm run inngest --prefix server",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "typecheck": "npm run typecheck --prefix server",
+    "test": "npm run test:unit --prefix server",
+    "lint": "npm run lint --prefix client",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -11,7 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "eval:rag": "tsx evals/run-rag-eval.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "prisma generate && tsc --noEmit",
     "test:unit": "tsx --test src/lib/rag/citation-parse.test.ts src/lib/chunking/layout.test.ts src/config/env.test.ts",
     "test:rag": "tsx --test src/lib/rag/citation-parse.test.ts src/lib/chunking/layout.test.ts src/config/env.test.ts"
   },

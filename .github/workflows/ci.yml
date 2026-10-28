@@ -84,6 +84,8 @@ jobs:
       - run: npm ci
       - run: npm ci --prefix server
       - run: npm ci --prefix client
+      - run: npx prisma generate
+        working-directory: server
       - run: npx prisma db push
         working-directory: server
       - run: npx playwright install chromium --with-deps

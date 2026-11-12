@@ -7,11 +7,13 @@ import {
     updateWorkspace,
 } from "../controllers/workspace.controller.js";
 import { requireAuth } from "../middleware/require-auth.middleware.js";
+import { aiOperationLimiter } from "../middleware/rate-limit.middleware.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
 export const workspaceRoutes = Router();
 
 workspaceRoutes.use(requireAuth);
+workspaceRoutes.use(aiOperationLimiter);
 
 workspaceRoutes.get("/", asyncHandler(listWorkspaces));
 workspaceRoutes.post("/", asyncHandler(createWorkspace));

@@ -6,11 +6,13 @@ import {
     updateMemory,
 } from "../controllers/memory.controller.js";
 import { requireAuth } from "../middleware/require-auth.middleware.js";
+import { aiOperationLimiter } from "../middleware/rate-limit.middleware.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
 export const memoryRoutes = Router();
 
 memoryRoutes.use(requireAuth);
+memoryRoutes.use(aiOperationLimiter);
 
 memoryRoutes.get("/", asyncHandler(listMemories));
 memoryRoutes.post("/", asyncHandler(createMemory));

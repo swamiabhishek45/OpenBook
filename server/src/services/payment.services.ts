@@ -3,9 +3,11 @@ import Razorpay from "razorpay";
 import {
     createPaymentRecord,
     findPaymentRecordByOrderId,
+    findPaymentRecordByPaymentId,
     markPaymentRecordFailed,
     updatePaymentRecordSuccess,
 } from "../repository/payment.repository.js";
+import { logger } from "../lib/logger.js";
 import {
     findUserPlanDetails,
     renewOrUpgradeUserPlan,
@@ -197,4 +199,86 @@ export async function verifyRazorpayPayment(
             ? `Your ${planDisplayName} subscription is renewed through ${updatedUser.planExpiresAt?.toISOString().slice(0, 10)}.`
             : `Congratulations! You have successfully upgraded to ${planDisplayName}.`,
     };
+}
+
+type RazorpayWebhookPayload = {
+    event?: string;
+    payload?: {
+        payment?: {
+            entity?: {
+                id?: string;
+                order_id?: string;
+                status?: string;
+            };
+        };
+    };
+};
+
+/**
+ * Verifies Razorpay webhook signature and idempotently marks successful payments.
+ */
+export async function processRazorpayWebhook(
+    rawBody: Buffer,
+    signatureHeader: string | undefined,
+) {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+        throw new AppError(
+            503,
+            "RAZORPAY_WEBHOOK_SECRET is not configured on the server",
+        );
+    }
+
+    if (!signatureHeader) {
+        throw new ValidationError("Missing Razorpay webhook signature");
+    }
+
+    const expected = crypto
+        .createHmac("sha256", webhookSecret)
+        .update(rawBody)
+        .digest("hex");
+
+    if (expected !== signatureHeader) {
+        throw new ValidationError("Invalid Razorpay webhook signature");
+    }
+
+    const body = JSON.parse(rawBody.toString("utf8")) as RazorpayWebhookPayload;
+    const event = body.event ?? "";
+    const payment = body.payload?.payment?.entity;
+
+    if (event !== "payment.captured" || !payment?.id || !payment.order_id) {
+        return { handled: false, reason: "ignored_event" as const };
+    }
+
+    const existing = await findPaymentRecordByPaymentId(payment.id);
+    if (existing?.status === "SUCCESS") {
+        logger.info("Razorpay webhook duplicate ignored", {
+            paymentId: payment.id,
+        });
+        return { handled: true, duplicate: true as const };
+    }
+
+    const record = await findPaymentRecordByOrderId(payment.order_id);
+    if (!record) {
+        logger.warn("Razorpay webhook for unknown order", {
+            orderId: payment.order_id,
+        });
+        return { handled: false, reason: "unknown_order" as const };
+    }
+
+    await updatePaymentRecordSuccess({
+        orderId: payment.order_id,
+        paymentId: payment.id,
+        signature: signatureHeader,
+    });
+
+    await renewOrUpgradeUserPlan(record.userId, record.plan);
+
+    logger.info("Razorpay webhook applied plan upgrade", {
+        userId: record.userId,
+        plan: record.plan,
+        paymentId: payment.id,
+    });
+
+    return { handled: true, duplicate: false as const };
 }

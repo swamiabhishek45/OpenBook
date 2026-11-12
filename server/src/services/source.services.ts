@@ -4,7 +4,10 @@ import { scrapeWebsite } from "../lib/sources/firecrawl.js";
 import { buildFaviconUrl } from "../lib/sources/favicon.js";
 import { extractPdfFromBuffer } from "../lib/sources/pdf.js";
 import { enqueueSourceProcessing } from "../lib/events/source-events.js";
-import { deleteSourceVectors } from "../lib/pinecone.js";
+import {
+    deleteSourceVectors,
+    isIgnorablePineconeDeleteError,
+} from "../lib/pinecone.js";
 import { fetchYoutubeTranscript } from "../lib/sources/youtube.js";
 import {
     createSourceRecord,
@@ -107,10 +110,12 @@ export async function deleteSourceForWorkspace(
     try {
         await deleteSourceVectors(workspaceId, sourceId);
     } catch (err) {
-        console.warn(
-            `Failed to delete Pinecone vectors for source ${sourceId}:`,
-            err,
-        );
+        if (!isIgnorablePineconeDeleteError(err)) {
+            console.warn(
+                `Failed to delete Pinecone vectors for source ${sourceId}:`,
+                err,
+            );
+        }
     }
     await deleteSourceRecord(sourceId);
 }

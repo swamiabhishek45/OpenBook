@@ -103,9 +103,25 @@ Unlike static audio overviews, OpenBook introduces a **Live "Interrupt & Ask"** 
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/openbook.git
+git clone https://github.com/swamiabhishek45/chaibooklm-2.git
 cd openbook
 ```
+
+Install root tooling (runs server, Inngest, and client together):
+
+```bash
+npm install
+npm install --prefix server
+npm install --prefix client
+```
+
+Optional Postgres via Docker Compose (`DATABASE_URL=postgresql://postgres:postgres@localhost:5435/chaibook`):
+
+```bash
+docker compose up -d
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for architecture, RAG evals, and CI commands.
 
 ---
 
@@ -134,7 +150,7 @@ cd openbook
    npx prisma generate
    ```
 
-6. Start the backend development server and Inngest dev server:
+6. Start the backend development server and Inngest dev server (from repo root you can run `npm run dev` instead):
    ```bash
    # Terminal 1: Express Server
    npm run dev
@@ -236,8 +252,17 @@ openbook/
 
 ---
 
+## Data flow (high level)
+
+1. Sources are chunked and embedded into Pinecone; metadata lives in Postgres.
+2. Chat and artifacts retrieve context via `server/src/lib/rag/retrieve.ts`.
+3. Long-running generation runs through Inngest workers.
+4. Retrieval quality can be measured with `npm run eval:rag --prefix server` (see `server/evals/`).
+
 ## Key API Endpoints
 
+- `GET /health`: Liveness plus database (and optional Pinecone) checks.
+- `POST /api/payment/webhook`: Razorpay webhook (HMAC verified, idempotent).
 - `POST /api/workspaces/:workspaceId/artifacts`: Generate a learning artifact (Summary, Quiz, Flashcards, Mindmap, Report, Podcast).
 - `GET /api/audio/:workspaceId/:artifactId`: Direct byte-range audio streaming for generated podcasts.
 - `POST /api/workspaces/:workspaceId/artifacts/:artifactId/podcast/interrupt`: Submit a live listener question to the AI podcast hosts.

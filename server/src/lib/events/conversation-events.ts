@@ -1,4 +1,5 @@
-import { inngest } from "../../inngest/client.js";
+import { summarizeConversationById } from "../../services/conversation-memory.services.js";
+import { sendInngestEvent } from "./inngest-send.js";
 
 
 /**
@@ -11,12 +12,20 @@ export async function enqueueConversationSummarize(input: {
     conversationId: string;
     userId: string;
 }) {
-    try {
-        await inngest.send({
-            name: "conversation/summarize",
-            data: input,
+    const accepted = await sendInngestEvent({
+        name: "conversation/summarize",
+        data: input,
+    });
+
+    if (!accepted) {
+        void summarizeConversationById(
+            input.conversationId,
+            input.userId,
+        ).catch((err) => {
+            console.error(
+                `Conversation summarize failed for ${input.conversationId}:`,
+                err,
+            );
         });
-    } catch (err) {
-        console.warn("Inngest enqueueConversationSummarize warning (Inngest server may be offline):", err);
     }
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import {
     createRazorpayOrder,
+    processRazorpayWebhook,
     verifyRazorpayPayment,
 } from "../services/payment.services.js";
 import {
@@ -30,4 +31,22 @@ export async function verifyPayment(req: Request, res: Response) {
     const input = verifyPaymentSchema.parse(req.body);
     const result = await verifyRazorpayPayment(req.session.user.id, input);
     res.json(result);
+}
+
+/**
+ * Razorpay server webhook (raw JSON body, no session). Idempotent on payment id.
+ */
+export async function handleRazorpayWebhook(req: Request, res: Response) {
+    const rawBody = req.body as Buffer;
+    if (!Buffer.isBuffer(rawBody)) {
+        res.status(400).json({ error: "Expected raw JSON body" });
+        return;
+    }
+
+    const signature =
+        req.headers["x-razorpay-signature"]?.toString() ??
+        req.headers["X-Razorpay-Signature"]?.toString();
+
+    const result = await processRazorpayWebhook(rawBody, signature);
+    res.json({ received: true, ...result });
 }

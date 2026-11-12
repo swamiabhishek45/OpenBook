@@ -41,6 +41,12 @@ export function findPaymentRecordByOrderId(orderId: string) {
     });
 }
 
+export function findPaymentRecordByPaymentId(paymentId: string) {
+    return prisma.paymentRecord.findUnique({
+        where: { razorpayPaymentId: paymentId },
+    });
+}
+
 /**
  * Updates a payment record status to SUCCESS upon valid signature verification.
  *

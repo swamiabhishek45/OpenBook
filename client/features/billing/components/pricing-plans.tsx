@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useSession } from "@/features/auth/lib/auth-client";
 import { useRazorpayCheckout } from "../hooks/use-razorpay";
 import { useUsage } from "../hooks/use-usage";
@@ -228,26 +228,34 @@ export function PricingPlans({
                 </div>
 
                 {plan.id === "FREE" ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isCurrent}
-                    asChild={!isCurrent}
-                    className={cn(
-                      "w-full rounded-full h-10 text-xs font-semibold",
-                      inverted
-                        ? "border-background/30 bg-background text-foreground hover:bg-background/90"
-                        : "bg-background shadow-sm",
-                    )}
-                  >
-                    {isCurrent ? (
-                      <span>Current plan</span>
-                    ) : (
-                      <Link href={isAuthenticated ? "/dashboard" : "/login"}>
-                        Start for free
-                      </Link>
-                    )}
-                  </Button>
+                  isCurrent ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled
+                      className={cn(
+                        "w-full rounded-full h-10 text-xs font-semibold",
+                        inverted
+                          ? "border-background/30 bg-background text-foreground hover:bg-background/90"
+                          : "bg-background shadow-sm",
+                      )}
+                    >
+                      Current plan
+                    </Button>
+                  ) : (
+                    <Link
+                      href={isAuthenticated ? "/dashboard" : "/login"}
+                      className={cn(
+                        buttonVariants({ variant: "outline" }),
+                        "w-full rounded-full h-10 text-xs font-semibold",
+                        inverted
+                          ? "border-background/30 bg-background text-foreground hover:bg-background/90"
+                          : "bg-background shadow-sm",
+                      )}
+                    >
+                      Start for free
+                    </Link>
+                  )
                 ) : (
                   <Button
                     type="button"

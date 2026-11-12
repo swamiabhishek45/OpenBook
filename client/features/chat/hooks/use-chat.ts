@@ -436,8 +436,10 @@ export function useChat(
     conversations: conversationsQuery.data || [],
     currentConversationId,
     setCurrentConversationId: selectConversation,
-    deleteConversation: deleteConversationMutation.mutateAsync,
-    clearConversation: clearConversationMutation.mutateAsync,
+    deleteConversation: (convId: string) =>
+      deleteConversationMutation.mutateAsync(convId).then(() => undefined),
+    clearConversation: (convId: string) =>
+      clearConversationMutation.mutateAsync(convId).then(() => undefined),
   };
 }
 

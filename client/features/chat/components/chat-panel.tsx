@@ -46,7 +46,7 @@ interface ChatPanelProps {
   conversations: Conversation[];
   currentConversationId?: string;
   onSelectConversation: (id: string) => void;
-  onDeleteConversation: (id: string) => void;
+  onDeleteConversation: (id: string) => void | Promise<void>;
   onClearConversation: (id: string) => void | Promise<void>;
 }
 

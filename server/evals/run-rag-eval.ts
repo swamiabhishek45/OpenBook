@@ -133,13 +133,19 @@ async function main() {
     try {
         const baseline = JSON.parse(readFileSync(baselinePath, "utf8")) as {
             retrieval_precision_at_k?: number;
+            retrieval_recall_at_k?: number;
+            mrr?: number;
         };
-        const drop =
+        const precisionDrop =
             (baseline.retrieval_precision_at_k ?? 0) -
             summary.retrieval_precision_at_k;
-        if (drop > 0.05) {
+        const recallDrop =
+            (baseline.retrieval_recall_at_k ?? 0) -
+            summary.retrieval_recall_at_k;
+        const mrrDrop = (baseline.mrr ?? 0) - summary.mrr;
+        if (precisionDrop > 0.05 || recallDrop > 0.05 || mrrDrop > 0.05) {
             console.error(
-                `Precision@k dropped by ${drop.toFixed(3)} vs baseline.`,
+                `Retrieval regression vs baseline (precision drop ${precisionDrop.toFixed(3)}, recall drop ${recallDrop.toFixed(3)}, MRR drop ${mrrDrop.toFixed(3)}).`,
             );
             process.exit(2);
         }

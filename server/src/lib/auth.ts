@@ -43,5 +43,16 @@ export const auth = betterAuth({
             secure: isProduction,
             partitioned: isProduction,
         },
+        ipAddress: {
+            ipAddressHeaders: [
+                "x-forwarded-for",
+                "x-real-ip",
+                "cf-connecting-ip",
+            ],
+            // Render (and similar) terminate TLS at the edge; trust forwarded client IP.
+            ...(isProduction
+                ? { trustedProxies: ["0.0.0.0/0", "::/0"] as const }
+                : {}),
+        },
     },
 });

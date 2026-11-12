@@ -3,6 +3,7 @@ import multer from "multer";
 import { ZodError } from "zod";
 import { AppError } from "../types/app-error.js";
 import { getZodFieldErrors } from "../utils/zod-error.js";
+import { logger } from "../lib/logger.js";
 
 /**
  * Global Express error handling middleware. Formats Application errors, Zod validation failures,
@@ -76,6 +77,8 @@ export function errorHandler(
         }
     }
 
-    console.error(error);
+    logger.error("Unhandled request error", {
+        error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).json({ error: "Internal server error" });
 }

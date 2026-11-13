@@ -11,6 +11,10 @@ import {
   Search,
   Check,
   HelpCircle,
+  GitFork,
+  Lock,
+  Star,
+  RefreshCw,
 } from "lucide-react";
 
 import { GithubIcon } from "@/components/ui/github-icon";
@@ -203,6 +207,37 @@ export function AddSourceDialog({
     enabled: isDialogOpen && activeTab === "notion" && !!integrations?.notion?.connected,
   });
 
+  // GitHub repository browsing state & query
+  const [githubSearch, setGithubSearch] = useState("");
+  const [selectedGithubRepoUrl, setSelectedGithubRepoUrl] = useState<string | null>(null);
+  const [isManualGithubUrl, setIsManualGithubUrl] = useState(false);
+
+  const {
+    data: githubReposData,
+    isLoading: isLoadingGithubRepos,
+    refetch: refetchGithubRepos,
+    isFetching: isFetchingGithubRepos,
+  } = useQuery<{
+    repos: Array<{
+      id: number;
+      name: string;
+      fullName: string;
+      owner: string;
+      htmlUrl: string;
+      description: string | null;
+      isPrivate: boolean;
+      defaultBranch: string;
+      language: string | null;
+      stargazersCount: number;
+      updatedAt: string;
+    }>;
+  }>({
+    queryKey: ["github-repos", githubSearch],
+    queryFn: () =>
+      apiClient(`/api/integrations/github/repos?search=${encodeURIComponent(githubSearch)}`),
+    enabled: isDialogOpen && activeTab === "github" && !!integrations?.github?.connected,
+  });
+
   if (!isDialogOpen) return null;
 
   const resetForm = () => {
@@ -218,6 +253,9 @@ export function AddSourceDialog({
     setSelectedNotionPageId(null);
     setGithubUrl("");
     setGithubTitle("");
+    setGithubSearch("");
+    setSelectedGithubRepoUrl(null);
+    setIsManualGithubUrl(false);
     setError(null);
   };
 
@@ -783,62 +821,242 @@ export function AddSourceDialog({
           {/* 7. GitHub Repository */}
           {activeTab === "github" && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  GitHub Repository URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://github.com/owner/repo"
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
-                  className={FORM_CONTROL_CLASSNAME}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
-                  Title (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. My Project Docs"
-                  value={githubTitle}
-                  onChange={(e) => setGithubTitle(e.target.value)}
-                  className={FORM_CONTROL_CLASSNAME}
-                />
-              </div>
-
+              {/* Not Connected State */}
               {!integrations?.github?.connected ? (
-                <div className="p-4 border border-border rounded-xl bg-muted/20 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <GithubIcon size={20} className="shrink-0 text-muted-foreground mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-medium text-foreground">
-                        Connect GitHub for private repos
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Public repositories work without authentication. Connect your GitHub account to import private repositories and avoid rate limits.
-                      </p>
+                <>
+                  <div className="p-4 border border-border rounded-xl bg-muted/20 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <GithubIcon size={20} className="shrink-0 text-muted-foreground mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-foreground">
+                          Connect GitHub to browse your repositories
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Connect your GitHub account to list and import both public and private repositories without rate limits.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleConnectGithub}
+                      className="px-4 py-2 bg-foreground text-background text-xs font-semibold rounded-xl transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
+                    >
+                      Connect GitHub
+                    </button>
+                  </div>
+
+                  <div className="relative flex py-1 items-center">
+                    <div className="grow border-t border-border"></div>
+                    <span className="shrink mx-3 text-[10px] text-muted-foreground uppercase font-mono">
+                      Or enter public repo URL
+                    </span>
+                    <div className="grow border-t border-border"></div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
+                      GitHub Repository URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://github.com/owner/repo"
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      className={FORM_CONTROL_CLASSNAME}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">
+                      Title (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. My Project Docs"
+                      value={githubTitle}
+                      onChange={(e) => setGithubTitle(e.target.value)}
+                      className={FORM_CONTROL_CLASSNAME}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* Connected State: List user's repositories */
+                <div className="space-y-3">
+                  {/* Account Badge & Switch Mode */}
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                      <span>
+                        Connected as{" "}
+                        <span className="font-semibold text-foreground">
+                          {integrations.github.account?.metadata?.login || "GitHub User"}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => refetchGithubRepos()}
+                        title="Refresh repositories"
+                        className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <RefreshCw className={cn("w-3.5 h-3.5", isFetchingGithubRepos && "animate-spin")} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualGithubUrl(!isManualGithubUrl);
+                          setSelectedGithubRepoUrl(null);
+                        }}
+                        className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+                      >
+                        {isManualGithubUrl ? "Browse my repos" : "Enter custom URL"}
+                      </button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleConnectGithub}
-                    className="px-4 py-2 bg-foreground text-background text-xs font-semibold rounded-xl transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
-                  >
-                    Connect GitHub
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/30 border border-border text-xs text-muted-foreground">
-                  <Check className="w-3.5 h-3.5 text-green-500" />
-                  <span>
-                    Connected as{" "}
-                    <span className="font-medium text-foreground">
-                      {integrations.github.account?.metadata?.login || "GitHub User"}
-                    </span>
-                  </span>
+
+                  {isManualGithubUrl ? (
+                    /* Manual Custom URL input when connected */
+                    <div className="space-y-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">
+                          GitHub Repository URL
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://github.com/owner/repo"
+                          value={githubUrl}
+                          onChange={(e) => setGithubUrl(e.target.value)}
+                          className={FORM_CONTROL_CLASSNAME}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">
+                          Title (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. My Project Docs"
+                          value={githubTitle}
+                          onChange={(e) => setGithubTitle(e.target.value)}
+                          className={FORM_CONTROL_CLASSNAME}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Repository List from GitHub */
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Search your repositories..."
+                          value={githubSearch}
+                          onChange={(e) => setGithubSearch(e.target.value)}
+                          className={cn(FORM_CONTROL_CLASSNAME, "pl-8 pr-3")}
+                        />
+                      </div>
+
+                      <div className="max-h-56 overflow-y-auto border border-border rounded-xl divide-y divide-border bg-card">
+                        {isLoadingGithubRepos ? (
+                          <div className="p-6 text-center space-y-2">
+                            <ThemeLoader size={20} />
+                            <p className="text-xs text-muted-foreground">Loading your repositories...</p>
+                          </div>
+                        ) : githubReposData?.repos && githubReposData.repos.length > 0 ? (
+                          githubReposData.repos.map((repo) => {
+                            const isSelected = (selectedGithubRepoUrl || githubUrl) === repo.htmlUrl;
+                            return (
+                              <div
+                                key={repo.id}
+                                onClick={() => {
+                                  setSelectedGithubRepoUrl(repo.htmlUrl);
+                                  setGithubUrl(repo.htmlUrl);
+                                  if (!githubTitle) {
+                                    setGithubTitle(repo.name);
+                                  }
+                                }}
+                                className={cn(
+                                  "p-2.5 flex items-center justify-between gap-3 text-xs cursor-pointer transition-colors",
+                                  isSelected
+                                    ? "bg-muted font-medium text-foreground border-l-2 border-l-primary"
+                                    : "hover:bg-muted/40 text-foreground"
+                                )}
+                              >
+                                <div className="flex items-start gap-2.5 min-w-0">
+                                  <div className="mt-0.5 shrink-0 text-muted-foreground">
+                                    {repo.isPrivate ? (
+                                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                                    ) : (
+                                      <GitFork className="w-3.5 h-3.5" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 space-y-0.5">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-semibold truncate">{repo.fullName}</span>
+                                      <span
+                                        className={cn(
+                                          "text-[9px] px-1.5 py-0.2 rounded border font-mono",
+                                          repo.isPrivate
+                                            ? "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                                            : "border-border text-muted-foreground bg-muted/50"
+                                        )}
+                                      >
+                                        {repo.isPrivate ? "Private" : "Public"}
+                                      </span>
+                                      {repo.language && (
+                                        <span className="text-[10px] text-muted-foreground font-mono">
+                                          {repo.language}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {repo.description && (
+                                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                                        {repo.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {repo.stargazersCount > 0 && (
+                                    <span className="flex items-center gap-0.5 text-[10px] font-mono text-muted-foreground">
+                                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                      {repo.stargazersCount}
+                                    </span>
+                                  )}
+                                  {isSelected && <Check className="w-4 h-4 text-green-500" />}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="p-6 text-center text-xs text-muted-foreground space-y-1">
+                            <p className="font-medium text-foreground">No repositories found</p>
+                            <p className="text-[11px]">
+                              {githubSearch
+                                ? "No repos match your search term."
+                                : "No repositories were found in your GitHub account."}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Title input when a repo is selected */}
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">
+                          Source Title (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. My Project Docs"
+                          value={githubTitle}
+                          onChange={(e) => setGithubTitle(e.target.value)}
+                          className={FORM_CONTROL_CLASSNAME}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

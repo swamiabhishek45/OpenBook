@@ -185,6 +185,93 @@ async function getOptionalAccessToken(userId: string): Promise<string | undefine
     return account?.accessToken;
 }
 
+export interface GithubRepoItem {
+    id: number;
+    name: string;
+    fullName: string;
+    owner: string;
+    htmlUrl: string;
+    description: string | null;
+    isPrivate: boolean;
+    defaultBranch: string;
+    language: string | null;
+    stargazersCount: number;
+    updatedAt: string;
+}
+
+/**
+ * Lists repositories for the user's connected GitHub account.
+ */
+export async function listUserGithubRepos(
+    userId: string,
+    search?: string,
+): Promise<{ repos: GithubRepoItem[] }> {
+    const account = await findConnectedAccount(userId, "GITHUB");
+    if (!account || !account.accessToken) {
+        throw new ValidationError("GitHub account is not connected. Please connect your GitHub account first.");
+    }
+
+    const response = await fetch(
+        "https://api.github.com/user/repos?sort=updated&per_page=100&affiliation=owner,collaborator,organization_member",
+        {
+            headers: {
+                Authorization: `Bearer ${account.accessToken}`,
+                Accept: "application/vnd.github+json",
+                "User-Agent": "OpenBook-App",
+            },
+        },
+    );
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to fetch user repos from GitHub API:", response.status, errorText);
+        if (response.status === 401) {
+            throw new ValidationError("GitHub token has expired or was revoked. Please reconnect GitHub in Integrations.");
+        }
+        throw new ValidationError("Failed to fetch repositories from GitHub.");
+    }
+
+    const data = (await response.json()) as Array<{
+        id: number;
+        name: string;
+        full_name: string;
+        owner: { login: string };
+        html_url: string;
+        description: string | null;
+        private: boolean;
+        default_branch: string;
+        language: string | null;
+        stargazers_count: number;
+        updated_at: string;
+    }>;
+
+    let repos: GithubRepoItem[] = data.map((repo) => ({
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.full_name,
+        owner: repo.owner?.login || "",
+        htmlUrl: repo.html_url,
+        description: repo.description,
+        isPrivate: repo.private,
+        defaultBranch: repo.default_branch || "main",
+        language: repo.language,
+        stargazersCount: repo.stargazers_count || 0,
+        updatedAt: repo.updated_at,
+    }));
+
+    if (search && search.trim()) {
+        const query = search.trim().toLowerCase();
+        repos = repos.filter(
+            (r) =>
+                r.name.toLowerCase().includes(query) ||
+                r.fullName.toLowerCase().includes(query) ||
+                (r.description && r.description.toLowerCase().includes(query)),
+        );
+    }
+
+    return { repos };
+}
+
 /**
  * Imports a GitHub repository as a workspace Source by fetching and indexing its text files.
  */

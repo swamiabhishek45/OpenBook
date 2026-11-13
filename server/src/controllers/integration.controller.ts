@@ -22,6 +22,7 @@ import {
     getGithubAuthUrl,
     handleGithubCallback,
     importGithubRepo,
+    listUserGithubRepos,
 } from "../services/github.services.js";
 import {
     connectNotionSchema,
@@ -361,4 +362,16 @@ export async function importGithub(req: Request, res: Response) {
     });
 
     res.status(201).json(source);
+}
+
+/**
+ * Handles HTTP GET request to list repositories for the connected GitHub account.
+ */
+export async function listGithubRepos(req: Request, res: Response) {
+    const { search } = req.query;
+    const data = await listUserGithubRepos(
+        req.session.user.id,
+        search ? String(search) : undefined,
+    );
+    res.json(data);
 }

@@ -15,6 +15,7 @@ import {
     getGithubAuth,
     githubCallback,
     importGithub,
+    listGithubRepos,
 } from "../controllers/integration.controller.js";
 import { requireAuth } from "../middleware/require-auth.middleware.js";
 import { asyncHandler } from "../utils/async-handler.js";
@@ -43,3 +44,4 @@ integrationRoutes.get("/notion/pages", asyncHandler(listPages));
 
 // GitHub
 integrationRoutes.get("/github/auth-url", asyncHandler(getGithubAuth));
+integrationRoutes.get("/github/repos", asyncHandler(listGithubRepos));

@@ -60,13 +60,15 @@ export function useRazorpayCheckout() {
 
   const checkout = useCallback(
     async (options?: {
+      amountInr?: number;
       plan?: "PRO" | "PRO_PLUS";
       onSuccess?: () => void;
       onError?: (err: Error) => void;
     }) => {
-      const selectedPlan = options?.plan ?? "PRO";
       setIsLoading(true);
       setError(null);
+
+      const amountInr = options?.amountInr ?? 50;
 
       try {
         const scriptLoaded = await loadRazorpayScript();
@@ -81,7 +83,11 @@ export function useRazorpayCheckout() {
           "/api/payment/create-order",
           {
             method: "POST",
-            body: JSON.stringify({ plan: selectedPlan }),
+            body: JSON.stringify(
+              options?.amountInr
+                ? { amountInr: options.amountInr }
+                : { plan: options?.plan ?? "PRO", amountInr: 50 }
+            ),
           }
         );
 
@@ -89,23 +95,24 @@ export function useRazorpayCheckout() {
           throw new Error("Invalid order data received from server.");
         }
 
-        const planName =
-          selectedPlan === "PRO_PLUS" ? "ChaiBookLM Pro+" : "ChaiBookLM Pro";
+        const description = orderData.credits
+          ? `Top up ${orderData.credits} OpenBook Credits`
+          : "OpenBook Credits Top-up";
 
         // 2. Open Razorpay modal
         const rzpOptions = {
           key: orderData.keyId,
           amount: orderData.amount,
-          currency: orderData.currency,
-          name: "ChaiBookLM",
-          description: `Unlock ${planName} Subscription`,
+          currency: orderData.currency || "INR",
+          name: "OpenBook",
+          description,
           order_id: orderData.orderId,
           prefill: {
             name: orderData.user?.name || "",
             email: orderData.user?.email || "",
           },
           theme: {
-            color: "#18181b",
+            color: "#0f172a",
             backdrop_color: "rgba(0, 0, 0, 0.75)",
           },
           handler: async (response: RazorpayPaymentSuccessResponse) => {
@@ -118,12 +125,14 @@ export function useRazorpayCheckout() {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  plan: selectedPlan,
+                  amountInr,
+                  plan: options?.plan,
                 }),
               });
 
-              // Refresh usage cache
+              // Refresh usage & credits cache
               await queryClient.invalidateQueries({ queryKey: ["user-usage"] });
+              await queryClient.invalidateQueries({ queryKey: ["user-credits"] });
               await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
 
               fireCelebration();

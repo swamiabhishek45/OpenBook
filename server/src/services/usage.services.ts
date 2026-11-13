@@ -6,6 +6,12 @@ import {
     findUserTotalArtifacts,
     incrementUserArtifactCount as incrementUserArtifactCountRepo,
 } from "../repository/user.repository.js";
+import {
+    CREDIT_COSTS,
+    deductCredits,
+    getCreditHistory,
+    getUserCredits,
+} from "./credit.services.js";
 import { ForbiddenError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 
@@ -93,17 +99,21 @@ export async function getUserUsage(userId: string) {
         limits,
     } = await getUserPlan(userId);
 
-    const [workspaceCount, sourceCount, userArtifacts, messageCount] =
+    const [workspaceCount, sourceCount, userArtifacts, messageCount, credits, creditHistory] =
         await Promise.all([
             countUserWorkspaces(userId),
             countUserSources(userId),
             findUserTotalArtifacts(userId),
             countUserMessages(userId),
+            getUserCredits(userId),
+            getCreditHistory(userId, 50),
         ]);
 
     const totalArtifactsCreated = userArtifacts?.totalArtifactsCreated ?? 0;
 
     return {
+        credits,
+        creditHistory,
         plan,
         subscriptionPlan,
         subscriptionExpired,
@@ -160,82 +170,58 @@ export async function assertCanCreateWorkspace(userId: string): Promise<void> {
 }
 
 /**
- * Enforces source document upload quotas based on the user's active subscription plan.
+ * Enforces source document upload credits: deducts 5 credits.
  *
  * @param userId - Unique identifier of the user
- * @throws {ForbiddenError} When the source limit for the user's plan is reached
+ * @throws {InsufficientCreditsError} When user does not have at least 5 credits
  */
 export async function assertCanCreateSource(userId: string): Promise<void> {
-    const { plan, limits } = await getUserPlan(userId);
-
-    const count = await countUserSources(userId);
-    if (count >= limits.SOURCES) {
-        const nextPlan = plan === "FREE" ? "Pro" : "Pro+";
-        throw new ForbiddenError(
-            `${plan} plan limit reached: You can upload a maximum of ${limits.SOURCES} sources on the ${plan} plan. Upgrade to ${nextPlan} for more sources.`,
-            {
-                code: "LIMIT_REACHED",
-                limitType: "sources",
-                current: count,
-                max: limits.SOURCES,
-                plan,
-            } satisfies LimitDetails & { code: string },
-        );
-    }
+    await deductCredits(
+        userId,
+        CREDIT_COSTS.SOURCE_UPLOAD,
+        "SOURCE_UPLOAD",
+        "Uploaded a source document",
+    );
 }
 
 /**
- * Enforces total lifetime/period artifact generation quotas based on the user's subscription plan.
+ * Enforces artifact creation credits: deducts 10 credits for standard artifacts, 50 for audio debate.
  *
  * @param userId - Unique identifier of the user
- * @throws {ForbiddenError} When the artifact creation limit for the plan is reached
+ * @param artifactType - Type of artifact being created
+ * @throws {InsufficientCreditsError} When user has insufficient credits
  */
-export async function assertCanCreateArtifact(userId: string): Promise<void> {
-    const { plan, limits } = await getUserPlan(userId);
+export async function assertCanCreateArtifact(
+    userId: string,
+    artifactType?: string,
+): Promise<void> {
+    const cost =
+        artifactType === "PODCAST"
+            ? CREDIT_COSTS.AUDIO_DEBATE
+            : CREDIT_COSTS.ARTIFACT_GENERATE;
 
-    const user = await findUserTotalArtifacts(userId);
-    const totalCreated = user?.totalArtifactsCreated ?? 0;
+    const type =
+        artifactType === "PODCAST" ? "AUDIO_DEBATE" : "ARTIFACT_GENERATE";
 
-    if (totalCreated >= limits.ARTIFACTS) {
-        const nextPlan = plan === "FREE" ? "Pro" : "Pro+";
-        throw new ForbiddenError(
-            `${plan} plan limit reached: You have already created ${totalCreated} of ${limits.ARTIFACTS} allowed artifacts on the ${plan} plan. Deleting artifacts does not restore your quota. Upgrade to ${nextPlan} for more artifacts.`,
-            {
-                code: "LIMIT_REACHED",
-                limitType: "artifacts",
-                current: totalCreated,
-                max: limits.ARTIFACTS,
-                plan,
-            } satisfies LimitDetails & { code: string },
-        );
-    }
+    const description =
+        artifactType === "PODCAST"
+            ? "Generated an Audio Debate Podcast"
+            : `Generated ${artifactType || "study"} artifact`;
+
+    await deductCredits(userId, cost, type, description);
 }
 
 /**
- * Checks feature gating permissions for specialized artifact types (e.g. Podcasts requiring Pro/Pro+).
+ * Validates feature access for artifact types. Any user with 50 credits can generate Audio Debate Podcasts.
  *
  * @param userId - Unique identifier of the user
- * @param artifactType - Type of artifact being requested (e.g. "PODCAST")
- * @throws {ForbiddenError} When attempting to create a premium artifact on a restricted plan
+ * @param artifactType - Type of artifact being requested
  */
 export async function assertCanCreateArtifactType(
     userId: string,
     artifactType: string,
 ): Promise<void> {
-    const { plan, isPro } = await getUserPlan(userId);
-
-    if (artifactType === "PODCAST" && !isPro) {
-        throw new ForbiddenError(
-            "Audio Debate Podcast is an exclusive feature for Pro and Pro+ members. Upgrade to Pro to generate AI voice podcasts.",
-            {
-                code: "PRO_FEATURE_REQUIRED",
-                limitType: "artifacts",
-                current: 0,
-                max: 0,
-                plan,
-            } satisfies LimitDetails & { code: string },
-        );
-    }
+    // Feature gating is now credit-based: checked in assertCanCreateArtifact
 }
 
 /**
@@ -248,29 +234,16 @@ export async function incrementArtifactCount(userId: string): Promise<void> {
 }
 
 /**
- * Enforces chat message quotas based on the user's active subscription plan.
+ * Enforces chat message credits: deducts 1 credit per message.
  *
  * @param userId - Unique identifier of the user
- * @throws {ForbiddenError} When the free chat message quota is exhausted
+ * @throws {InsufficientCreditsError} When user does not have at least 1 credit
  */
 export async function assertCanSendMessage(userId: string): Promise<void> {
-    const { plan, limits } = await getUserPlan(userId);
-
-    if (limits.MESSAGES === null) {
-        return; // Unlimited chats
-    }
-
-    const count = await countUserMessages(userId);
-    if (count >= limits.MESSAGES) {
-        throw new ForbiddenError(
-            `${plan} plan limit reached: You can send a maximum of ${limits.MESSAGES} chat messages on the ${plan} plan. Upgrade to Pro for unlimited chats.`,
-            {
-                code: "LIMIT_REACHED",
-                limitType: "messages",
-                current: count,
-                max: limits.MESSAGES,
-                plan,
-            } satisfies LimitDetails & { code: string },
-        );
-    }
+    await deductCredits(
+        userId,
+        CREDIT_COSTS.CHAT_MESSAGE,
+        "CHAT_MESSAGE",
+        "Sent a chat message",
+    );
 }

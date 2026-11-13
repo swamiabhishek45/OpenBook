@@ -12,6 +12,11 @@ import {
     findUserPlanDetails,
     renewOrUpgradeUserPlan,
 } from "../repository/user.repository.js";
+import {
+    addCredits,
+    calculateCreditsForInr,
+    getUserCredits,
+} from "./credit.services.js";
 import { AppError, ValidationError } from "../types/app-error.js";
 import type { PlanType } from "../generated/prisma/client.js";
 import type { VerifyPaymentInput } from "../validators/payment.validator.js";
@@ -23,20 +28,17 @@ export const PLAN_PRICES: Record<
     PRO: {
         pricePaise: 19900, // ₹199 in paise
         label: "₹199 / month",
-        name: "ChaiBookLM Pro",
+        name: "OpenBook Pro",
     },
     PRO_PLUS: {
         pricePaise: 49900, // ₹499 in paise
         label: "₹499 / month",
-        name: "ChaiBookLM Pro+",
+        name: "OpenBook Pro+",
     },
 };
 
 /**
  * Initializes and returns the Razorpay SDK instance along with configured API credentials.
- *
- * @returns Object containing Razorpay client, keyId, and keySecret
- * @throws {AppError} If RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is missing from environment variables
  */
 function getRazorpayInstance() {
     const key_id = process.env.RAZORPAY_KEY_ID;
@@ -57,16 +59,14 @@ function getRazorpayInstance() {
 }
 
 /**
- * Creates a Razorpay order for upgrading a user to PRO or PRO_PLUS and saves a pending payment record.
- *
- * @param userId - Unique identifier of the user
- * @param requestedPlan - Target subscription tier ("PRO" or "PRO_PLUS")
- * @returns Order details including orderId, amount, currency, plan info, and user contact details
- * @throws {AppError} When user is not found or order creation with Razorpay fails
+ * Creates a Razorpay order for purchasing credits (or legacy plan upgrade).
  */
 export async function createRazorpayOrder(
     userId: string,
-    requestedPlan: "PRO" | "PRO_PLUS" = "PRO",
+    options?: {
+        amountInr?: number;
+        plan?: "PRO" | "PRO_PLUS";
+    },
 ) {
     const user = await findUserPlanDetails(userId);
 
@@ -74,36 +74,56 @@ export async function createRazorpayOrder(
         throw new AppError(404, "User not found");
     }
 
-    const plan: "PRO" | "PRO_PLUS" =
-        requestedPlan === "PRO_PLUS" ? "PRO_PLUS" : "PRO";
-    const planConfig = PLAN_PRICES[plan];
-
     const { razorpay, keyId } = getRazorpayInstance();
+
+    let amountPaise: number;
+    let creditsToAward = 0;
+    let description = "";
+    let targetPlan: PlanType = "PRO";
+
+    if (options?.amountInr !== undefined && options.amountInr >= 50) {
+        const amountInr = options.amountInr;
+        creditsToAward = calculateCreditsForInr(amountInr);
+        amountPaise = Math.round(amountInr * 100);
+        description = `Purchase ${creditsToAward} OpenBook Credits`;
+    } else if (options?.plan) {
+        targetPlan = options.plan === "PRO_PLUS" ? "PRO_PLUS" : "PRO";
+        const planConfig = PLAN_PRICES[targetPlan];
+        amountPaise = planConfig.pricePaise;
+        creditsToAward = targetPlan === "PRO_PLUS" ? 1500 : 500;
+        description = planConfig.name;
+    } else {
+        // Default to min ₹50 -> 100 credits
+        const amountInr = 50;
+        creditsToAward = calculateCreditsForInr(amountInr);
+        amountPaise = amountInr * 100;
+        description = `Purchase ${creditsToAward} OpenBook Credits`;
+    }
 
     const shortUserId = userId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 10);
     const receipt = `rcpt_${Date.now()}_${shortUserId}`;
 
     try {
         const order = await razorpay.orders.create({
-            amount: planConfig.pricePaise,
+            amount: amountPaise,
             currency: "INR",
             receipt,
             notes: {
                 userId,
                 userEmail: user.email,
-                plan,
+                creditsPurchased: String(creditsToAward),
+                plan: targetPlan,
             },
         });
 
         // Store pending payment in database
         await createPaymentRecord({
             userId,
-            plan,
+            plan: targetPlan,
+            creditsPurchased: creditsToAward,
             razorpayOrderId: order.id,
             amount:
-                typeof order.amount === "number"
-                    ? order.amount
-                    : planConfig.pricePaise,
+                typeof order.amount === "number" ? order.amount : amountPaise,
             currency: order.currency || "INR",
             status: "PENDING",
         });
@@ -112,8 +132,9 @@ export async function createRazorpayOrder(
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
-            plan,
-            planName: planConfig.name,
+            credits: creditsToAward,
+            plan: targetPlan,
+            planName: description,
             keyId,
             user: {
                 name: user.name,
@@ -132,12 +153,7 @@ export async function createRazorpayOrder(
 }
 
 /**
- * Validates the HMAC SHA256 signature of a completed Razorpay payment and upgrades the user's plan.
- *
- * @param userId - Unique identifier of the user
- * @param input - Razorpay payment verification parameters (orderId, paymentId, signature)
- * @returns Success response with updated plan details
- * @throws {ValidationError} When payment signature is invalid or required parameters are missing
+ * Validates the HMAC SHA256 signature and credits the user's account.
  */
 export async function verifyRazorpayPayment(
     userId: string,
@@ -167,13 +183,8 @@ export async function verifyRazorpayPayment(
         );
     }
 
-    // Find the pending payment record to get the plan purchased
+    // Find the pending payment record
     const paymentRecord = await findPaymentRecordByOrderId(razorpay_order_id);
-
-    const targetPlan: PlanType =
-        paymentRecord?.plan ?? input.plan ?? "PRO";
-
-    const userBefore = await findUserPlanDetails(userId);
 
     // Update payment record to SUCCESS
     await updatePaymentRecordSuccess({
@@ -182,22 +193,30 @@ export async function verifyRazorpayPayment(
         signature: razorpay_signature,
     });
 
-    // Upgrade user to the purchased plan
-    const updatedUser = await renewOrUpgradeUserPlan(userId, targetPlan);
+    const creditsPurchased = paymentRecord?.creditsPurchased ?? (input.amountInr ? calculateCreditsForInr(input.amountInr) : 100);
 
-    const planDisplayName =
-        targetPlan === "PRO_PLUS" ? "ChaiBookLM Pro+" : "ChaiBookLM Pro";
+    // Add credits to user's balance
+    let newBalance = await getUserCredits(userId);
+    if (creditsPurchased > 0) {
+        newBalance = await addCredits(
+            userId,
+            creditsPurchased,
+            "PURCHASE",
+            `Purchased ${creditsPurchased} credits via Razorpay (Order ${razorpay_order_id})`,
+            { orderId: razorpay_order_id, paymentId: razorpay_payment_id }
+        );
+    }
 
-    const renewedSamePlan =
-        userBefore?.plan === targetPlan && targetPlan !== "FREE";
+    // Legacy plan renewal for backwards compatibility
+    if (paymentRecord?.plan) {
+        await renewOrUpgradeUserPlan(userId, paymentRecord.plan).catch(() => {});
+    }
 
     return {
         success: true,
-        plan: updatedUser.plan,
-        planExpiresAt: updatedUser.planExpiresAt,
-        message: renewedSamePlan
-            ? `Your ${planDisplayName} subscription is renewed through ${updatedUser.planExpiresAt?.toISOString().slice(0, 10)}.`
-            : `Congratulations! You have successfully upgraded to ${planDisplayName}.`,
+        credits: newBalance,
+        creditsAdded: creditsPurchased,
+        message: `Payment successful! Added ${creditsPurchased} credits to your account.`,
     };
 }
 
@@ -215,7 +234,7 @@ type RazorpayWebhookPayload = {
 };
 
 /**
- * Verifies Razorpay webhook signature and idempotently marks successful payments.
+ * Verifies Razorpay webhook signature and idempotently applies credits.
  */
 export async function processRazorpayWebhook(
     rawBody: Buffer,
@@ -272,11 +291,23 @@ export async function processRazorpayWebhook(
         signature: signatureHeader,
     });
 
-    await renewOrUpgradeUserPlan(record.userId, record.plan);
+    if (record.creditsPurchased > 0) {
+        await addCredits(
+            record.userId,
+            record.creditsPurchased,
+            "PURCHASE",
+            `Webhook: Added ${record.creditsPurchased} credits (Payment ${payment.id})`,
+            { orderId: payment.order_id, paymentId: payment.id }
+        );
+    }
 
-    logger.info("Razorpay webhook applied plan upgrade", {
+    if (record.plan) {
+        await renewOrUpgradeUserPlan(record.userId, record.plan).catch(() => {});
+    }
+
+    logger.info("Razorpay webhook processed payment", {
         userId: record.userId,
-        plan: record.plan,
+        credits: record.creditsPurchased,
         paymentId: payment.id,
     });
 

@@ -14,11 +14,12 @@ export function useUsage() {
       return await apiClient<UserUsage>("/api/user/usage");
     },
     enabled: !!session?.user,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 15, // 15 seconds
     retry: false,
   });
 
   const usage = query.data;
+  const credits = usage?.credits ?? 0;
   const plan = usage?.plan ?? "FREE";
   const isPro = plan === "PRO" || plan === "PRO_PLUS";
   const isProPlus = plan === "PRO_PLUS";
@@ -26,6 +27,8 @@ export function useUsage() {
 
   return {
     usage,
+    credits,
+    creditHistory: usage?.creditHistory ?? [],
     isPro,
     isProPlus,
     isFree,

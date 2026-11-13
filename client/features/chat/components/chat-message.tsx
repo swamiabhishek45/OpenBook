@@ -10,6 +10,7 @@ import { ReasoningText } from "@/components/agents/loading-states/reasoning-text
 import { ChatMarkdown } from "@/components/ui/chat-markdown";
 import { chatCitationsToAgentItems } from "../lib/citation-items";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -120,15 +121,12 @@ export function ChatMessage({
         )}
       >
         {isUser ? (
-          session?.user?.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name || "You"}
-              className="w-full h-full object-cover rounded-lg"
-            />
-          ) : (
-            <User className="w-4 h-4" />
-          )
+          <UserAvatar
+            src={session?.user?.image}
+            name={session?.user?.name}
+            className="rounded-lg"
+            fallbackClassName="rounded-lg"
+          />
         ) : (
           <ThemeBlob size={26} />
         )}

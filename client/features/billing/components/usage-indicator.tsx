@@ -2,43 +2,28 @@
 
 import React from "react";
 import Link from "next/link";
-import { Zap, Layers, FileText, MessageSquare, Compass, Crown } from "lucide-react";
+import { Coins, Plus, Upload, MessageSquare, BookOpen, Headphones } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useUsage } from "../hooks/use-usage";
 import { useUpgradeModal } from "../stores/use-upgrade-modal";
+import { CREDIT_COSTS } from "../lib/plans";
+import { cn } from "@/lib/utils";
 
 export function UsageIndicator({
   variant = "compact",
 }: {
   variant?: "compact" | "detailed";
 }) {
-  const { usage, plan, isPro, isProPlus, isLoading } = useUsage();
+  const { credits, isLoading } = useUsage();
   const { openUpgradeModal } = useUpgradeModal();
 
-  if (isLoading || !usage) {
+  if (isLoading) {
     return null;
   }
 
-  const planLabel =
-    plan === "PRO_PLUS"
-      ? "Pro+ Plan"
-      : plan === "PRO"
-      ? "Pro Plan"
-      : "Free Plan";
+  const isLow = credits < 10;
 
   if (variant === "compact") {
-    const isAnyExceeded =
-      usage.workspaces.exceeded ||
-      usage.sources.exceeded ||
-      usage.artifacts.exceeded ||
-      usage.messages.exceeded;
-
-    const chatText =
-      usage.messages.limit === null
-        ? "Unlimited Chats"
-        : `${usage.messages.count}/${usage.messages.limit} Chats`;
-
     return (
       <Button
         type="button"
@@ -46,175 +31,77 @@ export function UsageIndicator({
         size="xs"
         onClick={() =>
           openUpgradeModal({
-            reason: isAnyExceeded
-              ? `You have reached your ${planLabel} limit. Upgrade for higher limits.`
-              : "Upgrade your plan for higher limits and unlimited access.",
+            reason: isLow
+              ? "Your credits are running low. Top up to continue research uninterrupted."
+              : "Top up your OpenBook credits.",
+            currentCredits: credits,
           })
         }
-        className={`gap-1.5 text-xs font-normal border-border ${
-          isAnyExceeded
-            ? "border-destructive/40 text-destructive bg-destructive/5 hover:bg-destructive/10"
+        className={cn(
+          "gap-1.5 text-xs font-normal border-border transition-colors",
+          isLow
+            ? "border-rose-500/40 text-rose-600 dark:text-rose-400 bg-rose-500/5 hover:bg-rose-500/10"
             : "hover:bg-secondary text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        {isProPlus ? (
-          <Crown className="w-3 h-3 text-primary" />
-        ) : (
-          <Zap className="w-3 h-3 text-primary" />
         )}
-        <span>
-          {plan === "FREE" ? "Free" : plan === "PRO" ? "Pro" : "Pro+"}:{" "}
-          {usage.workspaces.count}/{usage.workspaces.limit} WS • {chatText}
+      >
+        <Coins className={cn("w-3.5 h-3.5 text-amber-500", isLow && "animate-bounce")} />
+        <span className="font-medium text-foreground">{credits.toLocaleString("en-IN")} Credits</span>
+        <span className="text-[10px] text-muted-foreground px-1 py-0.2 rounded bg-muted">
+          Top up
         </span>
       </Button>
     );
   }
 
-  // Detailed widget (e.g. for sidebar or settings)
+  // Detailed variant (e.g. in settings or sidebar flyouts)
   return (
-    <div className="p-4 rounded-xl bg-card border border-border space-y-3 shadow-xs">
+    <div className="space-y-4 rounded-xl border border-border p-4 bg-card text-card-foreground">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-foreground">Usage & Limits</span>
-        <Badge variant={isPro ? "default" : "secondary"} className="text-[10px] px-2 py-0.5">
-          {planLabel}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Coins className="w-4 h-4 text-amber-500" />
+          <span className="text-sm font-semibold">Credit Balance</span>
+        </div>
+        <span className="text-xs font-mono font-bold text-foreground">
+          {credits.toLocaleString("en-IN")} cr
+        </span>
       </div>
 
-      <div className="space-y-2.5 text-xs">
-        {/* Workspaces */}
-        <div>
-          <div className="flex justify-between text-muted-foreground mb-1">
-            <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-foreground" /> Workspaces
-            </span>
-            <span className="font-mono text-[11px]">
-              {usage.workspaces.count} / {usage.workspaces.limit}
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                usage.workspaces.exceeded ? "bg-destructive" : "bg-primary"
-              }`}
-              style={{
-                width: `${Math.min(
-                  (usage.workspaces.count / (usage.workspaces.limit || 1)) * 100,
-                  100
-                )}%`,
-              }}
-            />
-          </div>
+      <div className="space-y-2 text-xs">
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Upload className="w-3 h-3 text-blue-500" /> Source upload
+          </span>
+          <span className="font-medium text-foreground">{CREDIT_COSTS.SOURCE_UPLOAD} cr</span>
         </div>
-
-        {/* Sources */}
-        <div>
-          <div className="flex justify-between text-muted-foreground mb-1">
-            <span className="flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-foreground" /> Sources
-            </span>
-            <span className="font-mono text-[11px]">
-              {usage.sources.count} / {usage.sources.limit}
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                usage.sources.exceeded ? "bg-destructive" : "bg-primary"
-              }`}
-              style={{
-                width: `${Math.min(
-                  (usage.sources.count / (usage.sources.limit || 3)) * 100,
-                  100
-                )}%`,
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <MessageSquare className="w-3 h-3 text-emerald-500" /> Chat query
+          </span>
+          <span className="font-medium text-foreground">{CREDIT_COSTS.CHAT_MESSAGE} cr</span>
         </div>
-
-        {/* Artifacts */}
-        <div>
-          <div className="flex justify-between text-muted-foreground mb-1">
-            <span className="flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-foreground" /> Artifacts
-            </span>
-            <span className="font-mono text-[11px]">
-              {usage.artifacts.count} / {usage.artifacts.limit}
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                usage.artifacts.exceeded ? "bg-destructive" : "bg-primary"
-              }`}
-              style={{
-                width: `${Math.min(
-                  (usage.artifacts.count / (usage.artifacts.limit || 3)) * 100,
-                  100
-                )}%`,
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <BookOpen className="w-3 h-3 text-purple-500" /> Study artifact
+          </span>
+          <span className="font-medium text-foreground">{CREDIT_COSTS.ARTIFACT_GENERATE} cr</span>
         </div>
-
-        {/* Chat Messages */}
-        <div>
-          <div className="flex justify-between text-muted-foreground mb-1">
-            <span className="flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-foreground" /> Messages
-            </span>
-            <span className="font-mono text-[11px]">
-              {usage.messages.limit === null
-                ? `${usage.messages.count} (Unlimited)`
-                : `${usage.messages.count} / ${usage.messages.limit}`}
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${
-                usage.messages.exceeded ? "bg-destructive" : "bg-primary"
-              }`}
-              style={{
-                width:
-                  usage.messages.limit === null
-                    ? "100%"
-                    : `${Math.min(
-                        (usage.messages.count / (usage.messages.limit || 10)) * 100,
-                        100
-                      )}%`,
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Headphones className="w-3 h-3 text-rose-500" /> Audio debate
+          </span>
+          <span className="font-medium text-foreground">{CREDIT_COSTS.AUDIO_DEBATE} cr</span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 mt-2">
-        {!isProPlus && (
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            onClick={() =>
-              openUpgradeModal({
-                reason: "Upgrade your plan for higher limits and unlimited access.",
-              })
-            }
-            className="w-full gap-1.5 font-semibold text-xs"
-          >
-            <Zap className="w-3.5 h-3.5 fill-primary-foreground" />
-            <span>{plan === "PRO" ? "Upgrade to Pro+ (₹499/mo)" : "Upgrade Plan"}</span>
-          </Button>
-        )}
-        <Link
-          href="/settings/billing"
-          className={buttonVariants({
-            variant: "outline",
-            size: "sm",
-            className: "w-full text-xs font-medium",
-          })}
-        >
-          Manage billing &amp; usage
-        </Link>
-      </div>
+      <Button
+        type="button"
+        size="sm"
+        onClick={() => openUpgradeModal({ currentCredits: credits })}
+        className="w-full gap-1.5 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>Top Up Credits (Min ₹50)</span>
+      </Button>
     </div>
   );
 }

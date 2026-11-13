@@ -1,12 +1,14 @@
 export * from "./types";
 export * from "./hooks/use-usage";
+export * from "./hooks/use-credits";
 export * from "./hooks/use-razorpay";
 export * from "./stores/use-upgrade-modal";
 export * from "./components/upgrade-modal";
 export * from "./components/pro-badge";
+export * from "./components/credit-badge";
+export * from "./components/insufficient-credits-dialog";
 export * from "./components/usage-indicator";
 export * from "./components/premium-avatar";
 export * from "./components/billing-settings-view";
 export * from "./components/pricing-plans";
 export * from "./lib/plans";
-

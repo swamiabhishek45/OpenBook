@@ -6,6 +6,7 @@ import { User, LogOut } from "lucide-react";
 import { OpenBookLogo } from "@/features/auth";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { PremiumAvatar, ProBadge, useUsage } from "@/features/billing";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface DashboardHeaderProps {
   user: {
@@ -39,17 +40,7 @@ export function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
         <div className="flex items-center gap-2 px-2 py-1 rounded-lg border border-border bg-card">
           <PremiumAvatar plan={plan} size="sm" className="w-6 h-6">
             <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
-              {user.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name || "Profile"}
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : user.name ? (
-                user.name.charAt(0).toUpperCase()
-              ) : (
-                <User className="w-3.5 h-3.5" />
-              )}
+              <UserAvatar src={user.image} name={user.name} />
             </div>
           </PremiumAvatar>
 

@@ -2,31 +2,65 @@
 
 import { create } from "zustand";
 
-interface UpgradeModalStore {
+interface BuyCreditsModalStore {
   isOpen: boolean;
   reason?: string;
-  limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general";
+  requiredCredits?: number;
+  currentCredits?: number;
+  limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general" | "credits";
   openUpgradeModal: (options?: {
     reason?: string;
-    limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general";
+    requiredCredits?: number;
+    currentCredits?: number;
+    limitType?: "workspaces" | "artifacts" | "sources" | "messages" | "general" | "credits";
   }) => void;
   closeUpgradeModal: () => void;
+  openBuyCreditsModal: (options?: {
+    reason?: string;
+    requiredCredits?: number;
+    currentCredits?: number;
+  }) => void;
+  closeBuyCreditsModal: () => void;
 }
 
-export const useUpgradeModal = create<UpgradeModalStore>((set) => ({
+export const useUpgradeModal = create<BuyCreditsModalStore>((set) => ({
   isOpen: false,
   reason: undefined,
+  requiredCredits: undefined,
+  currentCredits: undefined,
   limitType: "general",
   openUpgradeModal: (options) =>
     set({
       isOpen: true,
       reason: options?.reason,
-      limitType: options?.limitType || "general",
+      requiredCredits: options?.requiredCredits,
+      currentCredits: options?.currentCredits,
+      limitType: options?.limitType || "credits",
     }),
   closeUpgradeModal: () =>
     set({
       isOpen: false,
       reason: undefined,
+      requiredCredits: undefined,
+      currentCredits: undefined,
+      limitType: "general",
+    }),
+  openBuyCreditsModal: (options) =>
+    set({
+      isOpen: true,
+      reason: options?.reason,
+      requiredCredits: options?.requiredCredits,
+      currentCredits: options?.currentCredits,
+      limitType: "credits",
+    }),
+  closeBuyCreditsModal: () =>
+    set({
+      isOpen: false,
+      reason: undefined,
+      requiredCredits: undefined,
+      currentCredits: undefined,
       limitType: "general",
     }),
 }));
+
+export const useBuyCreditsModal = useUpgradeModal;

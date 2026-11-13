@@ -19,33 +19,60 @@ enum PaymentStatus {
   FAILED
 }
 
+enum CreditTransactionType {
+  SIGNUP_BONUS
+  PURCHASE
+  SOURCE_UPLOAD
+  CHAT_MESSAGE
+  ARTIFACT_GENERATE
+  AUDIO_DEBATE
+  REFUND
+}
+
 model User {
-  id                    String          @id
+  id                    String              @id
   name                  String
   email                 String
-  emailVerified         Boolean         @default(false)
+  emailVerified         Boolean             @default(false)
   image                 String?
-  plan                  PlanType        @default(FREE)
+  credits               Int                 @default(50)
+  plan                  PlanType            @default(FREE)
   planExpiresAt         DateTime?
-  totalArtifactsCreated Int             @default(0)
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  totalArtifactsCreated Int                 @default(0)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
   sessions              Session[]
   accounts              Account[]
   workspaces            Workspace[]
   payments              PaymentRecord[]
+  creditTransactions    CreditTransaction[]
   connectedAccounts     ConnectedAccount[]
 
   @@unique([email])
   @@map("user")
 }
 
+model CreditTransaction {
+  id           String                @id @default(cuid())
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount       Int                   // positive for purchases/refunds, negative for deductions
+  balanceAfter Int
+  type         CreditTransactionType
+  description  String
+  metadata     Json?
+  createdAt    DateTime              @default(now())
+
+  @@index([userId, createdAt])
+  @@map("credit_transaction")
+}
 
 model PaymentRecord {
   id                String        @id @default(cuid())
   userId            String
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan              PlanType      @default(PRO)
+  plan              PlanType?     @default(PRO)
+  creditsPurchased  Int           @default(0)
   razorpayOrderId   String        @unique
   razorpayPaymentId String?       @unique
   razorpaySignature String?

@@ -3,7 +3,8 @@ import type { PaymentStatus, PlanType } from "../generated/prisma/client.js";
 
 export interface CreatePaymentRecordData {
     userId: string;
-    plan: PlanType;
+    plan?: PlanType;
+    creditsPurchased?: number;
     razorpayOrderId: string;
     amount: number;
     currency?: string;
@@ -20,7 +21,8 @@ export function createPaymentRecord(data: CreatePaymentRecordData) {
     return prisma.paymentRecord.create({
         data: {
             userId: data.userId,
-            plan: data.plan,
+            plan: data.plan || "PRO",
+            creditsPurchased: data.creditsPurchased ?? 0,
             razorpayOrderId: data.razorpayOrderId,
             amount: data.amount,
             currency: data.currency || "INR",

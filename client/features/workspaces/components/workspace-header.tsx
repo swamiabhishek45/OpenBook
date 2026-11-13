@@ -19,10 +19,12 @@ import {
   LayoutGrid,
   Zap,
   Puzzle,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { PremiumAvatar, ProBadge, useUpgradeModal, useUsage } from "@/features/billing";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 
 
@@ -177,21 +179,11 @@ export function WorkspaceHeader({
               type="button"
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               className="rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0"
-              title={isProPlus ? "PRO+ Member" : isPro ? "PRO Member" : "User menu"}
+              title={session.user.name || "User menu"}
             >
               <PremiumAvatar plan={plan} size="sm" className="w-7 h-7">
                 <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
-                  {session.user.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session.user.name || "Profile"}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : session.user.name ? (
-                    session.user.name.charAt(0).toUpperCase()
-                  ) : (
-                    <User className="w-3.5 h-3.5" />
-                  )}
+                  <UserAvatar src={session.user.image} name={session.user.name} />
                 </div>
               </PremiumAvatar>
             </button>
@@ -203,17 +195,7 @@ export function WorkspaceHeader({
                 <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border">
                   <PremiumAvatar plan={plan} size="md" className="w-8 h-8">
                     <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
-                      {session.user.image ? (
-                        <img
-                          src={session.user.image}
-                          alt={session.user.name || "Profile"}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : session.user.name ? (
-                        session.user.name.charAt(0).toUpperCase()
-                      ) : (
-                        <User className="w-4 h-4" />
-                      )}
+                      <UserAvatar src={session.user.image} name={session.user.name} />
                     </div>
                   </PremiumAvatar>
                   <div className="min-w-0 flex-1">
@@ -226,34 +208,27 @@ export function WorkspaceHeader({
                   </div>
                 </div>
 
-
-                {/* Upgrade prompt if not on highest tier */}
-                {!isProPlus && (
-                  <div className="p-1 border-b border-border">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileMenuOpen(false);
-                        openUpgradeModal({
-                          reason: "Upgrade your subscription for higher workspace, source, and artifact limits.",
-                        });
-                      }}
-                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border transition-colors font-medium cursor-pointer"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5 fill-primary text-primary" />
-                        <span className="text-xs font-semibold">
-                          {isPro ? "Upgrade to Pro+" : "Upgrade Plan"}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">
-                        {isPro ? "₹499" : "₹199"}
-                      </span>
-                    </button>
-                  </div>
-                )}
-
-
+                {/* Top Up Credits Button */}
+                <div className="p-1 border-b border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      openUpgradeModal({
+                        reason: "Top up your OpenBook credits to upload sources, chat, and generate artifacts.",
+                      });
+                    }}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-foreground border border-amber-500/25 transition-colors font-medium cursor-pointer"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-xs font-semibold">Top Up Credits</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">
+                      Min ₹50
+                    </span>
+                  </button>
+                </div>
 
                 {workspaceId && (
                   <div className="space-y-0.5 pt-1">
@@ -286,7 +261,7 @@ export function WorkspaceHeader({
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
                     >
                       <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>Billing &amp; plan</span>
+                      <span>Credits &amp; billing</span>
                     </Link>
 
                     <Link

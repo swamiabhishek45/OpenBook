@@ -16,8 +16,8 @@ import {
  * @param res - Express response returning 201 Created with order ID and details
  */
 export async function createOrder(req: Request, res: Response) {
-    const { plan } = createOrderSchema.parse(req.body);
-    const orderData = await createRazorpayOrder(req.session.user.id, plan);
+    const input = createOrderSchema.parse(req.body);
+    const orderData = await createRazorpayOrder(req.session.user.id, input);
     res.status(201).json(orderData);
 }
 

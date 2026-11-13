@@ -3,9 +3,9 @@ import { SiteNav, SiteFooter } from "@/components/home";
 import { PricingPlans } from "@/features/billing/components/pricing-plans";
 
 export const metadata = {
-  title: "Pricing — OpenBook",
+  title: "Pricing & Credits — OpenBook",
   description:
-    "Simple, flexible plans for researchers. Free tier plus Pro and Pro+ with higher limits.",
+    "Transparent, pay-as-you-go credit pricing for researchers. Top up credits with zero monthly commitments.",
 };
 
 export default async function PricingPage() {

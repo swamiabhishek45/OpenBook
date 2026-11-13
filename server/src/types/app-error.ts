@@ -42,4 +42,14 @@ export class ForbiddenError extends AppError {
         super(403, message, details);
         this.name = "ForbiddenError";
     }
+}
+
+export class InsufficientCreditsError extends AppError {
+    constructor(
+        message = "Insufficient credits for this action. Please top up your account.",
+        details?: unknown,
+    ) {
+        super(402, message, details);
+        this.name = "InsufficientCreditsError";
+    }
 }

@@ -1,4 +1,5 @@
 import type { Prisma } from "../generated/prisma/client.js";
+import prisma from "../lib/db.js";
 import { enqueueArtifactGeneration } from "../lib/events/artifact-events.js";
 import {
     createArtifactRecord,
@@ -21,6 +22,7 @@ import {
     assertCanCreateArtifactType,
     incrementArtifactCount,
 } from "./usage.services.js";
+import { CREDIT_COSTS, refundCredits } from "./credit.services.js";
 
 import { generateArtifactTitleWithGemini } from "../lib/gemini.js";
 import type { CreateArtifactInput } from "../validators/artifact.validator.js";
@@ -66,6 +68,27 @@ export async function markArtifactFailed(artifactId: string, message: string) {
             processingError: message,
         },
     });
+
+    try {
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: artifact.workspaceId },
+            select: { userId: true },
+        });
+
+        if (workspace?.userId) {
+            const cost =
+                artifact.type === "PODCAST"
+                    ? CREDIT_COSTS.AUDIO_DEBATE
+                    : CREDIT_COSTS.ARTIFACT_GENERATE;
+            const type =
+                artifact.type === "PODCAST"
+                    ? "AUDIO_DEBATE"
+                    : "ARTIFACT_GENERATE";
+            await refundCredits(workspace.userId, cost, type, message);
+        }
+    } catch (refundErr) {
+        console.error("Failed to refund credits for failed artifact:", refundErr);
+    }
 }
 
 /**
@@ -116,7 +139,7 @@ export async function createArtifactForWorkspace(
     input: CreateArtifactInput,
 ) {
     await getWorkspaceByIdForUser(workspaceId, userId);
-    await assertCanCreateArtifact(userId);
+    await assertCanCreateArtifact(userId, input.type);
     await assertCanCreateArtifactType(userId, input.type);
 
     const context = await gatherSourceContext(

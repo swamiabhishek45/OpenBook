@@ -6,7 +6,43 @@ export interface UsageMetric {
 
 export type PlanType = "FREE" | "PRO" | "PRO_PLUS";
 
+export type CreditTransactionType =
+  | "SIGNUP_BONUS"
+  | "PURCHASE"
+  | "SOURCE_UPLOAD"
+  | "CHAT_MESSAGE"
+  | "ARTIFACT_GENERATE"
+  | "AUDIO_DEBATE"
+  | "REFUND";
+
+export interface CreditTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  balanceAfter: number;
+  type: CreditTransactionType;
+  description: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface CreditBalance {
+  credits: number;
+  history: CreditTransaction[];
+}
+
+export interface CreditPack {
+  id: string;
+  name: string;
+  amountInr: number;
+  credits: number;
+  bonusPercent: number;
+  isPopular?: boolean;
+}
+
 export interface UserUsage {
+  credits: number;
+  creditHistory?: CreditTransaction[];
   /** Effective plan for limits (FREE if subscription expired). */
   plan: PlanType;
   /** Plan stored on the account (may still be PRO while expired). */
@@ -25,7 +61,8 @@ export interface RazorpayOrderResponse {
   orderId: string;
   amount: number;
   currency: string;
-  plan: "PRO" | "PRO_PLUS";
+  credits?: number;
+  plan?: "PRO" | "PRO_PLUS";
   planName?: string;
   keyId: string;
   user: {

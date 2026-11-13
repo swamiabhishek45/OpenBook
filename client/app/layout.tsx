@@ -1,9 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono, Figtree, Newsreader } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import QueryProvider from "@/components/providers/query-provider";
+import { PWAProvider } from "@/components/providers/pwa-provider";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { UpgradeModal } from "@/features/billing";
+import { Analytics } from "@vercel/analytics/next";
 
 const figtreeHeading = Figtree({ subsets: ['latin'], variable: '--font-heading' });
 
@@ -25,19 +29,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: "OpenBook",
   description: "AI-Powered Research & Interactive Notebook",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "OpenBook",
+  },
   icons: {
-    icon: "/logo.svg",
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.svg" },
+    ],
   },
 };
-
-
-import { UpgradeModal } from "@/features/billing";
-import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
@@ -58,8 +79,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            {children}
-            <UpgradeModal />
+            <PWAProvider>
+              {children}
+              <UpgradeModal />
+              <InstallPrompt />
+            </PWAProvider>
           </QueryProvider>
         </ThemeProvider>
         <Analytics />

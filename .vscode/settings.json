@@ -1,3 +1,4 @@
 {
-    "terminal.integrated.shellIntegration.enabled": true
+    "terminal.integrated.shellIntegration.enabled": true,
+    "python.terminal.useEnvFile": true
 }

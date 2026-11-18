@@ -119,3 +119,6 @@ dist
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
 /src/generated/prisma
+
+# local env backups (may contain secrets)
+.env.bak-*

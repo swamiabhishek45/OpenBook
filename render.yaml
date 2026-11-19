@@ -8,7 +8,9 @@ services:
     plan: free
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
-    healthCheckPath: /health
+    # Liveness only — must not depend on DB/Pinecone, or a degraded
+    # dependency fails the deploy. Use /health for dependency status.
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production

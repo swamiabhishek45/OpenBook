@@ -83,6 +83,14 @@ app.get("/", (_req, res) => {
     res.send("OpenBook API");
 });
 
+// Liveness probe: must never depend on external services (DB, Pinecone, ...).
+// Render's health check uses this; a 503 here fails the whole deploy even when
+// the process itself is healthy.
+app.get("/healthz", (_req, res) => {
+    res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
+// Readiness/diagnostics probe: reports dependency status, 503 when degraded.
 app.get("/health", async (_req, res) => {
     const { ok, checks } = await runHealthChecks();
     res.status(ok ? 200 : 503).json({

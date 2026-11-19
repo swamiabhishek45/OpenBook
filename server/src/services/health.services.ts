@@ -7,6 +7,17 @@ export type HealthChecks = {
     pinecone: "ok" | "error" | "skipped";
 };
 
+const CHECK_TIMEOUT_MS = 5000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error("health check timed out")), ms),
+        ),
+    ]);
+}
+
 export async function runHealthChecks(): Promise<{
     ok: boolean;
     checks: HealthChecks;
@@ -17,7 +28,7 @@ export async function runHealthChecks(): Promise<{
     };
 
     try {
-        await prisma.$queryRaw`SELECT 1`;
+        await withTimeout(prisma.$queryRaw`SELECT 1`, CHECK_TIMEOUT_MS);
     } catch {
         checks.database = "error";
     }
@@ -30,7 +41,10 @@ export async function runHealthChecks(): Promise<{
         checks.pinecone = "ok";
         try {
             const client = new Pinecone({ apiKey });
-            await client.describeIndex(indexName);
+            await withTimeout(
+                client.describeIndex(indexName),
+                CHECK_TIMEOUT_MS,
+            );
         } catch {
             checks.pinecone = "error";
         }

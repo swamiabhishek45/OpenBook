@@ -8,8 +8,21 @@ on:
       - "server/evals/**"
 
 jobs:
+  # `secrets` is not allowed in a job-level `if`, and using it there makes GitHub
+  # reject the whole workflow file. Read it in a step and gate on the output instead.
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - id: gate
+        env:
+          RAG_EVAL_WORKSPACE_ID: ${{ secrets.RAG_EVAL_WORKSPACE_ID }}
+        run: echo "enabled=${{ env.RAG_EVAL_WORKSPACE_ID != '' }}" >> "$GITHUB_OUTPUT"
+
   rag-eval:
-    if: ${{ secrets.RAG_EVAL_WORKSPACE_ID != '' }}
+    needs: check
+    if: needs.check.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

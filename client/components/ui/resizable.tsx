@@ -41,13 +41,14 @@ function ResizableHandle({
     <ResizablePrimitive.Separator
       data-slot="resizable-handle"
       className={cn(
-        "relative flex w-1 hover:w-1.5 items-center justify-center bg-zinc-800/80 hover:bg-zinc-600 transition-all cursor-col-resize select-none shrink-0 group z-10",
+        // A quiet gutter between the soft panels: the grip only shows on hover.
+        "group relative z-10 flex w-2 shrink-0 cursor-col-resize items-center justify-center bg-transparent select-none",
         className
       )}
       {...props}
     >
       {withHandle && (
-        <div className="z-10 flex h-8 w-1 shrink-0 rounded-full bg-zinc-600 group-hover:bg-zinc-400 transition-colors" />
+        <div className="z-10 h-10 w-1 shrink-0 rounded-full bg-border transition-colors duration-150 group-hover:bg-muted-foreground/50 group-data-[resize-handle-state=drag]:bg-muted-foreground/70" />
       )}
     </ResizablePrimitive.Separator>
   );

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Globe, Zap, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { PillButton, iconButtonClassName } from "@/components/ui/pill";
 import { useUsage, useUpgradeModal } from "@/features/billing";
 import { enhanceChatPrompt } from "../lib/api";
 import { toast } from "@/components/ui/toast";
@@ -118,20 +118,17 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4 border-t border-border bg-card/40 space-y-2">
-      {/* Insufficient credits banner */}
+    <div className="space-y-2 px-3 pt-1 pb-3 sm:px-4">
       {isOutOfCredits && (
-        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 text-foreground text-xs font-medium animate-fadeIn">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>
-              You have 0 credits remaining. Chats cost 1 credit each.
+        <div className="animate-fadeIn flex items-center justify-between gap-3 rounded-full bg-amber-500/12 py-1.5 pr-1.5 pl-4 text-[13px] font-medium text-foreground">
+          <span className="flex min-w-0 items-center gap-2">
+            <Zap className="size-4 shrink-0 text-amber-500" />
+            <span className="truncate">
+              No credits left. Each chat costs 1 credit.
             </span>
-          </div>
-          <Button
-            type="button"
+          </span>
+          <PillButton
             size="xs"
-            variant="default"
             onClick={() =>
               openUpgradeModal({
                 reason: "You need credits to send chat messages. Top up your balance to continue.",
@@ -140,26 +137,25 @@ export function ChatInput({
                 currentCredits: credits,
               })
             }
-            className="font-semibold text-xs gap-1 shadow-xs cursor-pointer"
           >
-            Top Up Credits
-          </Button>
+            Top up
+          </PillButton>
         </div>
       )}
 
 
       <div
         className={cn(
-          "rounded-2xl p-[1.5px] transition-all duration-300",
+          "rounded-[26px] p-[1.5px] transition-all duration-300",
           isEnhancing
             ? "bg-[linear-gradient(135deg,#22d3ee_0%,#8b5cf6_45%,#ec4899_100%)] shadow-[0_0_24px_rgba(139,92,246,0.25)]"
-            : "bg-border focus-within:bg-zinc-400 dark:focus-within:bg-zinc-600 has-[:focus]:bg-zinc-400 dark:has-[:focus]:bg-zinc-600",
+            : "bg-border/70 focus-within:bg-foreground/20",
         )}
       >
-      <form
-        onSubmit={handleSubmit}
-        className="relative rounded-[calc(1rem-1px)] bg-card shadow-lg p-3 space-y-2.5"
-      >
+        <form
+          onSubmit={handleSubmit}
+          className="relative space-y-2.5 rounded-[24.5px] bg-card p-3 shadow-[0_12px_28px_-16px_rgb(0_0_0/0.25)]"
+        >
         {/* Text input area */}
         <textarea
           ref={textareaRef}
@@ -180,83 +176,86 @@ export function ChatInput({
           }
           rows={1}
           disabled={isStreaming || isOutOfCredits}
-          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none resize-none max-h-44 leading-relaxed font-sans disabled:opacity-60 disabled:cursor-not-allowed"
+          className="max-h-44 w-full resize-none bg-transparent px-1.5 pt-1 font-sans text-[14.5px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
 
         {/* Bottom toolbar */}
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             {/* Web search toggle */}
-            <button
-              type="button"
+            <PillButton
+              size="xs"
+              variant={webSearchEnabled ? "ink" : "chip"}
               onClick={onToggleWebSearch}
-              title="Toggle Tavily live web search"
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors cursor-pointer",
-                webSearchEnabled
-                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                  : "bg-muted/70 border-border text-muted-foreground hover:text-foreground"
-              )}
+              aria-pressed={webSearchEnabled}
+              title="Toggle live web search"
+              className={cn(!webSearchEnabled && "text-muted-foreground")}
             >
-              <Globe className="w-3 h-3" />
+              <Globe className="size-3.5" />
               <span>Web search</span>
-            </button>
+            </PillButton>
           </div>
 
           <div className="flex items-center gap-1.5">
             {isEnhancing && (
-              <div
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-muted/80 border border-border"
+              <span
+                className="flex size-9 items-center justify-center rounded-full bg-muted"
                 aria-label="Enhancing prompt"
                 aria-busy="true"
               >
-                <LoaderCircle className="w-4 h-4 text-muted-foreground animate-spin" />
-              </div>
+                <LoaderCircle className="size-4 animate-spin text-muted-foreground" />
+              </span>
             )}
 
             {showEnhanceControl && !isEnhancing && (
-              <button
-                type="button"
+              <PillButton
+                size="xs"
+                variant={isEnhanced ? "chip" : "ghost"}
                 onClick={() => void handleEnhanceOrRevert()}
                 title={
                   isEnhanced
                     ? "Restore your original prompt"
                     : "Improve clarity with Gemini"
                 }
-                className={cn(
-                  "px-2.5 py-1 rounded-md text-[11px] font-medium border border-[#2a2a2a] dark:border-[#333333] transition-colors",
-                  isEnhanced
-                    ? "bg-muted/50 text-foreground hover:bg-muted/80"
-                    : "bg-transparent text-muted-foreground hover:text-foreground",
-                )}
               >
                 {isEnhanced ? "Revert" : "Enhance prompt"}
-              </button>
+              </PillButton>
             )}
 
-          {/* Submit / Stop button */}
-          {isStreaming ? (
-            <button
-              type="button"
-              onClick={onStopStreaming}
-              title="Stop generating"
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground text-background hover:opacity-90 active:scale-95 transition-all shadow-md cursor-pointer"
-            >
-              <span className="w-2.5 h-2.5 rounded-[2px] bg-background" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!input.trim() || isOutOfCredits}
-              title={isOutOfCredits ? "Top up credits to send messages" : "Send message (1 credit)"}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary hover:opacity-90 active:scale-95 text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-            >
-              <ArrowUp className="w-4 h-4 stroke-[2.5]" />
-            </button>
-          )}
+            {isStreaming ? (
+              <button
+                type="button"
+                onClick={onStopStreaming}
+                title="Stop generating"
+                aria-label="Stop generating"
+                className={cn(
+                  iconButtonClassName(),
+                  "bg-foreground text-background hover:bg-foreground/88",
+                )}
+              >
+                <span className="size-2.5 rounded-[3px] bg-background" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim() || isOutOfCredits}
+                title={
+                  isOutOfCredits
+                    ? "Top up credits to send messages"
+                    : "Send message (1 credit)"
+                }
+                aria-label="Send message"
+                className={cn(
+                  iconButtonClassName(),
+                  "bg-foreground text-background hover:bg-foreground/88 disabled:opacity-35",
+                )}
+              >
+                <ArrowUp className="size-4 stroke-[2.5]" />
+              </button>
+            )}
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
       </div>
     </div>
   );

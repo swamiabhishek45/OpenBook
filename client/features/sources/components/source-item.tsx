@@ -2,15 +2,10 @@
 
 import React from "react";
 import { Source } from "../lib/types";
-import {
-  Trash2,
-  Check,
-  AlertCircle,
-  Eye,
-  RefreshCw,
-} from "lucide-react";
+import { Trash2, Check, AlertCircle, Eye, RefreshCw } from "lucide-react";
 import { CircularLoader } from "@/components/ui/circular-loader";
 import { SourceTypeIcon } from "./source-type-icon";
+import { RAISED, iconButtonClassName } from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
 
 interface SourceItemProps {
@@ -39,16 +34,16 @@ export function SourceItem({
       case "PROCESSING":
       case "PENDING":
         return (
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-            <CircularLoader size={12} />
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            <CircularLoader size={11} />
             Indexing
           </span>
         );
       case "FAILED":
         return (
-          <div className="flex items-center gap-1">
-            <span className="flex items-center gap-1 text-[10px] text-destructive bg-destructive/10 px-1.5 py-0.5 rounded border border-destructive/30">
-              <AlertCircle className="w-2.5 h-2.5" />
+          <span className="flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+              <AlertCircle className="size-2.5" />
               Failed
             </span>
             {onRetry && (
@@ -60,15 +55,13 @@ export function SourceItem({
                 }}
                 disabled={isRetrying}
                 title="Retry processing"
-                className="flex items-center gap-1 text-[10px] font-medium text-foreground bg-muted hover:bg-muted/80 px-1.5 py-0.5 rounded border border-border disabled:opacity-50"
+                className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors hover:bg-border/70 disabled:pointer-events-none disabled:opacity-50"
               >
-                <RefreshCw
-                  className={cn("w-2.5 h-2.5", isRetrying && "animate-spin")}
-                />
+                <RefreshCw className={cn("size-2.5", isRetrying && "animate-spin")} />
                 Retry
               </button>
             )}
-          </div>
+          </span>
         );
     }
   };
@@ -76,29 +69,36 @@ export function SourceItem({
   return (
     <div
       className={cn(
-        "group relative flex items-center justify-between p-2.5 rounded-xl border transition-all duration-150 select-none",
+        "group relative flex items-center justify-between rounded-[16px] p-2.5 select-none",
+        "transition-[background-color,box-shadow] duration-150 ease-out",
         isSelected
-          ? "border-border bg-muted/60 dark:bg-muted/30 shadow-xs"
-          : "border-border hover:border-zinc-300 dark:hover:border-zinc-700 bg-card hover:bg-muted/30"
+          ? RAISED
+          : "bg-card/40 hover:bg-card/80 dark:bg-white/3 dark:hover:bg-white/6",
       )}
     >
-      <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-        {/* Grounding Selection Checkbox */}
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 pr-2">
+        {/* Grounding selection */}
         <button
           type="button"
           onClick={() => onToggleSelect(source.id)}
+          role="checkbox"
+          aria-checked={isSelected}
+          aria-label={`Use ${source.title} for grounding`}
           className={cn(
-            "w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0",
+            "flex size-[17px] shrink-0 cursor-pointer items-center justify-center rounded-[6px]",
+            "transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
             isSelected
-              ? "bg-primary border-primary text-primary-foreground"
-              : "border-border bg-card hover:border-muted-foreground"
+              ? "bg-foreground text-background"
+              : "bg-muted ring-1 ring-border ring-inset hover:bg-border/70",
           )}
         >
-          {isSelected && <Check className="w-3 h-3 stroke-3" />}
+          {isSelected && <Check className="size-3 stroke-3" />}
         </button>
 
-        {/* Source Icon */}
-        <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+        <span
+          aria-hidden="true"
+          className="flex size-8 shrink-0 items-center justify-center rounded-[11px] bg-muted"
+        >
           <SourceTypeIcon
             type={source.type}
             source={source}
@@ -108,20 +108,18 @@ export function SourceItem({
                 : undefined
             }
           />
-        </div>
+        </span>
 
-        {/* Title & Status */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p
-              onClick={() => onPreview(source)}
-              className="text-xs font-medium text-foreground hover:underline truncate cursor-pointer"
-            >
-              {source.title}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
+          <button
+            type="button"
+            onClick={() => onPreview(source)}
+            className="block max-w-full cursor-pointer truncate text-left text-[13px] font-medium text-foreground hover:underline"
+          >
+            {source.title}
+          </button>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
               {source.type}
             </span>
             {getStatusBadge()}
@@ -129,15 +127,15 @@ export function SourceItem({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <button
           type="button"
           onClick={() => onPreview(source)}
           title="Preview source content"
-          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label={`Preview ${source.title}`}
+          className={iconButtonClassName({ size: "sm" })}
         >
-          <Eye className="w-3.5 h-3.5" />
+          <Eye className="size-3.5" />
         </button>
         <button
           type="button"
@@ -147,9 +145,10 @@ export function SourceItem({
             }
           }}
           title="Delete source"
-          className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+          aria-label={`Delete ${source.title}`}
+          className={iconButtonClassName({ tone: "danger", size: "sm" })}
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="size-3.5" />
         </button>
       </div>
     </div>

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { pillClassName } from "@/components/ui/pill";
+import { cn } from "@/lib/utils";
 
 type WorkspacePageShellProps = {
   workspaceId: string;
@@ -14,22 +16,29 @@ export function WorkspacePageShell({
   children,
 }: WorkspacePageShellProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <div className="border-b border-border px-3 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between gap-2 bg-card shrink-0">
-        <Link
-          href={`/workspace/${workspaceId}`}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors min-w-0"
-        >
-          <ArrowLeft className="w-4 h-4 shrink-0" />
-          <span className="truncate">
-            <span className="sm:hidden">Back</span>
-            <span className="hidden sm:inline">Back to Workspace Chat</span>
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="shrink-0 px-3 pt-3 pb-2 sm:px-4">
+        <div className="flex h-[52px] items-center justify-between gap-2 rounded-full bg-muted/70 py-1.5 pr-4 pl-1.5 backdrop-blur-xl dark:bg-muted/60">
+          <Link
+            href={`/workspace/${workspaceId}`}
+            className={cn(
+              pillClassName({ variant: "card", size: "sm" }),
+              "min-w-0 pr-4 pl-3",
+            )}
+          >
+            <ArrowLeft className="size-4 shrink-0" />
+            <span className="truncate">
+              <span className="sm:hidden">Back</span>
+              <span className="hidden sm:inline">Back to notebook</span>
+            </span>
+          </Link>
+
+          <span className="max-w-[45%] truncate text-right text-[13px] font-semibold tracking-[-0.01em] text-foreground">
+            {sectionLabel}
           </span>
-        </Link>
-        <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground shrink-0 text-right max-w-[40%] truncate">
-          {sectionLabel}
-        </span>
+        </div>
       </div>
+
       <div className="flex-1">{children}</div>
     </div>
   );

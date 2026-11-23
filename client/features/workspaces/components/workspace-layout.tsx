@@ -154,6 +154,17 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
     retryingArtifactId,
   } = useArtifacts(workspaceId);
 
+  const MOBILE_TABS: {
+    id: MobileTab;
+    label: string;
+    icon: typeof Layers;
+    count: number;
+  }[] = [
+    { id: "sources", label: "Sources", icon: Layers, count: sources.length },
+    { id: "chat", label: "Chat", icon: MessageSquare, count: 0 },
+    { id: "studio", label: "Studio", icon: Sparkles, count: artifacts.length },
+  ];
+
   if (isWorkspaceLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
@@ -204,7 +215,7 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
           <ResizableHandle withHandle />
 
           {/* Middle Panel: Chat Interface */}
-          <ResizablePanel defaultSize="52%" minSize="30%">
+          <ResizablePanel defaultSize="52%" minSize="30%" className="min-w-0">
             <ChatPanel
               workspaceId={workspaceId}
               defaultModel={workspace?.defaultModel}
@@ -318,50 +329,46 @@ export function WorkspaceLayout({ workspaceId }: WorkspaceLayoutProps) {
         </div>
 
 
-        {/* Mobile Navigation Tabs */}
-        <div className="h-14 border-t border-border bg-card flex items-center justify-around px-4 z-20 shrink-0">
-          <button
-            type="button"
-            onClick={() => setMobileTab("sources")}
-            className={cn(
-              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
-              mobileTab === "sources"
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Layers className="w-4 h-4" />
-            <span>Sources ({sources.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setMobileTab("chat")}
-            className={cn(
-              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
-              mobileTab === "chat"
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Chat</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setMobileTab("studio")}
-            className={cn(
-              "flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium transition-colors",
-              mobileTab === "studio"
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Studio ({artifacts.length})</span>
-          </button>
-        </div>
+        {/* Mobile navigation: one pill bar, matching the header chrome. */}
+        <nav
+          aria-label="Workspace panels"
+          className="z-20 shrink-0 px-3 pt-1 pb-3"
+        >
+          <div className="flex items-center gap-1 rounded-full bg-muted/70 p-1.5 backdrop-blur-xl dark:bg-muted/60">
+            {MOBILE_TABS.map(({ id, label, icon: Icon, count }) => {
+              const isActive = mobileTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setMobileTab(id)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "flex h-10 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full text-[13px] font-medium",
+                    "transition-[background-color,color] duration-150 ease-out active:scale-[0.97]",
+                    "outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                    isActive
+                      ? "bg-foreground text-background"
+                      : "text-foreground/75 hover:bg-foreground/6 hover:text-foreground"
+                  )}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span>{label}</span>
+                  {count > 0 && (
+                    <span
+                      className={cn(
+                        "font-mono text-[11px]",
+                        isActive ? "text-background/70" : "text-muted-foreground"
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </div>
   );

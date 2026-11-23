@@ -9,15 +9,12 @@ import { WorkspaceDetail } from "../hooks/use-workspace";
 import { useWorkspaces, Workspace } from "../hooks/use-workspaces";
 import {
   ChevronDown,
-  Sparkles,
   Layers,
   Check,
   LogOut,
-  User,
   Brain,
   CreditCard,
   LayoutGrid,
-  Zap,
   Puzzle,
   Coins,
 } from "lucide-react";
@@ -25,8 +22,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { PremiumAvatar, ProBadge, useUpgradeModal, useUsage } from "@/features/billing";
 import { UserAvatar } from "@/components/ui/user-avatar";
-
-
+import { META_CHIP, POPOVER, POPOVER_ITEM } from "@/components/ui/pill";
 
 interface WorkspaceHeaderProps {
   workspace: WorkspaceDetail | null;
@@ -38,18 +34,16 @@ interface WorkspaceHeaderProps {
 export function WorkspaceHeader({
   workspace,
   sourcesCount,
-  onUpdateModel,
 }: WorkspaceHeaderProps) {
   const router = useRouter();
   const { session, logoutMutation } = useAuth();
   const { workspaces } = useWorkspaces();
-  const { isPro, isProPlus, plan } = useUsage();
+  const { plan } = useUsage();
 
   const { openUpgradeModal } = useUpgradeModal();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -71,229 +65,246 @@ export function WorkspaceHeader({
   }, []);
 
   return (
-    <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between select-none shrink-0 z-20">
-      {/* Left: OpenBook logo + Workspace Switcher Dropdown */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        <Link href="/dashboard" className="shrink-0 flex items-center gap-2" title="Go to Dashboard">
-          <OpenBookLogo size={22} textSize="text-base" textColor="text-foreground" textClassName="hidden sm:inline" />
-        </Link>
-
-        <div className="h-4 w-px bg-border shrink-0" />
-
-        {/* Workspace Dropdown Switcher */}
-        <div className="relative min-w-0" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-1.5 sm:gap-2 py-1 px-2 sm:px-2.5 rounded-xl border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer group max-w-[130px] xs:max-w-[180px] sm:max-w-[240px] md:max-w-[320px]"
-            title="Switch Workspace"
+    <header className="z-20 shrink-0 px-3 pt-3 pb-2 select-none sm:px-4">
+      {/* The same floating pill bar the landing page and dashboard use. */}
+      <div className="flex h-[52px] items-center justify-between gap-2 rounded-full bg-muted/70 py-1.5 pr-1.5 pl-3 backdrop-blur-xl sm:pl-4 dark:bg-muted/60">
+        {/* Left: logo + notebook switcher */}
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Link
+            href="/dashboard"
+            className="flex shrink-0 items-center"
+            title="Go to dashboard"
           >
-            <span className="text-sm shrink-0">{workspace?.icon || "📚"}</span>
-            <span className="text-xs sm:text-sm font-semibold truncate">
-              {workspace?.title || "Untitled Notebook"}
-            </span>
-            <ChevronDown
-              className={cn(
-                "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 shrink-0",
-                isDropdownOpen && "rotate-180"
-              )}
+            <OpenBookLogo
+              size={23}
+              textSize="text-[16px]"
+              textColor="text-foreground"
+              textClassName="hidden sm:inline"
             />
-          </button>
+          </Link>
 
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl border border-border bg-card shadow-2xl p-2 z-50 animate-fadeIn space-y-1">
-              <div className="px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-b border-border">
-                <span>Switch Notebook</span>
-                <span className="font-mono text-[10px]">{workspaces.length} total</span>
-              </div>
-
-              {/* Workspaces List */}
-              <div className="max-h-64 overflow-y-auto space-y-1 py-1">
-                {workspaces.map((ws: Workspace) => {
-                  const isCurrent = ws.id === workspaceId;
-                  return (
-                    <button
-                      key={ws.id}
-                      type="button"
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        if (!isCurrent) {
-                          router.push(`/workspace/${ws.id}`);
-                        }
-                      }}
-                      className={cn(
-                        "w-full flex items-center justify-between gap-2.5 p-2 rounded-xl text-left text-xs transition-colors cursor-pointer",
-                        isCurrent
-                          ? "bg-foreground text-background font-semibold"
-                          : "text-foreground hover:bg-muted"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-sm shrink-0">{ws.icon || "📚"}</span>
-                        <span className="truncate">{ws.title}</span>
-                      </div>
-                      {isCurrent && <Check className="w-3.5 h-3.5 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Footer Actions */}
-              <div className="pt-1.5 border-t border-border space-y-1">
-                {workspaceId && (
-                  <Link
-                    href={`/workspace/${workspaceId}/settings`}
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  >
-                    <span>Notebook settings</span>
-                  </Link>
-                )}
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Dashboard · All Notebooks</span>
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Middle/Right Quick Tabs & Controls */}
-      <div className="flex items-center gap-2">
-        {/* Pro Plan Badge — hidden on small screens to save header space */}
-        <ProBadge className="hidden md:inline-flex" />
-
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
-        {/* User profile dropdown button & popover menu */}
-        {session?.user && (
-          <div className="relative pl-1 sm:pl-2 border-l border-border" ref={profileMenuRef}>
+          <div className="relative min-w-0" ref={dropdownRef}>
             <button
               type="button"
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="rounded-full transition-transform hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 shrink-0"
-              title={session.user.name || "User menu"}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-expanded={isDropdownOpen}
+              aria-haspopup="menu"
+              className={cn(
+                "flex h-9 max-w-[130px] cursor-pointer items-center gap-1.5 rounded-full bg-card pr-2.5 pl-3 sm:max-w-[240px] md:max-w-[320px]",
+                "text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors hover:bg-background",
+                "outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+              )}
+              title="Switch notebook"
             >
-              <PremiumAvatar plan={plan} size="sm" className="w-7 h-7">
-                <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
-                  <UserAvatar src={session.user.image} name={session.user.name} />
-                </div>
-              </PremiumAvatar>
+              <span className="shrink-0 text-[14px]">{workspace?.icon || "📚"}</span>
+              <span className="truncate text-[13.5px] font-medium">
+                {workspace?.title || "Untitled notebook"}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+                  isDropdownOpen && "rotate-180",
+                )}
+              />
             </button>
 
-            {/* Profile Dropdown Popover Menu */}
-            {isProfileMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-card shadow-2xl p-1.5 z-50 animate-fadeIn text-xs space-y-1">
-                {/* Header User Info */}
-                <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border">
-                  <PremiumAvatar plan={plan} size="md" className="w-8 h-8">
-                    <div className="w-full h-full rounded-full bg-muted border border-border flex items-center justify-center text-xs font-semibold text-foreground overflow-hidden">
-                      <UserAvatar src={session.user.image} name={session.user.name} />
-                    </div>
-                  </PremiumAvatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground truncate">
-                      {session.user.name || "User"}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate">
-                      {session.user.email}
-                    </p>
-                  </div>
+            {isDropdownOpen && (
+              <div
+                className={cn(POPOVER, "animate-fadeIn absolute top-full left-0 z-50 mt-2 w-72")}
+              >
+                <div className="flex items-center justify-between px-3 pt-1 pb-2">
+                  <span className="text-[13px] font-semibold tracking-[-0.01em] text-foreground">
+                    Switch notebook
+                  </span>
+                  <span className={META_CHIP}>{workspaces.length}</span>
                 </div>
 
-                {/* Top Up Credits Button */}
-                <div className="p-1 border-b border-border">
+                <div className="max-h-64 space-y-0.5 overflow-y-auto">
+                  {workspaces.map((ws: Workspace) => {
+                    const isCurrent = ws.id === workspaceId;
+                    return (
+                      <button
+                        key={ws.id}
+                        type="button"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          if (!isCurrent) {
+                            router.push(`/workspace/${ws.id}`);
+                          }
+                        }}
+                        className={cn(
+                          POPOVER_ITEM,
+                          "justify-between",
+                          isCurrent
+                            ? "bg-foreground font-semibold text-background"
+                            : "text-foreground hover:bg-foreground/6",
+                        )}
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2">
+                          <span className="shrink-0 text-[14px]">{ws.icon || "📚"}</span>
+                          <span className="truncate">{ws.title}</span>
+                        </span>
+                        {isCurrent && <Check className="size-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-1 space-y-0.5 border-t border-border/60 pt-1">
+                  {workspaceId && (
+                    <Link
+                      href={`/workspace/${workspaceId}/settings`}
+                      onClick={() => setIsDropdownOpen(false)}
+                      className={cn(POPOVER_ITEM, "text-foreground hover:bg-foreground/6")}
+                    >
+                      <Layers className="size-4 text-muted-foreground" />
+                      <span>Notebook settings</span>
+                    </Link>
+                  )}
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className={cn(POPOVER_ITEM, "text-foreground hover:bg-foreground/6")}
+                  >
+                    <LayoutGrid className="size-4 text-muted-foreground" />
+                    <span>All notebooks</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: plan, theme, account */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <ProBadge className="hidden md:inline-flex" />
+
+          <ThemeToggle className="size-9 rounded-full border-0 bg-transparent shadow-none hover:bg-foreground/6" />
+
+          {session?.user && (
+            <div className="relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                aria-expanded={isProfileMenuOpen}
+                aria-haspopup="menu"
+                className="cursor-pointer rounded-full transition-transform duration-150 ease-out hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
+                title={session.user.name || "Account menu"}
+              >
+                <PremiumAvatar plan={plan} size="sm" className="size-8">
+                  <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-card text-[11px] font-semibold text-foreground">
+                    <UserAvatar src={session.user.image} name={session.user.name} />
+                  </div>
+                </PremiumAvatar>
+              </button>
+
+              {isProfileMenuOpen && (
+                <div
+                  className={cn(POPOVER, "animate-fadeIn absolute top-full right-0 z-50 mt-2 w-60")}
+                >
+                  <div className="flex items-center gap-2.5 px-3 pt-1.5 pb-3">
+                    <PremiumAvatar plan={plan} size="md" className="size-9">
+                      <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-semibold text-foreground">
+                        <UserAvatar src={session.user.image} name={session.user.name} />
+                      </div>
+                    </PremiumAvatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-semibold text-foreground">
+                        {session.user.name || "User"}
+                      </p>
+                      <p className="truncate text-[12px] text-muted-foreground">
+                        {session.user.email}
+                      </p>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
                       setIsProfileMenuOpen(false);
                       openUpgradeModal({
-                        reason: "Top up your OpenBook credits to upload sources, chat, and generate artifacts.",
+                        reason:
+                          "Top up your OpenBook credits to upload sources, chat, and generate artifacts.",
                       });
                     }}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-foreground border border-amber-500/25 transition-colors font-medium cursor-pointer"
+                    className={cn(
+                      POPOVER_ITEM,
+                      "justify-between bg-foreground text-background hover:bg-foreground/88",
+                    )}
                   >
-                    <div className="flex items-center gap-1.5">
-                      <Coins className="w-3.5 h-3.5 text-amber-500" />
-                      <span className="text-xs font-semibold">Top Up Credits</span>
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold bg-background border border-border px-1.5 py-0.5 rounded text-foreground">
+                    <span className="flex items-center gap-2">
+                      <Coins className="size-4" />
+                      <span>Top up credits</span>
+                    </span>
+                    <span className="font-mono text-[11px] text-background/70">
                       Min ₹50
                     </span>
                   </button>
-                </div>
 
-                {workspaceId && (
-                  <div className="space-y-0.5 pt-1">
-                    <Link
-                      href={`/workspace/${workspaceId}/sources`}
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>Library</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
-                        {sourcesCount}
-                      </span>
-                    </Link>
+                  {workspaceId && (
+                    <div className="mt-1 space-y-0.5">
+                      <Link
+                        href={`/workspace/${workspaceId}/sources`}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className={cn(
+                          POPOVER_ITEM,
+                          "justify-between text-foreground hover:bg-foreground/6",
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Layers className="size-4 text-muted-foreground" />
+                          <span>Library</span>
+                        </span>
+                        <span className={META_CHIP}>{sourcesCount}</span>
+                      </Link>
 
-                    <Link
-                      href={`/workspace/${workspaceId}/memory`}
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
-                    >
-                      <Brain className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>Memory</span>
-                    </Link>
+                      <Link
+                        href={`/workspace/${workspaceId}/memory`}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className={cn(POPOVER_ITEM, "text-foreground hover:bg-foreground/6")}
+                      >
+                        <Brain className="size-4 text-muted-foreground" />
+                        <span>Memory</span>
+                      </Link>
 
-                    <Link
-                      href={`/workspace/${workspaceId}/billing`}
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
-                    >
-                      <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>Credits &amp; billing</span>
-                    </Link>
+                      <Link
+                        href={`/workspace/${workspaceId}/billing`}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className={cn(POPOVER_ITEM, "text-foreground hover:bg-foreground/6")}
+                      >
+                        <CreditCard className="size-4 text-muted-foreground" />
+                        <span>Credits &amp; billing</span>
+                      </Link>
 
-                    <Link
-                      href={`/workspace/${workspaceId}/integrations`}
-                      onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-foreground hover:bg-muted transition-colors font-medium"
+                      <Link
+                        href={`/workspace/${workspaceId}/integrations`}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className={cn(POPOVER_ITEM, "text-foreground hover:bg-foreground/6")}
+                      >
+                        <Puzzle className="size-4 text-muted-foreground" />
+                        <span>Integrations</span>
+                      </Link>
+                    </div>
+                  )}
+
+                  <div className="mt-1 border-t border-border/60 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        logoutMutation.mutate();
+                      }}
+                      className={cn(POPOVER_ITEM, "text-destructive hover:bg-destructive/10")}
                     >
-                      <Puzzle className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>Integrations</span>
-                    </Link>
+                      <LogOut className="size-4" />
+                      <span>Sign out</span>
+                    </button>
                   </div>
-                )}
-
-                {/* Divider & Logout */}
-                <div className="pt-1 border-t border-border">
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProfileMenuOpen(false);
-                      logoutMutation.mutate();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-destructive hover:bg-destructive/10 transition-colors font-medium text-left cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out</span>
-                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

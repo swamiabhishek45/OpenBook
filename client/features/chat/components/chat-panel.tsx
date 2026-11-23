@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Plus,
   Trash2,
-  Sparkles,
   HelpCircle,
   BookOpen,
   FileSearch,
@@ -27,6 +26,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  POPOVER,
+  POPOVER_ITEM,
+  PanelLabel,
+  PillButton,
+  iconButtonClassName,
+} from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
 
 type ChatConfirmAction = "clear" | "delete" | null;
@@ -52,21 +58,21 @@ interface ChatPanelProps {
 
 const STARTER_PROMPTS = [
   {
-    icon: <BookOpen className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    icon: <BookOpen className="size-4 text-foreground" />,
     title: "Summarize sources",
     desc: "Provide a comprehensive summary of all key concepts across my selected sources.",
     prompt:
       "Please provide a comprehensive and detailed summary of all key concepts across my selected sources.",
   },
   {
-    icon: <FileSearch className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    icon: <FileSearch className="size-4 text-foreground" />,
     title: "Key takeaways & insights",
     desc: "Extract the top 5 most important takeaways with supporting evidence.",
     prompt:
       "What are the top 5 most important takeaways and insights from these documents? Explain each clearly.",
   },
   {
-    icon: <HelpCircle className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />,
+    icon: <HelpCircle className="size-4 text-foreground" />,
     title: "Find connections",
     desc: "What are the common themes and contrasting arguments across these documents?",
     prompt:
@@ -149,35 +155,44 @@ export function ChatPanel({
   const currentConv = conversations.find((c) => c.id === currentConversationId);
 
   return (
-    <div className="h-full flex flex-col bg-background text-foreground relative select-text">
-      {/* Top Chat Sub-header */}
-      <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border flex items-center justify-between bg-card/60 gap-2">
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-          <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-foreground shrink-0 hidden sm:inline">
-            Chat
+    <div className="relative flex h-full flex-col bg-background text-foreground select-text">
+      {/* Top chat sub-header */}
+      <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="hidden shrink-0 sm:block">
+            <PanelLabel>Chat</PanelLabel>
           </span>
 
-          {/* Custom Compact Conversation Selector Dropdown */}
-          <div className="relative min-w-0 flex-1 max-w-[200px] sm:max-w-[240px]" ref={convMenuRef}>
+          {/* Conversation selector */}
+          <div className="relative min-w-0 flex-1 sm:max-w-[260px]" ref={convMenuRef}>
             <button
               type="button"
               onClick={() => setIsConvMenuOpen(!isConvMenuOpen)}
-              className="w-full flex items-center justify-between gap-1 px-2 py-1 bg-muted/80 hover:bg-muted border border-border rounded-lg text-xs text-foreground font-medium transition-colors cursor-pointer"
+              aria-expanded={isConvMenuOpen}
+              aria-haspopup="menu"
+              className="flex h-9 w-full cursor-pointer items-center justify-between gap-1.5 rounded-full bg-muted/70 px-3.5 text-[13px] font-medium text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none dark:bg-muted/50 dark:hover:bg-muted/80"
             >
-              <span className="truncate text-left">
-                {currentConv ? currentConv.title || "Untitled Chat" : "+ New Conversation"}
+              <span className="flex min-w-0 items-center gap-1.5">
+                <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate text-left">
+                  {currentConv ? currentConv.title || "Untitled chat" : "New conversation"}
+                </span>
               </span>
               <ChevronDown
                 className={cn(
-                  "w-3 h-3 text-muted-foreground shrink-0 transition-transform duration-200",
+                  "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
                   isConvMenuOpen && "rotate-180"
                 )}
               />
             </button>
 
             {isConvMenuOpen && (
-              <div className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 rounded-xl border border-border bg-card shadow-2xl p-1.5 z-40 animate-fadeIn space-y-1 text-xs">
+              <div
+                className={cn(
+                  POPOVER,
+                  "animate-fadeIn absolute top-full left-0 z-40 mt-2 w-64 sm:w-72"
+                )}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -185,37 +200,38 @@ export function ChatPanel({
                     onNewChat();
                   }}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                    POPOVER_ITEM,
                     !currentConversationId
-                      ? "bg-foreground text-background font-semibold"
-                      : "hover:bg-muted text-foreground"
+                      ? "bg-foreground font-semibold text-background"
+                      : "text-foreground hover:bg-foreground/6"
                   )}
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Conversation</span>
+                  <Plus className="size-4" />
+                  <span>New conversation</span>
                 </button>
 
                 {conversations.length > 0 && (
-                  <div className="pt-1 border-t border-border max-h-52 overflow-y-auto space-y-0.5">
+                  <div className="mt-1 max-h-52 space-y-0.5 overflow-y-auto border-t border-border/60 pt-1">
                     {conversations.map((c) => {
                       const isActive = c.id === currentConversationId;
                       return (
                         <div
                           key={c.id}
                           className={cn(
-                            "flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg group transition-colors cursor-pointer",
+                            POPOVER_ITEM,
+                            "group justify-between",
                             isActive
                               ? "bg-muted font-semibold text-foreground"
-                              : "hover:bg-muted/60 text-foreground"
+                              : "text-foreground hover:bg-foreground/6"
                           )}
                           onClick={() => {
                             setIsConvMenuOpen(false);
                             onSelectConversation(c.id);
                           }}
                         >
-                          <span className="truncate flex-1 text-xs">{c.title || "Untitled Chat"}</span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            {isActive && <Check className="w-3.5 h-3.5 text-foreground" />}
+                          <span className="flex-1 truncate">{c.title || "Untitled chat"}</span>
+                          <span className="flex shrink-0 items-center gap-0.5">
+                            {isActive && <Check className="size-3.5 text-foreground" />}
                             <button
                               type="button"
                               onClick={(e) => {
@@ -224,11 +240,15 @@ export function ChatPanel({
                                 setConfirmAction("delete");
                               }}
                               title="Delete chat"
-                              className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity rounded"
+                              aria-label={`Delete ${c.title || "untitled chat"}`}
+                              className={cn(
+                                iconButtonClassName({ tone: "danger", size: "sm" }),
+                                "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                              )}
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="size-3" />
                             </button>
-                          </div>
+                          </span>
                         </div>
                       );
                     })}
@@ -239,29 +259,23 @@ export function ChatPanel({
           </div>
         </div>
 
-        {/* Header Action Buttons: Clear, New Chat */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5">
           {(currentConversationId || messages.length > 0) && (
-            <button
-              type="button"
+            <PillButton
+              variant="danger"
+              size="xs"
               onClick={() => setConfirmAction("clear")}
               title="Clear all messages in this chat"
-              className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 text-muted-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="size-3.5" />
               <span className="hidden md:inline">Clear</span>
-            </button>
+            </PillButton>
           )}
 
-          {/* New Chat Button */}
-          <button
-            type="button"
-            onClick={onNewChat}
-            className="flex items-center gap-1 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground border border-border rounded-lg text-xs font-medium transition-colors cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Chat</span>
-          </button>
+          <PillButton variant="chip" size="xs" onClick={onNewChat}>
+            <Plus className="size-3.5" strokeWidth={2.4} />
+            <span className="hidden sm:inline">New chat</span>
+          </PillButton>
         </div>
       </div>
 
@@ -274,40 +288,48 @@ export function ChatPanel({
         >
           {messages.length === 0 ? (
 
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto  space-y-6 animate-fadeIn">
-            {/* <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center shadow-xs"> */}
-              <ThemeLoader size={86} />
-            {/* </div> */}
+          <div className="animate-fadeIn mx-auto flex h-full max-w-lg flex-col items-center justify-center text-center">
+            <ThemeLoader size={76} />
 
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-foreground tracking-tight">
-                Ask anything about your notes &amp; sources
-              </h3>
-              {/* <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
-                OpenBook retrieves relevant excerpts directly from your indexed
-                materials and synthesizes answers with source citations.
-              </p> */}
-            </div>
+            <h3 className="mt-6 text-[clamp(22px,2.6vw,30px)] leading-[1.18] font-semibold tracking-[-0.03em] text-balance">
+              Ask anything about{" "}
+              {/* Fades from ink to muted, as the landing headlines do. */}
+              <span className="bg-linear-to-b from-foreground from-30% to-muted-foreground/55 bg-clip-text pb-[0.08em] text-transparent">
+                your sources.
+              </span>
+            </h3>
 
-            {/* Starter Prompt Cards */}
-            <div className="grid grid-cols-1 gap-2.5 w-full pt-2">
+            <p className="mt-2.5 max-w-[360px] text-[14.5px] leading-[1.55] text-muted-foreground">
+              Every answer lists the passages it used. Start from one of these, or
+              type your own.
+            </p>
+
+            <div className="mt-8 grid w-full grid-cols-1 gap-2">
               {STARTER_PROMPTS.map((item, idx) => (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => onSendMessage(item.prompt)}
-                  className="flex items-center gap-3 p-3.5 rounded-xl border border-border bg-card hover:bg-muted/50 hover:border-zinc-400 dark:hover:border-zinc-600 text-left transition-all group shadow-xs"
+                  className={cn(
+                    "group flex cursor-pointer items-center gap-3 rounded-[18px] bg-muted/60 p-3.5 text-left dark:bg-muted/70",
+                    "transition-[background-color,transform] duration-200 ease-out hover:bg-muted active:scale-[0.99]",
+                    "outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  )}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[12px] bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05)]"
+                  >
                     {item.icon}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-foreground">
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13.5px] font-medium text-foreground">
                       {item.title}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                      {item.prompt}
-                    </p>
-                  </div>
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                      {item.desc}
+                    </span>
+                  </span>
                 </button>
               ))}
             </div>
@@ -331,7 +353,10 @@ export function ChatPanel({
           <button
             type="button"
             onClick={scrollToTop}
-            className="absolute bottom-3 right-4 z-20 w-8 h-8 rounded-full bg-card/95 hover:bg-muted border border-border text-foreground shadow-lg backdrop-blur-xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer animate-fadeIn"
+            className={cn(
+              iconButtonClassName({ tone: "card" }),
+              "animate-fadeIn absolute right-4 bottom-3 z-20 backdrop-blur-sm"
+            )}
             title="Go to top"
             aria-label="Scroll to top of chat"
           >

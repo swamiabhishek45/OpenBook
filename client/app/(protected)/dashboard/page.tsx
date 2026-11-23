@@ -169,15 +169,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      {/* 1. Header Bar */}
       <DashboardHeader
         user={session.user}
         onLogout={() => logoutMutation.mutate()}
       />
 
-      {/* 2. Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-10 space-y-8">
-        {/* Welcome Banner & Search */}
+      <main className="mx-auto w-full max-w-[1240px] flex-1 space-y-12 px-5 pt-10 pb-20 sm:px-6 sm:pt-14">
         <DashboardBanner
           userName={session.user.name}
           searchQuery={searchQuery}
@@ -185,7 +182,6 @@ export default function DashboardPage() {
           onNewNotebook={handleOpenCreateModal}
         />
 
-        {/* Workspaces Grid */}
         <WorkspacesGrid
           workspaces={filteredWorkspaces}
           isLoading={isWorkspacesLoading}
@@ -196,10 +192,10 @@ export default function DashboardPage() {
           onEdit={handleOpenEdit}
           onTogglePin={togglePin}
           onDelete={handleDeleteWorkspace}
+          searchQuery={searchQuery}
         />
       </main>
 
-      {/* 3. Create Workspace Modal */}
       <CreateWorkspaceModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -207,7 +203,6 @@ export default function DashboardPage() {
         isCreating={isCreating}
       />
 
-      {/* 4. Edit Workspace Modal */}
       <EditWorkspaceModal
         workspace={editingWorkspace}
         onClose={() => setEditingWorkspace(null)}

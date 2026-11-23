@@ -18,16 +18,19 @@ const FEATURES: Feature[] = [
     title: ["A cited answer,", "not a confident guess."],
     body: "Every reply points back to the passage it came from — the page of the PDF, the timestamp in the video, the paragraph on the page. You can check the claim instead of trusting it.",
     image: "/landing/grounded-chat.png",
-    alt: "Grounded chat answering a question with inline citations from the notebook's sources",
+    // TODO(landing): this screenshot is a coding chat with no citation visible, so it
+    // does not show what this row claims. Re-shoot it against a real cited answer and
+    // restore an alt that describes the citations.
+    alt: "A chat thread in an OpenBook notebook, showing a question and the assistant's reply",
     tone: "sand",
     aspect: "16 / 10",
   },
   {
     id: "sources",
     title: ["Connect the sources", "your work already uses."],
-    body: "Import straight from Google Drive and Notion, drop in PDFs, paste a URL, or pull a YouTube transcript. Everything lands in one library your notebook can reason over.",
+    body: "Import straight from Google Drive, Notion and GitHub, drop in PDFs or images, paste a URL, or pull a YouTube transcript. Everything lands in one library your notebook can reason over.",
     image: "/landing/source.png",
-    alt: "The sources library showing PDFs, web pages, and YouTube videos imported into a notebook",
+    alt: "The Add Source dialog, open on the PDF tab, with its drop zone and the other source types across the top",
     tone: "violet",
     aspect: "4 / 3",
   },
@@ -36,7 +39,7 @@ const FEATURES: Feature[] = [
     title: ["A podcast you can", "interrupt mid-sentence."],
     body: "Alex and Jordan debate your sources out loud. Pause the episode at any timestamp, ask a question, and hear an in-character answer grounded in your notes before the show picks back up.",
     image: "/landing/podcast.png",
-    alt: "An AI debate podcast episode paused mid-play with an Interrupt and Ask question",
+    alt: "An AI debate podcast episode hosted by Alex and Jordan, with an Interrupt and Ask button beside the player",
     tone: "green",
     aspect: "16 / 10",
   },
@@ -45,7 +48,9 @@ const FEATURES: Feature[] = [
     title: ["Flashcards, quizzes,", "and mind maps on tap."],
     body: "Studio turns the same library into summaries, key takeaways, flashcards, practice quizzes, and mind maps. Memory remembers how you like to learn, and you can export any artifact to Notion.",
     image: "/landing/studio.png",
-    alt: "Studio panel generating flashcards, a quiz, and a mind map from the notebook's sources",
+    // TODO(landing): this row promises flashcards, quizzes and mind maps but the
+    // screenshot shows only a mind map. Re-shoot against the Studio panel.
+    alt: "A mind map generated from a notebook's sources, its branches expanded across the canvas",
     tone: "blue",
     aspect: "16 / 10",
   },

@@ -56,6 +56,9 @@
   --radius: 0.625rem;
   --selection: #dfcfbc;
   --selection-foreground: #18181b;
+  /* Mind map minimap viewport mask. React Flow only accepts a single colour
+     string for this, so it cannot be derived from the tokens above. */
+  --minimap-mask: rgb(246 239 231 / 0.6);
 }
 
 .dark {
@@ -79,6 +82,7 @@
   --ring: #d4d4d8;
   --selection: #3f3f46;
   --selection-foreground: #fafafa;
+  --minimap-mask: rgb(9 9 11 / 0.6);
 }
 
 @layer base {

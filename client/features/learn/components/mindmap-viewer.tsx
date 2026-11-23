@@ -367,11 +367,20 @@ export function MindmapViewer({ content }: MindmapViewerProps) {
       >
         <Background gap={16} size={1} />
         <Controls className="bg-card border-border text-foreground" />
+        {/* React Flow keys its own palette off a `dark` class on the .react-flow
+            element, not on <html>, so it always serves its light defaults here:
+            #e2e2e2 nodes on a #fff panel behind a near-white mask, which is
+            invisible on our cream page. Binding every colour to a token fixes it
+            in both themes without depending on that class. */}
         <MiniMap
           nodeStrokeWidth={3}
           zoomable
           pannable
-          className="bg-card/90 border border-border rounded-lg"
+          bgColor="var(--card)"
+          nodeColor="var(--muted-foreground)"
+          nodeStrokeColor="var(--border)"
+          maskColor="var(--minimap-mask)"
+          className="border border-border rounded-lg"
         />
       </ReactFlow>
     </div>

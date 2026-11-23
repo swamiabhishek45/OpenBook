@@ -13,7 +13,7 @@ const FAQS = [
   {
     question: "What can I add as a source?",
     answer:
-      "PDFs, web pages, YouTube videos, Google Docs, Notion pages, Markdown, and raw text. Web pages are scraped with Firecrawl and videos come in as transcripts, so both end up searchable like any other document.",
+      "PDFs, images, web pages, YouTube videos, Google Docs, Notion pages, GitHub repositories, Markdown, and raw text. Web pages are scraped with Firecrawl and videos come in as transcripts, so both end up searchable like any other document.",
   },
   {
     question: "How do the citations work?",

@@ -2,6 +2,7 @@ import React from "react";
 import { AudioLines, Layers, MessageSquareQuote, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ShowcaseFrame } from "./showcase-frame";
+import { SourcesDemo } from "./sources-demo";
 import { Fade, IconTile, type TileTone } from "./primitives";
 
 interface Feature {
@@ -14,6 +15,8 @@ interface Feature {
   /** Index of the chip that matches what the screenshot shows, if any. */
   activeChip?: number;
   note: { code: string; text: string };
+  /** Replace the static chips + screenshot with the recorded, tabbed demo. */
+  demo?: "sources";
   image: string;
   alt: string;
   aspect: string;
@@ -52,6 +55,7 @@ const FEATURES: Feature[] = [
     chips: ["PDF", "Drive", "Notion", "GitHub", "YouTube", "URL"],
     activeChip: 0,
     note: { code: "sources.add()", text: "One library, every format." },
+    demo: "sources",
     image: "/landing/source.png",
     alt: "The Add Source dialog, open on the PDF tab, with its drop zone and the other source types across the top",
     aspect: "4 / 3",
@@ -101,6 +105,25 @@ export function FeatureRows() {
         const imageFirst = index % 2 === 1;
         const { icon: TileIcon, tone, tilt } = feature.title.tile;
 
+        const header = (
+          <>
+            <p className="text-[15px] text-muted-foreground">{feature.eyebrow}</p>
+            <h2
+              id={`${feature.id}-title`}
+              className="mt-2.5 text-[clamp(36px,4.4vw,60px)] leading-[1.16] font-semibold tracking-[-0.035em] text-balance"
+            >
+              {feature.title.lead}{" "}
+              <IconTile tone={tone} tilt={tilt}>
+                <TileIcon strokeWidth={2.2} />
+              </IconTile>{" "}
+              {feature.title.rest} <Fade>{feature.title.fade}</Fade>
+            </h2>
+            <p className="mt-6 max-w-[440px] text-[18px] leading-[1.6] text-muted-foreground">
+              {feature.body}
+            </p>
+          </>
+        );
+
         return (
           <section
             key={feature.id}
@@ -108,51 +131,44 @@ export function FeatureRows() {
             aria-labelledby={`${feature.id}-title`}
             className="grid scroll-mt-28 items-center gap-10 pt-32 sm:pt-40 lg:grid-cols-[0.82fr_1fr] lg:gap-14"
           >
-            <div className={cn(imageFirst && "lg:order-2")}>
-              <p className="text-[15px] text-muted-foreground">{feature.eyebrow}</p>
-              <h2
-                id={`${feature.id}-title`}
-                className="mt-2.5 text-[clamp(36px,4.4vw,60px)] leading-[1.16] font-semibold tracking-[-0.035em] text-balance"
-              >
-                {feature.title.lead}{" "}
-                <IconTile tone={tone} tilt={tilt}>
-                  <TileIcon strokeWidth={2.2} />
-                </IconTile>{" "}
-                {feature.title.rest} <Fade>{feature.title.fade}</Fade>
-              </h2>
-              <p className="mt-6 max-w-[440px] text-[18px] leading-[1.6] text-muted-foreground">
-                {feature.body}
-              </p>
+            {feature.demo === "sources" ? (
+              <SourcesDemo header={header} note={feature.note} imageFirst={imageFirst} />
+            ) : (
+              <>
+                <div className={cn(imageFirst && "lg:order-2")}>
+                  {header}
 
-              {/* Segmented chip row, read-only: it labels what the feature covers. */}
-              <ul className="mt-8 inline-flex max-w-full flex-wrap gap-1 rounded-[22px] bg-muted/60 p-1 dark:bg-muted/70">
-                {feature.chips.map((chip, chipIndex) => (
-                  <li
-                    key={chip}
-                    className={cn(
-                      "flex h-10 items-center rounded-full px-4 text-[14px] font-medium",
-                      chipIndex === feature.activeChip
-                        ? "bg-foreground text-background"
-                        : "text-foreground/80"
-                    )}
-                  >
-                    {chip}
-                  </li>
-                ))}
-              </ul>
+                  {/* Segmented chip row, read-only: it labels what the feature covers. */}
+                  <ul className="mt-8 inline-flex max-w-full flex-wrap gap-1 rounded-[22px] bg-muted/60 p-1 dark:bg-muted/70">
+                    {feature.chips.map((chip, chipIndex) => (
+                      <li
+                        key={chip}
+                        className={cn(
+                          "flex h-10 items-center rounded-full px-4 text-[14px] font-medium",
+                          chipIndex === feature.activeChip
+                            ? "bg-foreground text-background"
+                            : "text-foreground/80"
+                        )}
+                      >
+                        {chip}
+                      </li>
+                    ))}
+                  </ul>
 
-              <p className="mt-5 text-[14px] text-muted-foreground">
-                <code className="font-mono text-[13px] text-foreground">{feature.note.code}</code>{" "}
-                {feature.note.text}
-              </p>
-            </div>
+                  <p className="mt-5 text-[14px] text-muted-foreground">
+                    <code className="font-mono text-[13px] text-foreground">{feature.note.code}</code>{" "}
+                    {feature.note.text}
+                  </p>
+                </div>
 
-            <ShowcaseFrame
-              src={feature.image}
-              alt={feature.alt}
-              aspect={feature.aspect}
-              className={cn(imageFirst && "lg:order-1")}
-            />
+                <ShowcaseFrame
+                  src={feature.image}
+                  alt={feature.alt}
+                  aspect={feature.aspect}
+                  className={cn(imageFirst && "lg:order-1")}
+                />
+              </>
+            )}
           </section>
         );
       })}

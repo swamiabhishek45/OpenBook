@@ -21,7 +21,7 @@ const SOURCE_TYPES: { label: string; icon: React.ReactNode; tint: string }[] = [
   { label: "YouTube", icon: <YoutubeIcon size={26} />, tint: "bg-card" },
   {
     label: "Drive",
-    icon: <Image src="/integrations/google-drive-logo.png" alt="" width={26} height={26} />,
+    icon: <Image src="/integrations/google-drive-logo.png" alt="" width={26} height={26} className="size-6.5 object-contain" />,
     tint: "bg-card",
   },
   {

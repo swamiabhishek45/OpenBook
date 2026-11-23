@@ -14,7 +14,7 @@ import { GithubIcon } from "./brand-icons";
 const INTEGRATIONS: { label: string; icon: React.ReactNode }[] = [
   {
     label: "Google Drive",
-    icon: <Image src="/integrations/google-drive-logo.png" alt="" width={18} height={18} />,
+    icon: <Image src="/integrations/google-drive-logo.png" alt="" width={18} height={18} className="size-4.5 object-contain" />,
   },
   {
     label: "Notion",

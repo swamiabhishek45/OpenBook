@@ -2,15 +2,24 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { OpenBookLogo } from "@/features/auth";
 import { GithubIcon } from "./brand-icons";
 import { ThemeToggle } from "@/components/motion/theme-toggle";
 import { cn } from "@/lib/utils";
 import { GITHUB_URL } from "./links";
+import { PillLink } from "./primitives";
 
 interface SiteNavProps {
   isAuthenticated?: boolean;
 }
+
+const NAV_LINKS = [
+  { label: "Features", href: "/#features" },
+  { label: "Studio", href: "/#studio" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/#faq" },
+];
 
 export function SiteNav({ isAuthenticated = false }: SiteNavProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,49 +32,64 @@ export function SiteNav({ isAuthenticated = false }: SiteNavProps) {
   }, []);
 
   return (
-    <header
-      className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300",
-        isScrolled
-          ? "border-border bg-background/85 backdrop-blur-md"
-          : "border-transparent bg-background/60 backdrop-blur-sm"
-      )}
-    >
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-5 sm:px-6">
-        <div className="flex items-center">
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-3.5">
+      <nav
+        aria-label="Main"
+        className={cn(
+          "mx-auto flex h-[60px] w-full max-w-[1140px] items-center justify-between rounded-full py-2 pr-2 pl-5",
+          "backdrop-blur-xl transition-[background-color,box-shadow] duration-300",
+          isScrolled
+            ? "bg-muted/85 shadow-[0_8px_30px_-12px_rgb(0_0_0/0.18)] dark:bg-muted/80"
+            : "bg-muted/70 dark:bg-muted/60",
+        )}
+      >
+        <div className="flex items-center gap-7">
           <Link href="/" aria-label="OpenBook home" className="flex items-center">
-            <OpenBookLogo size={24} textSize="text-[17px]" />
+            <OpenBookLogo size={26} textSize="text-[18px]" />
           </Link>
+
+          <ul className="hidden items-center gap-1 md:flex">
+            {NAV_LINKS.map((link) => (
+              <li key={link.label}>
+                <Link
+                  href={link.href}
+                  className="rounded-full px-3 py-2 text-[14.5px] font-medium text-foreground/80 transition-colors hover:bg-foreground/6 hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/pricing"
-            className="hidden sm:inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Pricing
-          </Link>
-
+        <div className="flex items-center gap-1.5">
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer noopener"
             aria-label="OpenBook on GitHub"
-            className="inline-flex items-center text-muted-foreground/70 transition-colors hover:text-foreground"
+            className="hidden size-9 items-center justify-center rounded-full text-foreground/70 transition-colors hover:bg-foreground/6 hover:text-foreground sm:inline-flex"
           >
             <GithubIcon />
           </a>
 
-          <ThemeToggle />
+          <ThemeToggle className="size-9 rounded-full border-0 bg-transparent shadow-none hover:bg-foreground/6" />
 
-          <Link
-            href={isAuthenticated ? "/dashboard" : "/login"}
-            className="inline-flex items-center rounded-full bg-foreground px-3.5 py-1.5 text-[13px] font-medium text-background transition-opacity hover:opacity-85"
-          >
-            {isAuthenticated ? "Dashboard" : "Log in"}
-          </Link>
+          {!isAuthenticated && (
+            <Link
+              href="/login"
+              className="hidden rounded-full px-3 py-2 text-[14.5px] font-medium text-foreground/80 transition-colors hover:text-foreground sm:inline-flex"
+            >
+              Sign in
+            </Link>
+          )}
+
+          <PillLink href={isAuthenticated ? "/dashboard" : "/signup"} size="md">
+            {isAuthenticated ? "Dashboard" : "Get started"}
+            <ArrowRight className="size-3.5" />
+          </PillLink>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

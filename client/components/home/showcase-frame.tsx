@@ -5,31 +5,19 @@ import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const FRAME_GRADIENTS = {
-  blue: "from-[#c3d4f0] via-[#dde6f8] to-[#a9c1e8] dark:from-[#1b2540] dark:via-[#232d4a] dark:to-[#141a2c]",
-  sand: "from-[#e6d3b8] via-[#f1e6d5] to-[#d5bb99] dark:from-[#2b241a] dark:via-[#332b20] dark:to-[#1e1913]",
-  violet:
-    "from-[#d3cef1] via-[#e6e3f9] to-[#bfb8e8] dark:from-[#221f3c] dark:via-[#2a2647] dark:to-[#181528]",
-  green:
-    "from-[#c4ddc9] via-[#dcebde] to-[#a9cdb1] dark:from-[#182a1f] dark:via-[#1f3327] dark:to-[#121d16]",
-} as const;
-
-export type FrameTone = keyof typeof FRAME_GRADIENTS;
-
 interface ShowcaseFrameProps {
   src: string;
   alt: string;
-  tone?: FrameTone;
   /** CSS aspect-ratio for the inner screenshot, e.g. "16 / 10". */
   aspect?: string;
   priority?: boolean;
   className?: string;
 }
 
+/** A screenshot set inside a soft, borderless panel. */
 export function ShowcaseFrame({
   src,
   alt,
-  tone = "blue",
   aspect = "16 / 10",
   priority = false,
   className,
@@ -39,13 +27,12 @@ export function ShowcaseFrame({
   return (
     <div
       className={cn(
-        "rounded-[26px] bg-linear-to-br p-4 sm:p-7",
-        FRAME_GRADIENTS[tone],
+        "rounded-[28px] bg-muted/60 p-[clamp(12px,2.4vw,32px)] dark:bg-muted/70",
         className
       )}
     >
       <div
-        className="relative overflow-hidden rounded-xl bg-card ring-1 ring-black/5 shadow-[0_24px_50px_-28px_rgb(24_24_27/0.5)] dark:ring-white/10"
+        className="relative overflow-hidden rounded-[14px] bg-card shadow-[0_30px_60px_-24px_rgb(0_0_0/0.35)] ring-1 ring-black/5 dark:ring-white/10"
         style={{ aspectRatio: aspect }}
       >
         {failed ? (
@@ -62,7 +49,7 @@ export function ShowcaseFrame({
             alt={alt}
             fill
             priority={priority}
-            sizes="(max-width: 768px) 100vw, 900px"
+            sizes="(max-width: 1024px) 100vw, 720px"
             className="object-cover object-top"
             onError={() => setFailed(true)}
           />

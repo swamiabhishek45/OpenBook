@@ -88,8 +88,8 @@ function FooterItem({ link }: { link: FooterLink }) {
 
 export function SiteFooter() {
   return (
-    <footer className="px-4 pt-28 pb-5 sm:px-6 sm:pt-36">
-      <div className="mx-auto w-full max-w-6xl rounded-[28px] border border-border bg-card px-7 py-12 sm:px-12">
+    <footer className="px-3 pt-3 pb-3 sm:px-6">
+      <div className="mx-auto w-full max-w-[1290px] rounded-[32px] bg-muted/60 px-7 py-12 sm:px-12 dark:bg-muted/70">
         <div className="grid gap-12 lg:grid-cols-[1fr_2.3fr]">
           <Link href="/" className="flex h-fit items-center" aria-label="OpenBook home">
             <OpenBookLogo size={24} textSize="text-xl" />

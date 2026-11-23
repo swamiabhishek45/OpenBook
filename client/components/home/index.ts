@@ -3,7 +3,10 @@ export { Hero } from "./hero";
 export { IntegrationsStrip } from "./integrations-strip";
 export { GroundingIntro } from "./grounding-intro";
 export { FeatureRows } from "./feature-rows";
+export { FeatureGrid } from "./feature-grid";
+export { PricingPreview } from "./pricing-preview";
 export { Faq } from "./faq";
+export { ClosingCta } from "./closing-cta";
 export { SiteFooter } from "./site-footer";
 export { ShowcaseFrame } from "./showcase-frame";
 

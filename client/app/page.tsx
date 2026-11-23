@@ -5,7 +5,10 @@ import {
   IntegrationsStrip,
   GroundingIntro,
   FeatureRows,
+  FeatureGrid,
+  PricingPreview,
   Faq,
+  ClosingCta,
   SiteFooter,
 } from "@/components/home";
 
@@ -28,7 +31,10 @@ export default async function HomePage() {
         <IntegrationsStrip />
         <GroundingIntro />
         <FeatureRows />
+        <FeatureGrid />
+        <PricingPreview isAuthenticated={isAuthenticated} />
         <Faq />
+        <ClosingCta isAuthenticated={isAuthenticated} />
       </main>
 
       <SiteFooter />

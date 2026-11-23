@@ -2,7 +2,8 @@
 
 import React from "react";
 import { Accordion } from "@base-ui/react/accordion";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
+import { SectionHeading } from "./primitives";
 
 const FAQS = [
   {
@@ -51,36 +52,31 @@ export function Faq() {
   return (
     <section
       id="faq"
-      className="mx-auto grid w-full max-w-5xl scroll-mt-24 gap-10 px-5 pt-28 sm:px-6 sm:pt-36 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16"
+      aria-labelledby="faq-title"
+      className="mx-auto w-full max-w-[880px] scroll-mt-28 px-5 pt-32 sm:px-6 sm:pt-44"
     >
-      <div>
-        <h2 className="text-[28px] leading-[1.15] tracking-tight sm:text-[32px]">
-          The practical
-          <br />
-          bits, answered.
-        </h2>
-        <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-muted-foreground">
-          What OpenBook grounds, what it generates for you, and what stays under your
-          control.
-        </p>
-      </div>
+      <SectionHeading id="faq-title" eyebrow="FAQ" align="center" size="lg">
+        Questions.
+      </SectionHeading>
 
-      <Accordion.Root className="flex w-full flex-col">
+      <Accordion.Root className="mt-14 flex w-full flex-col gap-2">
         {FAQS.map((faq) => (
           <Accordion.Item
             key={faq.question}
             value={faq.question}
-            className="border-b border-border"
+            className="rounded-[20px] bg-muted/60 transition-colors data-open:bg-muted dark:bg-muted/70"
           >
             <Accordion.Header>
-              <Accordion.Trigger className="group/trigger flex w-full items-center justify-between gap-6 py-5 text-left text-[15px] outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
+              <Accordion.Trigger className="group/trigger flex w-full items-center justify-between gap-6 rounded-[20px] px-6 py-5 text-left text-[17px] font-semibold tracking-[-0.01em] outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
                 {faq.question}
-                <ChevronDown className="size-4 shrink-0 text-muted-foreground/60 transition-transform duration-200 group-aria-expanded/trigger:rotate-180" />
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-card transition-transform duration-200 ease-out group-aria-expanded/trigger:rotate-45">
+                  <Plus className="size-4" strokeWidth={2.2} />
+                </span>
               </Accordion.Trigger>
             </Accordion.Header>
 
-            <Accordion.Panel className="overflow-hidden data-closed:animate-accordion-up data-open:animate-accordion-down">
-              <p className="h-(--accordion-panel-height) max-w-xl pb-5 text-sm leading-relaxed text-muted-foreground data-ending-style:h-0 data-starting-style:h-0">
+            <Accordion.Panel className="h-(--accordion-panel-height) overflow-hidden transition-[height] duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0">
+              <p className="max-w-[640px] px-6 pb-6 text-[15.5px] leading-[1.6] text-muted-foreground">
                 {faq.answer}
               </p>
             </Accordion.Panel>
